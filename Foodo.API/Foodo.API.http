@@ -1,0 +1,6 @@
+@Foodo.API_HostAddress = http://localhost:5286
+
+GET {{Foodo.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

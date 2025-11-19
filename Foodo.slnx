@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="Foodo.API/Foodo.API.csproj" />
+  <Project Path="Foodo.Application/Foodo.Application.csproj" />
+  <Project Path="Foodo.Domain/Foodo.Domain.csproj" />
+  <Project Path="Foodo.Infrastructure/Foodo.Infrastructure.csproj" />
+</Solution>
