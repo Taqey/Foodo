@@ -1,7 +1,14 @@
 
+using Foodo.Application.Abstraction;
+using Foodo.Application.Implementation;
+using Foodo.Domain.Entities;
+using Foodo.Domain.Repository;
 using Foodo.Infrastructure.Perisistence;
+using Foodo.Infrastructure.Repository;
+using Foodo.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -62,6 +69,20 @@ namespace Foodo.API
 
 				};
 			});
+			builder.Services.AddIdentityCore<ApplicationUser>(options =>
+			{
+				options.Password.RequireDigit = true;
+				options.Password.RequireLowercase = true;
+				options.Password.RequireUppercase = true;
+				options.Password.RequireNonAlphanumeric = true;
+				options.Password.RequiredLength = 8;
+			}).AddRoles<IdentityRole>().AddEntityFrameworkStores<AppDbContext>().AddDefaultTokenProviders();
+			builder.Services.AddScoped(typeof(IRepository<>),typeof(Repository<>));
+			builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+			builder.Services.AddScoped<IUserService, UserService>();
+			builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+
+
 			var app = builder.Build();
 
 			// Configure the HTTP request pipeline.
