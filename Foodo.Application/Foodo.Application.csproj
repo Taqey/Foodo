@@ -10,4 +10,8 @@
     <ProjectReference Include="..\Foodo.Domain\Foodo.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Models\Dto\" />
+  </ItemGroup>
+
 </Project>

@@ -1,4 +1,5 @@
 ﻿using Foodo.Domain.Entities;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -43,7 +44,25 @@ namespace Foodo.Infrastructure.Perisistence
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
-base.OnModelCreating(modelBuilder);
+			var Roles=new List<IdentityRole>
+			{
+				new IdentityRole
+				{
+					Id="d6d2f11c-6482-4b9f-8e59-24e997ac635b",
+					Name="Customer",
+					NormalizedName="CUSTOMER",
+					ConcurrencyStamp="d6d2f11c-6482-4b9f-8e59-24e997ac635b"
+				},
+				new IdentityRole
+				{
+					Id="23fd934c-7bcf-40e0-a41e-a253a2d3b557",
+					Name="Merchant",
+					NormalizedName="MERCHANT",
+					ConcurrencyStamp="23fd934c-7bcf-40e0-a41e-a253a2d3b557"
+				}
+			};
+			modelBuilder.Entity<IdentityRole>().HasData(Roles);
+			base.OnModelCreating(modelBuilder);
 
 			modelBuilder.Entity<LkpAttribute>(entity =>
 			{
