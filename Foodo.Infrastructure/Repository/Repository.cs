@@ -1,10 +1,7 @@
 ﻿using Foodo.Domain.Repository;
 using Foodo.Infrastructure.Perisistence;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
 using System.Linq.Expressions;
-using System.Text;
 
 namespace Foodo.Infrastructure.Repository
 {

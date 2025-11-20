@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Foodo.Infrastructure.Helper
+﻿namespace Foodo.Infrastructure.Helper
 {
 	public class JwtSettings
 	{

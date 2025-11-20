@@ -5,7 +5,6 @@ namespace Foodo.API.Models.Request
 	public class LoginRequest
 	{
 		[Required]
-		[EmailAddress]
 		public string Email { get; set; }
 		[Required]
 		[DataType(DataType.Password)]

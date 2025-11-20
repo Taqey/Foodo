@@ -23,6 +23,9 @@ namespace Foodo.API.Models.Request
 		[EnumDataType(typeof(Gender))]
 
 		public Gender? Gender { get; set; }
+		[DataType(DataType.Date)]
+		public DateOnly? DateOfBirth { get; set; }
+
 		[Required]
 		[StringLength(30, MinimumLength = 3)]
 		public string UserName { get; set; }

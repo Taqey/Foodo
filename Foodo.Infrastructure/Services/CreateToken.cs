@@ -1,15 +1,10 @@
 ﻿using Foodo.Application.Abstraction;
 using Foodo.Application.Models.Dto;
-using Foodo.Application.Models.Input;
-using Foodo.Application.Models.Response;
 using Foodo.Domain.Entities;
 using Foodo.Infrastructure.Helper;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
-using System.Net;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;

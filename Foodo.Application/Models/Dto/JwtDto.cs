@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Foodo.Application.Models.Dto
+﻿namespace Foodo.Application.Models.Dto
 {
 	public class JwtDto
 	{
