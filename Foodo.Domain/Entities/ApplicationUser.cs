@@ -9,9 +9,11 @@ namespace Foodo.Domain.Entities;
 public partial class ApplicationUser: IdentityUser
 {
 
-    public virtual ICollection<TblAdress> TblAdresses { get; set; } = new List<TblAdress>();
 
     public virtual TblCustomer TblCustomer { get; set; }
 
     public virtual TblMerchant TblMerchant { get; set; }
+    public virtual ICollection<TblAdress> TblAdresses { get; set; } = new List<TblAdress>();
+	public virtual ICollection<lkpRefreshToken> lkpRefreshTokens { get; set; } = new List<lkpRefreshToken>();	
+	public virtual ICollection<LkpResetCodes> LkpResetCodes { get; set; } = new List<LkpResetCodes>();
 }

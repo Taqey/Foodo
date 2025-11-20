@@ -1,6 +1,7 @@
 ﻿using Foodo.API.Models.Request;
 using Foodo.Application.Abstraction;
 using Foodo.Application.Models.Input;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,7 +20,12 @@ namespace Foodo.API.Controllers
 		[HttpPost("login")]
 		public async Task<IActionResult> Login([FromForm] LoginRequest request)
 		{
-			return Ok();
+			var result = await _service.Login(new LoginInput { Email=request.Email, Password=request.Password });
+			if (!result.IsSuccess)
+			{
+				return BadRequest("Incorrect username or password");
+			}
+			return Ok(result.Data);
 		}
 		[HttpPost("register")]
 		public async Task<IActionResult> Register([FromForm]RegisterRequest request)
@@ -58,6 +64,19 @@ namespace Foodo.API.Controllers
 		public async Task<IActionResult> ForgetPassword([FromForm] ForgetPasswordRequest request)
 		{
 			return Ok();
+		}
+		[Authorize]
+		[HttpPost("RefreshToken")]
+		public async Task<IActionResult> RefreshToken()
+		{
+			var RefreshToken= Request.Cookies["RefreshToken"];
+			var result = await _service.RefreshToken(RefreshToken);
+			if (!result.IsSuccess)
+			{
+				return BadRequest(result.Message);
+			}
+
+			return Ok(result.Data);
 		}
 	}
 }

@@ -14,6 +14,7 @@ public partial class TblCustomer
     public string LastName { get; set; }
 
     public string Gender { get; set; }
+	public DateOnly BirthDate { get; set; }
 
     public virtual ApplicationUser User { get; set; }
 }

@@ -3,6 +3,7 @@ using Foodo.Application.Abstraction;
 using Foodo.Application.Implementation;
 using Foodo.Domain.Entities;
 using Foodo.Domain.Repository;
+using Foodo.Infrastructure.Helper;
 using Foodo.Infrastructure.Perisistence;
 using Foodo.Infrastructure.Repository;
 using Foodo.Infrastructure.Services;
@@ -76,11 +77,15 @@ namespace Foodo.API
 				options.Password.RequireUppercase = true;
 				options.Password.RequireNonAlphanumeric = true;
 				options.Password.RequiredLength = 8;
+				
 			}).AddRoles<IdentityRole>().AddEntityFrameworkStores<AppDbContext>().AddDefaultTokenProviders();
 			builder.Services.AddScoped(typeof(IRepository<>),typeof(Repository<>));
 			builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 			builder.Services.AddScoped<IUserService, UserService>();
 			builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+			builder.Services.AddScoped<ICreateToken, CreateToken>();
+			builder.Services.AddHttpContextAccessor();
+			builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
 
 
 			var app = builder.Build();

@@ -67,16 +67,21 @@ namespace Foodo.Infrastructure.Services
 		}
 		public async Task<IdentityResult> AddRolesToUser(ApplicationUser user, string Role)
 		{
+			
 			var result=await _manager.AddToRoleAsync(user, Role);
 			return result;
 		}
-		//public async Task<ApplicationUser> GetUserByToken(string token)
-		//{
-		//	return await _manager.Users
-		//		.Include(u => u.RefreshTokens)
-		//		.Where(u => u.RefreshTokens.Any(rt => rt.Token == token))
-		//		.SingleOrDefaultAsync();
-		//}
+		public async Task<IList<string>> GetRolesForUser(ApplicationUser user)
+		{
+			var roles = await _manager.GetRolesAsync(user);
+			return roles;
+		}
+		public async Task<ApplicationUser> GetUserByToken(string token)
+		{
+			var user=await _manager.Users.Include(e=>e.lkpRefreshTokens).SingleOrDefaultAsync(e=>e.lkpRefreshTokens.Any(t=>t.Token==token));
+			return user;
+		}
+
 
 
 	}

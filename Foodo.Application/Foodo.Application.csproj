@@ -7,11 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Foodo.Domain\Foodo.Domain.csproj" />
+    <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.3.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Models\Dto\" />
+    <ProjectReference Include="..\Foodo.Domain\Foodo.Domain.csproj" />
   </ItemGroup>
 
 </Project>
