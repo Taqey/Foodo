@@ -36,20 +36,22 @@ namespace Foodo.API
 				options.SwaggerDoc("v1", new OpenApiInfo
 				{
 					Version = "v1",
-					Title = "Food API",
-					Description = "A sample application with Swagger, Swashbuckle, and API versioning for managing Foods",
-					TermsOfService = new Uri("https://example.com/terms"),
+					Title = "Foodo API",
+					Description = "Foodo API provides authentication, user management, merchant onboarding, and food ordering functionalities.",
+					TermsOfService = new Uri("https://foodo.com/terms"),
 					Contact = new OpenApiContact
 					{
-						Name = "Example Contact",
-						Url = new Uri("https://example.com/contact")
+						Name = "Taqeyy Eldeen",
+						Email = "atakieeldeen@gmail.com",
+						Url = new Uri("https://bucolic-cobbler-83dcdd.netlify.app/")
 					},
 					License = new OpenApiLicense
 					{
-						Name = "Example License",
-						Url = new Uri("https://example.com/license")
+						Name = "Foodo API License",
+						Url = new Uri("https://foodo.com/license")
 					}
 				});
+
 				var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
 				var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
 				options.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
