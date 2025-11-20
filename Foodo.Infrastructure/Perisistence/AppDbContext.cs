@@ -58,6 +58,10 @@ namespace Foodo.Infrastructure.Perisistence
 					ConcurrencyStamp="23fd934c-7bcf-40e0-a41e-a253a2d3b557"
 				}
 			};
+			modelBuilder.Entity<LkpCodes>(entity => {
+				entity.Property(e => e.Key).HasMaxLength(50);
+				entity.Property(e => e.CodeType).HasConversion<string>().HasMaxLength(50);
+			});
 			modelBuilder.Entity<IdentityRole>().HasData(Roles);
 			base.OnModelCreating(modelBuilder);
 

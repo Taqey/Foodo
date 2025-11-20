@@ -98,9 +98,15 @@ namespace Foodo.Application.Implementation
 			return ApiResponse<JwtDto>.Success(result, "Login successful.");
 		}
 
-		public Task<ApiResponse> ChangePassword(ChangePasswordInput input)
+		public async Task<ApiResponse> ChangePassword(ChangePasswordInput input)
 		{
-			throw new NotImplementedException();
+			var user= await _userService.GetByIdAsync(input.UserId);
+			var result= await _userService.ChangePasswordAsync(user,input.CurrentPassword, input.NewPassword);
+			if(!result.Succeeded)
+			{
+				return ApiResponse.Failure("Password change failed: " + string.Join(", ", result.Errors.Select(e => e.Description)));
+			}
+			return ApiResponse.Success("Password changed successfully.");
 		}
 
 		public async Task<ApiResponse> ForgetPassword(ForgetPasswordInput input)
@@ -111,7 +117,7 @@ namespace Foodo.Application.Implementation
 			{
 				return  new ApiResponse {  Message = "Invalid or expired reset code." };
 			}
-			var code= user.LkpResetCodes.FirstOrDefault(e=>e.Key==input.Code);
+			var code= user.LkpCodes.FirstOrDefault(e=>e.Key==input.Code);
 			if (code.ExpiresAt < DateTime.UtcNow)
 			{
 				return new ApiResponse { Message = "Invalid or expired reset code." };
@@ -132,7 +138,7 @@ namespace Foodo.Application.Implementation
 
 		public async Task<ApiResponse<JwtDto>> RefreshToken(string Token)
 		{
-			var user = await _userService.GetUserByToken(Token);
+			var user = await _userService.GetUserByResetToken(Token);
 			if (user == null)
 			{
 				return ApiResponse<JwtDto>.Failure("Invalid refresh token.");
@@ -187,10 +193,60 @@ namespace Foodo.Application.Implementation
 				Name = user.TblCustomer.FirstName;
 			}
 			var code = RandomNumberGenerator.GetInt32(100000, 999999).ToString();
-			user.LkpResetCodes.Add(new LkpResetCodes { Key = code, CreatedAt = DateTime.UtcNow, ExpiresAt = DateTime.UtcNow.AddMinutes(10) });
+			user.LkpCodes.Add(new LkpCodes { Key = code, CreatedAt = DateTime.UtcNow, ExpiresAt = DateTime.UtcNow.AddMinutes(10), CodeType = CodeType.PasswordReset });
 			await _userService.UpdateAsync(user);
 			var result=await _senderService.SendEmailAsync(input.Email, Name, "Password Reset", $"Your Reset Password code is {code}");
 			return result;
+		}
+
+		public async Task<ApiResponse> VerifyEmailRequest(VerifyEmailRequestInput input)
+		{
+			var user = await _userService.GetInclude(input.Email, e => e.TblCustomer, e => e.TblMerchant);
+			if (user == null)
+			{
+				return ApiResponse.Failure("Email not found");
+			}
+			var role = input.Role;
+			string Name;
+			if (role == (UserType.Merchant).ToString())
+			{
+				Name = user.TblMerchant.StoreName;
+			}
+			else
+			{
+				Name = user.TblCustomer.FirstName;
+			}
+			var code = RandomNumberGenerator.GetInt32(100000, 999999).ToString();
+			user.LkpCodes.Add(new LkpCodes { Key = code, CreatedAt = DateTime.UtcNow, ExpiresAt = DateTime.UtcNow.AddMinutes(10), CodeType = CodeType.EmailVerification });
+			await _userService.UpdateAsync(user);
+
+			var result =_senderService.SendEmailAsync(input.Email, "User", "Verify your email", $"Your Reset Password code is {code}");
+			return ApiResponse.Success("Verification email sent.");
+		}
+
+		
+		public async Task<ApiResponse> VerifyEmail(VerifyEmailInput input)
+		{
+			var user = await _userService.GetUserByVerificationToken(input.Code);
+			if (user == null)
+			{
+				return new ApiResponse { Message = "Invalid or expired verification token." };
+			}
+			var code = user.LkpCodes.FirstOrDefault(e => e.Key == input.Code);
+			if (code.ExpiresAt < DateTime.UtcNow)
+			{
+				return new ApiResponse { Message = "Invalid or expired verification token." };
+			}
+			if ((bool)code.IsUsed)
+			{
+				return ApiResponse.Failure("Verification token already used.");
+			}
+			code.IsUsed = true;
+			user.EmailConfirmed = true;
+			await _userService.UpdateAsync(user);
+
+				return ApiResponse.Success("Email has been verified successfully.");
+			
 		}
 	}
 }
