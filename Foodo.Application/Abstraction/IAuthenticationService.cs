@@ -12,5 +12,7 @@ namespace Foodo.Application.Abstraction
 		Task<ApiResponse> SubmitForgetPasswordRequest(SubmitForgetPasswordRequestInput input);
 		Task<ApiResponse> ForgetPassword(ForgetPasswordInput input);
 		Task<ApiResponse<JwtDto>> RefreshToken(string Token);
+		Task<ApiResponse> VerifyEmailRequest(VerifyEmailRequestInput input);
+		Task<ApiResponse> VerifyEmail(VerifyEmailInput input);
 	}
 }

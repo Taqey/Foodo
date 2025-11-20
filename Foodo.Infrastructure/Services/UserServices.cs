@@ -1,5 +1,6 @@
 ﻿using Foodo.Application.Abstraction;
 using Foodo.Domain.Entities;
+using Foodo.Domain.Enums;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
@@ -74,14 +75,19 @@ namespace Foodo.Infrastructure.Services
 			var roles = await _manager.GetRolesAsync(user);
 			return roles;
 		}
-		public async Task<ApplicationUser> GetUserByToken(string token)
+		public async Task<ApplicationUser> GetUserByResetToken(string token)
 		{
-			var user=await _manager.Users.Include(e=>e.lkpRefreshTokens).SingleOrDefaultAsync(e=>e.lkpRefreshTokens.Any(t=>t.Token==token));
+			var user = await _manager.Users.Include(e => e.LkpCodes).SingleOrDefaultAsync(e => e.LkpCodes.Any(t => t.Key == token && t.CodeType == CodeType.PasswordReset));
+			return user;
+		}
+		public async Task<ApplicationUser> GetUserByVerificationToken(string token)
+		{
+			var user = await _manager.Users.Include(e => e.LkpCodes).SingleOrDefaultAsync(e => e.LkpCodes.Any(t => t.Key == token && t.CodeType == CodeType.EmailVerification));
 			return user;
 		}
 		public async Task<ApplicationUser> GetUserByResetCode(string Code)
 		{
-			var user = await _manager.Users.Include(e=>e.LkpResetCodes).SingleOrDefaultAsync(e=>e.LkpResetCodes.Any(t=>t.Key== Code));
+			var user = await _manager.Users.Include(e=>e.LkpCodes).SingleOrDefaultAsync(e=>e.LkpCodes.Any(t=>t.Key== Code));
 			return user;
 
 		}
@@ -96,6 +102,5 @@ namespace Foodo.Infrastructure.Services
 		}
 
 
-
-		}
+	}
 }

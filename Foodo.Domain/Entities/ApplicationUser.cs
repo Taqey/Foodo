@@ -15,5 +15,5 @@ public partial class ApplicationUser: IdentityUser
     public virtual TblMerchant TblMerchant { get; set; }
     public virtual ICollection<TblAdress> TblAdresses { get; set; } = new List<TblAdress>();
 	public virtual ICollection<lkpRefreshToken> lkpRefreshTokens { get; set; } = new List<lkpRefreshToken>();	
-	public virtual ICollection<LkpResetCodes> LkpResetCodes { get; set; } = new List<LkpResetCodes>();
+	public virtual ICollection<LkpCodes> LkpCodes { get; set; } = new List<LkpCodes>();
 }
