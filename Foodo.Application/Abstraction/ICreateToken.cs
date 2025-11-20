@@ -1,9 +1,5 @@
 ﻿using Foodo.Application.Models.Dto;
-using Foodo.Application.Models.Response;
 using Foodo.Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Foodo.Application.Abstraction
 {

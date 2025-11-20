@@ -1,9 +1,7 @@
 ﻿namespace Foodo.Application.Models.Input
 {
-	public class LoginInput
+	public class SubmitForgetPasswordRequestInput
 	{
-
 		public string Email { get; set; }
-		public string Password { get; set; }
 	}
 }

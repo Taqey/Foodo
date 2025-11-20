@@ -2,9 +2,7 @@
 using Foodo.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using System.Linq.Expressions;
 
 namespace Foodo.Infrastructure.Services
 {
@@ -81,8 +79,23 @@ namespace Foodo.Infrastructure.Services
 			var user=await _manager.Users.Include(e=>e.lkpRefreshTokens).SingleOrDefaultAsync(e=>e.lkpRefreshTokens.Any(t=>t.Token==token));
 			return user;
 		}
+		public async Task<ApplicationUser> GetUserByResetCode(string Code)
+		{
+			var user = await _manager.Users.Include(e=>e.LkpResetCodes).SingleOrDefaultAsync(e=>e.LkpResetCodes.Any(t=>t.Key== Code));
+			return user;
+
+		}
+		public async Task<ApplicationUser> GetInclude(string email,params Expression<Func<ApplicationUser, object>>[] includeProperties)
+		{
+			var query = _manager.Users.AsQueryable();
+			foreach (var includeProperty in includeProperties)
+			{
+				query = query.Include(includeProperty);
+			}
+			return await query.SingleOrDefaultAsync(e=>e.Email==email);
+		}
 
 
 
-	}
+		}
 }

@@ -1,10 +1,6 @@
 ﻿using Foodo.Domain.Entities;
 using Foodo.Domain.Repository;
 using Foodo.Infrastructure.Perisistence;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Foodo.Infrastructure.Repository
 {

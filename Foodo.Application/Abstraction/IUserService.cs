@@ -1,8 +1,6 @@
 ﻿using Foodo.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using System.Linq.Expressions;
 
 namespace Foodo.Application.Abstraction
 {
@@ -19,6 +17,8 @@ namespace Foodo.Application.Abstraction
 		Task UpdateAsync(ApplicationUser user);
 		Task<IdentityResult> AddRolesToUser(ApplicationUser user, string Role);
 		Task<IList<string>> GetRolesForUser(ApplicationUser user);
+		Task<ApplicationUser> GetUserByResetCode(string Code);
+		Task<ApplicationUser> GetInclude(string email, params Expression<Func<ApplicationUser, object>>[] includeProperties);
 
 	}
 }

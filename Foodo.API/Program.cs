@@ -8,13 +8,11 @@ using Foodo.Infrastructure.Perisistence;
 using Foodo.Infrastructure.Repository;
 using Foodo.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
-using System.IdentityModel.Tokens.Jwt;
+using System.Reflection;
 using System.Text;
 namespace Foodo.API
 {
@@ -33,13 +31,28 @@ namespace Foodo.API
 				options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 			builder.Services.AddSwaggerGen(options =>
 			{
-				options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, "Foodo.API.xml"));
+
+
 				options.SwaggerDoc("v1", new OpenApiInfo
 				{
-					Title = "Foodo API",
 					Version = "v1",
-					Description = "API for Foodo Application"
+					Title = "Food API",
+					Description = "A sample application with Swagger, Swashbuckle, and API versioning for managing Foods",
+					TermsOfService = new Uri("https://example.com/terms"),
+					Contact = new OpenApiContact
+					{
+						Name = "Example Contact",
+						Url = new Uri("https://example.com/contact")
+					},
+					License = new OpenApiLicense
+					{
+						Name = "Example License",
+						Url = new Uri("https://example.com/license")
+					}
 				});
+				var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+				var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+				options.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
 				options.AddSecurityDefinition("bearer", new OpenApiSecurityScheme
 				{
 					Type = SecuritySchemeType.Http,
@@ -84,8 +97,10 @@ namespace Foodo.API
 			builder.Services.AddScoped<IUserService, UserService>();
 			builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 			builder.Services.AddScoped<ICreateToken, CreateToken>();
+			builder.Services.AddScoped<IEmailSenderService, EmailSenderService>();
 			builder.Services.AddHttpContextAccessor();
 			builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
+			builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("Smtp"));
 
 
 			var app = builder.Build();

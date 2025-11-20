@@ -7,6 +7,7 @@ using Foodo.Domain.Enums;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using System.Data;
+using System.Security.Cryptography;
 
 namespace Foodo.Application.Implementation
 {
@@ -15,12 +16,14 @@ namespace Foodo.Application.Implementation
 		private readonly IUserService _userService;
 		private readonly ICreateToken _createToken;
 		private readonly IHttpContextAccessor _http;
+		private readonly IEmailSenderService _senderService;
 
-		public AuthenticationService(IUserService userService, ICreateToken createToken, IHttpContextAccessor http)
+		public AuthenticationService(IUserService userService, ICreateToken createToken, IHttpContextAccessor http,IEmailSenderService senderService)
 		{
 			_userService = userService;
 			_createToken = createToken;
 			_http = http;
+			_senderService = senderService;
 		}
 		public async Task<ApiResponse> Register(RegisterInput input)
 		{
@@ -40,7 +43,18 @@ namespace Foodo.Application.Implementation
 			string Role = "";
 			if (input.UserType == UserType.Customer)
 			{
-				user.TblCustomer = new TblCustomer { FirstName = input.FirstName, LastName = input.LastName, Gender = input.Gender.ToString() };
+				user.TblCustomer = new TblCustomer { FirstName = input.FirstName, LastName = input.LastName, Gender = input.Gender.ToString(), BirthDate = (DateOnly)input.DateOfBirth };
+				user.TblAdresses.Add(new TblAdress
+				{
+
+					City = input.City,
+					State = input.State,
+					PostalCode = input.PostalCode,
+					Country = input.Country,
+					IsDefault = true,
+					StreetAddress= input.StreetAddress,
+					
+				});
 				Role = "Customer";
 			}
 			else
@@ -84,14 +98,36 @@ namespace Foodo.Application.Implementation
 			return ApiResponse<JwtDto>.Success(result, "Login successful.");
 		}
 
-		public Task ChangePassword(ChangePasswordInput input)
+		public Task<ApiResponse> ChangePassword(ChangePasswordInput input)
 		{
 			throw new NotImplementedException();
 		}
 
-		public Task ForgetPassword(ForgetPasswordInput input)
+		public async Task<ApiResponse> ForgetPassword(ForgetPasswordInput input)
 		{
-			throw new NotImplementedException();
+
+			var user=await _userService.GetUserByResetCode(input.Code);
+			if(user==null)
+			{
+				return  new ApiResponse {  Message = "Invalid or expired reset code." };
+			}
+			var code= user.LkpResetCodes.FirstOrDefault(e=>e.Key==input.Code);
+			if (code.ExpiresAt < DateTime.UtcNow)
+			{
+				return new ApiResponse { Message = "Invalid or expired reset code." };
+			}
+			if ((bool)code.IsUsed)
+			{
+				return ApiResponse.Failure("Reset Code Already used");
+			}
+			var result=	await _userService.ForgetPasswordAsync(user, input.Password);
+			if(result.Succeeded)
+			{
+				code.IsUsed= true;
+				return ApiResponse.Success("Password has been reset successfully.");
+			} 
+				return ApiResponse.Failure("Password reset failed: " + string.Join(", ", result.Errors.Select(e => e.Description)));
+			
 		}
 
 		public async Task<ApiResponse<JwtDto>> RefreshToken(string Token)
@@ -133,5 +169,28 @@ namespace Foodo.Application.Implementation
 
 		}
 
+		public async Task<ApiResponse> SubmitForgetPasswordRequest(SubmitForgetPasswordRequestInput input)
+		{
+			var user=await _userService.GetInclude(input.Email,e=>e.TblCustomer,e=>e.TblMerchant);
+			if(user==null)
+			{
+				return ApiResponse.Failure("Email not found");
+			}
+			var role=(await _userService.GetRolesForUser(user)).FirstOrDefault();
+			string Name;
+			if (role == (UserType.Merchant).ToString())
+			{
+				Name = user.TblMerchant.StoreName;
+			}
+			else
+			{
+				Name = user.TblCustomer.FirstName;
+			}
+			var code = RandomNumberGenerator.GetInt32(100000, 999999).ToString();
+			user.LkpResetCodes.Add(new LkpResetCodes { Key = code, CreatedAt = DateTime.UtcNow, ExpiresAt = DateTime.UtcNow.AddMinutes(10) });
+			await _userService.UpdateAsync(user);
+			var result=await _senderService.SendEmailAsync(input.Email, Name, "Password Reset", $"Your Reset Password code is {code}");
+			return result;
+		}
 	}
 }
