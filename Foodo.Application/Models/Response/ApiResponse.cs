@@ -1,13 +1,11 @@
 ﻿namespace Foodo.Application.Models.Response
 {
-	// Generic version مع Data
 	public class ApiResponse<T>
 	{
 		public bool IsSuccess { get; set; }
 		public string Message { get; set; }
 		public T? Data { get; set; }
 
-		// Factory method للنجاح
 		public static ApiResponse<T> Success(T data, string message = "")
 		{
 			return new ApiResponse<T>
@@ -18,7 +16,6 @@
 			};
 		}
 
-		// Factory method للفشل
 		public static ApiResponse<T> Failure(string message)
 		{
 			return new ApiResponse<T>
@@ -30,7 +27,6 @@
 		}
 	}
 
-	// Non-generic version لما مش محتاج ترجع Data
 	public class ApiResponse
 	{
 		public bool IsSuccess { get; set; }
