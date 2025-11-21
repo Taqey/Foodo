@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Foodo.API.Models.Request
+namespace Foodo.API.Models.Request.Authentication
 {
 	public class LoginRequest
 	{
