@@ -20,4 +20,8 @@
     <ProjectReference Include="..\Foodo.Application\Foodo.Application.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Perisistence\Migrations\" />
+  </ItemGroup>
+
 </Project>

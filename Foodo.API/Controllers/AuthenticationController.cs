@@ -1,6 +1,7 @@
 ﻿using Foodo.API.Models.Request;
 using Foodo.Application.Abstraction;
 using Foodo.Application.Models.Input;
+using Foodo.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -79,21 +80,27 @@ namespace Foodo.API.Controllers
 		}
 
 		/// <summary>
-		/// Registers a new user (Customer or Merchant).
+		/// Registers a new customer account.
 		/// </summary>
-		/// <param name="request">Registration request containing user details.</param>
-		/// <returns>
-		/// Returns 200 OK with a success message if registration succeeds.  
-		/// Returns 409 Conflict if registration fails.
-		/// </returns>
 		/// <remarks>
-		/// This endpoint uses form-data (<c>[FromForm]</c>) to receive user details.
+		/// This endpoint creates a new customer user with personal information, 
+		/// address details, and assigns the "Customer" role.
 		/// </remarks>
+		/// <param name="request">
+		/// Customer registration data, including email, password, name, gender, 
+		/// date of birth, phone number, and address details.
+		/// </param>
+		/// <returns>
+		/// Returns 200 OK if registration succeeds, or 409 Conflict if email/username already exists.
+		/// </returns>
+		/// <response code="200">Customer registered successfully.</response>
+		/// <response code="409">Email or username already in use.</response>
 
 
-		[HttpPost("register")]
-		public async Task<IActionResult> Register([FromForm] RegisterRequest request)
+		[HttpPost("register-customer")]
+		public async Task<IActionResult> RegisterCustomer([FromForm] CustomerRegisterRequest request)
 		{
+
 			var input = new RegisterInput
 			{
 				Email = request.Email,
@@ -104,9 +111,7 @@ namespace Foodo.API.Controllers
 				Gender = request.Gender,
 				DateOfBirth = request.DateOfBirth,
 				UserName = request.UserName,
-				UserType = request.UserType,
-				StoreName = request.StoreName,
-				StoreDescription = request.StoreDescription,
+				UserType = UserType.Customer,
 				City = request.City,
 				State = request.State,
 				StreetAddress = request.StreetAddress,
@@ -119,6 +124,43 @@ namespace Foodo.API.Controllers
 				return Conflict(result.Message);
 			}
 			return Ok(result.Message);
+		}
+		/// <summary>
+		/// Registers a new merchant account.
+		/// </summary>
+		/// <remarks>
+		/// This endpoint creates a new merchant user, including store details,
+		/// and assigns the "Merchant" role.
+		/// </remarks>
+		/// <param name="request">
+		/// Merchant registration data including email, password, store name 
+		/// and store description.
+		/// </param>
+		/// <returns>
+		/// Returns 200 OK if registration succeeds, or 409 Conflict if email already exists.
+		/// </returns>
+		/// <response code="200">Merchant registered successfully.</response>
+		/// <response code="409">Email already in use.</response>
+
+		[HttpPost("register-Merchant")]
+		public async Task<IActionResult> RegisterMerchant([FromForm] MerchantRegisterRequest request)
+		{
+			var input = new RegisterInput
+			{
+				Email = request.Email,
+				Password = request.Password,
+				StoreName = request.StoreName,
+				StoreDescription = request.StoreDescription,
+				UserType = UserType.Merchant,
+				UserName = request.UserName
+			};
+			var result = await _service.Register(input);
+			if (!result.IsSuccess)
+			{
+				return Conflict(result.Message);
+			}
+			return Ok(result.Message);
+
 		}
 		/// <summary>
 		/// Changes the password for the currently authenticated user.
