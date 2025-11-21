@@ -3,10 +3,12 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
 namespace Foodo.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class addIdentity : Migration
+    public partial class Initial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -54,9 +56,11 @@ namespace Foodo.Infrastructure.Migrations
                 name: "LkpAttributes",
                 columns: table => new
                 {
-                    AttributeId = table.Column<int>(type: "int", nullable: false),
+                    AttributeId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     DeletedDate = table.Column<DateTime>(type: "datetime", nullable: true),
                     Name = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    value = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     CreatedBy = table.Column<int>(type: "int", nullable: true),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false),
                     CreatedDate = table.Column<DateTime>(type: "datetime", nullable: false, defaultValueSql: "(getdate())")
@@ -73,7 +77,9 @@ namespace Foodo.Infrastructure.Migrations
                 name: "LkpMeasureUnits",
                 columns: table => new
                 {
-                    UnitOfMeasureId = table.Column<int>(type: "int", nullable: false),
+                    UnitOfMeasureId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UnitOfMeasureName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     CreatedBy = table.Column<int>(type: "int", nullable: true),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false),
                     CreatedDate = table.Column<DateTime>(type: "datetime", nullable: false, defaultValueSql: "(getdate())")
@@ -219,6 +225,51 @@ namespace Foodo.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "LkpCodes",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Key = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    CodeType = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ExpiresAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    IsUsed = table.Column<bool>(type: "bit", nullable: true),
+                    ApplicationUserId = table.Column<string>(type: "nvarchar(450)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_LkpCodes", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_LkpCodes_AspNetUsers_ApplicationUserId",
+                        column: x => x.ApplicationUserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "lkpRefreshToken",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Token = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ExpiresAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    RevokedOn = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ApplicationUserId = table.Column<string>(type: "nvarchar(450)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_lkpRefreshToken", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_lkpRefreshToken_AspNetUsers_ApplicationUserId",
+                        column: x => x.ApplicationUserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "TblAdresses",
                 columns: table => new
                 {
@@ -257,7 +308,8 @@ namespace Foodo.Infrastructure.Migrations
                     UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     FirstName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     LastName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    Gender = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false)
+                    Gender = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    BirthDate = table.Column<DateOnly>(type: "date", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -376,7 +428,8 @@ namespace Foodo.Infrastructure.Migrations
                 name: "LkpProductDetailsAttributes",
                 columns: table => new
                 {
-                    ProductDetailAttributeId = table.Column<int>(type: "int", nullable: false),
+                    ProductDetailAttributeId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     ProductDetailId = table.Column<int>(type: "int", nullable: false),
                     UnitOfMeasureId = table.Column<int>(type: "int", nullable: false),
                     AttributeId = table.Column<int>(type: "int", nullable: false)
@@ -402,6 +455,15 @@ namespace Foodo.Infrastructure.Migrations
                         principalTable: "TblProductDetails",
                         principalColumn: "ProductDetailId",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.InsertData(
+                table: "AspNetRoles",
+                columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
+                values: new object[,]
+                {
+                    { "23fd934c-7bcf-40e0-a41e-a253a2d3b557", "23fd934c-7bcf-40e0-a41e-a253a2d3b557", "Merchant", "MERCHANT" },
+                    { "d6d2f11c-6482-4b9f-8e59-24e997ac635b", "d6d2f11c-6482-4b9f-8e59-24e997ac635b", "Customer", "CUSTOMER" }
                 });
 
             migrationBuilder.CreateIndex(
@@ -444,6 +506,11 @@ namespace Foodo.Infrastructure.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
+                name: "IX_LkpCodes_ApplicationUserId",
+                table: "LkpCodes",
+                column: "ApplicationUserId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_LkpProductDetailsAttributes_AttributeId",
                 table: "LkpProductDetailsAttributes",
                 column: "AttributeId");
@@ -457,6 +524,11 @@ namespace Foodo.Infrastructure.Migrations
                 name: "IX_LkpProductDetailsAttributes_UnitOfMeasureId",
                 table: "LkpProductDetailsAttributes",
                 column: "UnitOfMeasureId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_lkpRefreshToken_ApplicationUserId",
+                table: "lkpRefreshToken",
+                column: "ApplicationUserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TblAdresses_UserId",
@@ -503,7 +575,13 @@ namespace Foodo.Infrastructure.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
+                name: "LkpCodes");
+
+            migrationBuilder.DropTable(
                 name: "LkpProductDetailsAttributes");
+
+            migrationBuilder.DropTable(
+                name: "lkpRefreshToken");
 
             migrationBuilder.DropTable(
                 name: "TblAdresses");

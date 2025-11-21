@@ -68,8 +68,7 @@ namespace Foodo.Infrastructure.Perisistence
 			modelBuilder.Entity<LkpAttribute>(entity =>
 			{
 				entity.HasKey(e => e.AttributeId);
-
-				entity.Property(e => e.AttributeId).ValueGeneratedNever();
+				
 				entity.Property(e => e.CreatedDate)
 					.HasDefaultValueSql("(getdate())", "DF_LkpAttributes_CreatedDate")
 					.HasColumnType("datetime");
@@ -77,13 +76,17 @@ namespace Foodo.Infrastructure.Perisistence
 				entity.Property(e => e.Name)
 					.IsRequired()
 					.HasMaxLength(50);
+				entity.Property(e => e.value)
+	.IsRequired()
+	.HasMaxLength(50);
 			});
 
 			modelBuilder.Entity<LkpMeasureUnit>(entity =>
 			{
 				entity.HasKey(e => e.UnitOfMeasureId);
-
-				entity.Property(e => e.UnitOfMeasureId).ValueGeneratedNever();
+				entity.Property(e => e.UnitOfMeasureName)
+	.IsRequired()
+	.HasMaxLength(50);
 				entity.Property(e => e.CreatedDate)
 					.HasDefaultValueSql("(getdate())", "DF_LkpMeasureUnits_CreatedDate")
 					.HasColumnType("datetime");
@@ -94,7 +97,6 @@ namespace Foodo.Infrastructure.Perisistence
 			{
 				entity.HasKey(e => e.ProductDetailAttributeId);
 
-				entity.Property(e => e.ProductDetailAttributeId).ValueGeneratedNever();
 
 				entity.HasOne(d => d.Attribute).WithMany(p => p.LkpProductDetailsAttributes)
 					.HasForeignKey(d => d.AttributeId)

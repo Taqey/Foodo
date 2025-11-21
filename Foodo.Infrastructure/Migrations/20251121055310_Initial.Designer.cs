@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Foodo.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251120195753_make Codes Table Generic")]
-    partial class makeCodesTableGeneric
+    [Migration("20251121055310_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -93,7 +93,10 @@ namespace Foodo.Infrastructure.Migrations
             modelBuilder.Entity("Foodo.Domain.Entities.LkpAttribute", b =>
                 {
                     b.Property<int>("AttributeId")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AttributeId"));
 
                     b.Property<int?>("CreatedBy")
                         .HasColumnType("int");
@@ -119,6 +122,11 @@ namespace Foodo.Infrastructure.Migrations
 
                     b.Property<int?>("UpdatedBy")
                         .HasColumnType("int");
+
+                    b.Property<string>("value")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.HasKey("AttributeId");
 
@@ -165,7 +173,10 @@ namespace Foodo.Infrastructure.Migrations
             modelBuilder.Entity("Foodo.Domain.Entities.LkpMeasureUnit", b =>
                 {
                     b.Property<int>("UnitOfMeasureId")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UnitOfMeasureId"));
 
                     b.Property<int?>("CreatedBy")
                         .HasColumnType("int");
@@ -184,6 +195,11 @@ namespace Foodo.Infrastructure.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
+                    b.Property<string>("UnitOfMeasureName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
                     b.Property<int?>("UpdatedBy")
                         .HasColumnType("int");
 
@@ -195,7 +211,10 @@ namespace Foodo.Infrastructure.Migrations
             modelBuilder.Entity("Foodo.Domain.Entities.LkpProductDetailsAttribute", b =>
                 {
                     b.Property<int>("ProductDetailAttributeId")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ProductDetailAttributeId"));
 
                     b.Property<int>("AttributeId")
                         .HasColumnType("int");

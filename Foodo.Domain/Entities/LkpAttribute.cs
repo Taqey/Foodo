@@ -12,6 +12,7 @@ public partial class LkpAttribute
     public DateTime? DeletedDate { get; set; }
 
     public string Name { get; set; }
+	public string value { get; set; }
 
     public int? CreatedBy { get; set; }
 

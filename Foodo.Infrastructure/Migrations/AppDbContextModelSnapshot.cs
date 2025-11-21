@@ -4,7 +4,6 @@ using Foodo.Infrastructure.Perisistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -12,11 +11,9 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Foodo.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251119225237_Roles")]
-    partial class Roles
+    partial class AppDbContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -93,7 +90,10 @@ namespace Foodo.Infrastructure.Migrations
             modelBuilder.Entity("Foodo.Domain.Entities.LkpAttribute", b =>
                 {
                     b.Property<int>("AttributeId")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AttributeId"));
 
                     b.Property<int?>("CreatedBy")
                         .HasColumnType("int");
@@ -120,15 +120,60 @@ namespace Foodo.Infrastructure.Migrations
                     b.Property<int?>("UpdatedBy")
                         .HasColumnType("int");
 
+                    b.Property<string>("value")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
                     b.HasKey("AttributeId");
 
                     b.ToTable("LkpAttributes");
                 });
 
+            modelBuilder.Entity("Foodo.Domain.Entities.LkpCodes", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ApplicationUserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("CodeType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool?>("IsUsed")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Key")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApplicationUserId");
+
+                    b.ToTable("LkpCodes");
+                });
+
             modelBuilder.Entity("Foodo.Domain.Entities.LkpMeasureUnit", b =>
                 {
                     b.Property<int>("UnitOfMeasureId")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("UnitOfMeasureId"));
 
                     b.Property<int?>("CreatedBy")
                         .HasColumnType("int");
@@ -147,6 +192,11 @@ namespace Foodo.Infrastructure.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
+                    b.Property<string>("UnitOfMeasureName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
                     b.Property<int?>("UpdatedBy")
                         .HasColumnType("int");
 
@@ -158,7 +208,10 @@ namespace Foodo.Infrastructure.Migrations
             modelBuilder.Entity("Foodo.Domain.Entities.LkpProductDetailsAttribute", b =>
                 {
                     b.Property<int>("ProductDetailAttributeId")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ProductDetailAttributeId"));
 
                     b.Property<int>("AttributeId")
                         .HasColumnType("int");
@@ -248,6 +301,9 @@ namespace Foodo.Infrastructure.Migrations
                 {
                     b.Property<string>("UserId")
                         .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateOnly>("BirthDate")
+                        .HasColumnType("date");
 
                     b.Property<string>("FirstName")
                         .IsRequired()
@@ -479,6 +535,38 @@ namespace Foodo.Infrastructure.Migrations
                     b.ToTable("TblProductsOrders");
                 });
 
+            modelBuilder.Entity("Foodo.Domain.Entities.lkpRefreshToken", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ApplicationUserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("RevokedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApplicationUserId");
+
+                    b.ToTable("lkpRefreshToken");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
                 {
                     b.Property<string>("Id")
@@ -628,6 +716,13 @@ namespace Foodo.Infrastructure.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("Foodo.Domain.Entities.LkpCodes", b =>
+                {
+                    b.HasOne("Foodo.Domain.Entities.ApplicationUser", null)
+                        .WithMany("LkpCodes")
+                        .HasForeignKey("ApplicationUserId");
+                });
+
             modelBuilder.Entity("Foodo.Domain.Entities.LkpProductDetailsAttribute", b =>
                 {
                     b.HasOne("Foodo.Domain.Entities.LkpAttribute", "Attribute")
@@ -732,6 +827,13 @@ namespace Foodo.Infrastructure.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("Foodo.Domain.Entities.lkpRefreshToken", b =>
+                {
+                    b.HasOne("Foodo.Domain.Entities.ApplicationUser", null)
+                        .WithMany("lkpRefreshTokens")
+                        .HasForeignKey("ApplicationUserId");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -785,11 +887,15 @@ namespace Foodo.Infrastructure.Migrations
 
             modelBuilder.Entity("Foodo.Domain.Entities.ApplicationUser", b =>
                 {
+                    b.Navigation("LkpCodes");
+
                     b.Navigation("TblAdresses");
 
                     b.Navigation("TblCustomer");
 
                     b.Navigation("TblMerchant");
+
+                    b.Navigation("lkpRefreshTokens");
                 });
 
             modelBuilder.Entity("Foodo.Domain.Entities.LkpAttribute", b =>

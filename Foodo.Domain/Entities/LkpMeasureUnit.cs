@@ -8,8 +8,9 @@ namespace Foodo.Domain.Entities;
 public partial class LkpMeasureUnit
 {
     public int UnitOfMeasureId { get; set; }
+	public string UnitOfMeasureName { get; set; }
 
-    public int? CreatedBy { get; set; }
+	public int? CreatedBy { get; set; }
 
     public bool IsDeleted { get; set; }
 
