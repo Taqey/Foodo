@@ -1,4 +1,5 @@
 ﻿using Foodo.Application.Abstraction;
+using Foodo.Application.Abstraction.Authentication;
 using Foodo.Application.Models.Dto;
 using Foodo.Application.Models.Input;
 using Foodo.Application.Models.Response;

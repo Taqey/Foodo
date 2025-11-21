@@ -2,7 +2,7 @@
 using Foodo.Application.Models.Input;
 using Foodo.Application.Models.Response;
 
-namespace Foodo.Application.Abstraction
+namespace Foodo.Application.Abstraction.Authentication
 {
 	public interface IAuthenticationService
 	{

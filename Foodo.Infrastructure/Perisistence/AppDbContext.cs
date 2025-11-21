@@ -100,7 +100,7 @@ namespace Foodo.Infrastructure.Perisistence
 
 				entity.HasOne(d => d.Attribute).WithMany(p => p.LkpProductDetailsAttributes)
 					.HasForeignKey(d => d.AttributeId)
-					.HasConstraintName("FK_LkpProductDetailsAttributes_LkpAttributes");
+					.HasConstraintName("FK_LkpProductDetailsAttributes_LkpAttributes").OnDelete(DeleteBehavior.Cascade);
 
 				entity.HasOne(d => d.ProductDetail).WithMany(p => p.LkpProductDetailsAttributes)
 					.HasForeignKey(d => d.ProductDetailId)
@@ -108,7 +108,7 @@ namespace Foodo.Infrastructure.Perisistence
 
 				entity.HasOne(d => d.UnitOfMeasure).WithMany(p => p.LkpProductDetailsAttributes)
 					.HasForeignKey(d => d.UnitOfMeasureId)
-					.HasConstraintName("FK_LkpProductDetailsAttributes_LkpMeasureUnits");
+					.HasConstraintName("FK_LkpProductDetailsAttributes_LkpMeasureUnits").OnDelete(DeleteBehavior.Cascade);
 			});
 
 			modelBuilder.Entity<TblAdress>(entity =>

@@ -1,5 +1,5 @@
-﻿using Foodo.API.Models.Request;
-using Foodo.Application.Abstraction;
+﻿using Foodo.API.Models.Request.Authentication;
+using Foodo.Application.Abstraction.Authentication;
 using Foodo.Application.Models.Input;
 using Foodo.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;

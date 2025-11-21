@@ -1,4 +1,4 @@
-
+﻿
 using Foodo.Application.Abstraction;
 using Foodo.Application.Implementation;
 using Foodo.Domain.Entities;
@@ -14,6 +14,9 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using System.Reflection;
 using System.Text;
+using Foodo.API.Controllers;
+using Foodo.Application.Abstraction.Authentication;
+using Foodo.Application.Abstraction.Merchant;
 namespace Foodo.API
 {
 	public class Program
@@ -28,7 +31,7 @@ namespace Foodo.API
 			// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 			builder.Services.AddOpenApi();
 			builder.Services.AddDbContext<AppDbContext>(options =>
-				options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+				options.UseLazyLoadingProxies().UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 			builder.Services.AddSwaggerGen(options =>
 			{
 
@@ -100,6 +103,7 @@ namespace Foodo.API
 			builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 			builder.Services.AddScoped<ICreateToken, CreateToken>();
 			builder.Services.AddScoped<IEmailSenderService, EmailSenderService>();
+            builder.Services.AddScoped<IProductService, ProductService>();
 			builder.Services.AddHttpContextAccessor();
 			builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
 			builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("Smtp"));
@@ -115,6 +119,11 @@ namespace Foodo.API
 				app.UseSwaggerUI();
 			}
 
+               if (app.Environment.IsDevelopment())
+{
+   app.MapOpenApi();
+};
+
 			app.UseHttpsRedirection();
 			app.UseAuthentication();
 
@@ -122,6 +131,7 @@ namespace Foodo.API
 
 
 			app.MapControllers();
+
 
 			app.Run();
 		}

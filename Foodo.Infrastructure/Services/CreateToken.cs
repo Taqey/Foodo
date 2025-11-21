@@ -1,4 +1,5 @@
 ﻿using Foodo.Application.Abstraction;
+using Foodo.Application.Abstraction.Authentication;
 using Foodo.Application.Models.Dto;
 using Foodo.Domain.Entities;
 using Foodo.Infrastructure.Helper;
@@ -26,7 +27,6 @@ namespace Foodo.Infrastructure.Services
 			
 			var claims=new List<Claim>();
 			claims.Add(new Claim(JwtRegisteredClaimNames.Email, user.Email));
-			claims.Add(new Claim(JwtRegisteredClaimNames.PhoneNumber,user.PhoneNumber));
 			claims.Add(new Claim(ClaimTypes.NameIdentifier, user.Id));
 			claims.Add(new Claim(ClaimTypes.Role, role));
 			var Key=new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.Value.Key));

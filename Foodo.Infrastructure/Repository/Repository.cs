@@ -14,9 +14,10 @@ namespace Foodo.Infrastructure.Repository
 			_context = context;
 			_dbSet = _context.Set<T>();
 		}
-		public async Task CreateAsync(T entity)
+		public async Task<T> CreateAsync(T entity)
 		{
-			await _dbSet.AddAsync(entity);
+			var result = await _dbSet.AddAsync(entity);
+			return result.Entity;
 		}
 		public async Task<T> ReadByIdAsync(int id)
 		{
@@ -40,12 +41,13 @@ namespace Foodo.Infrastructure.Repository
 		}
 		public void Update(T entity)
 		{
+
 			_context.Entry(entity).State = EntityState.Modified;
 		}
 
 		public void Delete(T entity)
 		{
-			 _context.Entry(entity).State = EntityState.Deleted;
+			_context.Entry(entity).State = EntityState.Deleted;
 		}
 
 		public void DeleteAll()
@@ -57,6 +59,18 @@ namespace Foodo.Infrastructure.Repository
 		{
 			var List = await _dbSet.Where(expression).ToListAsync();
 			return List;
+		}
+
+		//public async Task<IEnumerable<T>> FindAllByContidtionIncludingAsync(Expression<Func<T, bool>> expression,Func<IQueryable<T>, IQueryable<T>> include)
+		//{
+		//	IQueryable<T> query = _dbSet.AsQueryable();
+
+		//	query = include(query);
+		//	return await query.Where(expression).ToListAsync();
+		//	}
+		public void DeleteRange(IEnumerable<T> entities)
+		{
+			_dbSet.RemoveRange(entities);
 		}
 
 		public async Task<T> FindByContidtionAsync(Expression<Func<T, bool>> expression)
