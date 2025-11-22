@@ -186,7 +186,7 @@ namespace Foodo.Infrastructure.Perisistence
 					.HasColumnType("datetime");
 				entity.Property(e => e.OrderStatus)
 					.IsRequired()
-					.HasMaxLength(50);
+					.HasMaxLength(50).HasConversion<string>();
 				entity.Property(e => e.Tax).HasColumnType("decimal(9, 2)");
 				entity.Property(e => e.TotalPrice).HasColumnType("decimal(18, 2)");
 				entity.Property(e => e.UserId)
@@ -231,11 +231,11 @@ namespace Foodo.Infrastructure.Perisistence
 
 			modelBuilder.Entity<TblProductsOrder>(entity =>
 			{
-				entity.HasKey(e => e.ProductIorderId);
+				entity.HasKey(e => e.ProductorderId);
 
-				entity.Property(e => e.ProductIorderId)
-					.ValueGeneratedNever()
-					.HasColumnName("ProductIOrderId");
+				entity.Property(e => e.ProductorderId)
+					.ValueGeneratedOnAdd()
+					.HasColumnName("ProductOrderId");
 				entity.Property(e => e.CreatedDate)
 					.HasDefaultValueSql("(getdate())", "DF_TblProductsOrders_CreatedDate")
 					.HasColumnType("datetime");

@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Identity;
 using System.Data;
 using System.Security.Cryptography;
 
-namespace Foodo.Application.Implementation
+namespace Foodo.Application.Implementation.Authentication
 {
 	public class AuthenticationService : IAuthenticationService
 	{

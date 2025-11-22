@@ -1,6 +1,7 @@
 ﻿using Foodo.Domain.Entities;
 using Foodo.Domain.Repository;
 using Foodo.Infrastructure.Perisistence;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Foodo.Infrastructure.Repository
 {
@@ -56,5 +57,22 @@ namespace Foodo.Infrastructure.Repository
 		{
 			_context.Dispose();
 		}
+
+		public async Task<IDbContextTransaction> BeginTransactionAsync()
+		{
+			return await _context.Database.BeginTransactionAsync();
+		}
+
+		public async Task CommitTransactionAsync(IDbContextTransaction transaction)
+		{
+			 await transaction.CommitAsync();
+		}
+
+		public async Task RollbackTransactionAsync(IDbContextTransaction transaction)
+		{
+			await transaction.RollbackAsync();
+		}
+
+		}
 	}
-}
+

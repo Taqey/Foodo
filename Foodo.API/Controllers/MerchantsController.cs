@@ -37,11 +37,11 @@ namespace Foodo.API.Controllers
 	[Authorize(Roles = nameof(UserType.Merchant))]
 	[Route("api/[controller]")]
 	[ApiController]
-	public class ProductsController : ControllerBase
+	public class MerchantsController : ControllerBase
 	{
 		private readonly IProductService _productService;
 
-		public ProductsController(IProductService productService)
+		public MerchantsController(IProductService productService)
 		{
 			_productService = productService;
 		}
@@ -54,7 +54,7 @@ namespace Foodo.API.Controllers
 		/// </returns>
 		/// <response code="200">Successfully retrieved all products.</response>
 		/// <response code="400">Failed to retrieve products.</response>
-		[HttpGet]
+		[HttpGet("get-all-products")]
 		public async Task<ActionResult> Get()
 		{
 			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -73,7 +73,7 @@ namespace Foodo.API.Controllers
 		/// <returns>The product details if found.</returns>
 		/// <response code="200">Product retrieved successfully.</response>
 		/// <response code="400">Failed to retrieve the product.</response>
-		[HttpGet("{id}")]
+		[HttpGet("get-product-by-id/{id}")]
 		public async Task<IActionResult> Get(int id)
 		{
 			var result = await _productService.ReadProductByIdAsync(id);
@@ -90,7 +90,7 @@ namespace Foodo.API.Controllers
 		/// <returns>A success message if the product is created.</returns>
 		/// <response code="200">Product created successfully.</response>
 		/// <response code="400">Failed to create the product.</response>
-		[HttpPost]
+		[HttpPost("create-product")]
 		public async Task<IActionResult> Post([FromBody] ProductRequest request)
 		{
 			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -117,7 +117,7 @@ namespace Foodo.API.Controllers
 		/// <returns>A success message if the product is updated.</returns>
 		/// <response code="200">Product updated successfully.</response>
 		/// <response code="400">Failed to update the product.</response>
-		[HttpPut("{id}")]
+		[HttpPut("update-product/{id}")]
 		public async Task<IActionResult> Put(int id, [FromBody] ProductRequest request)
 		{
 			var result = await _productService.UpdateProductAsync(id, new ProductInput
@@ -141,7 +141,7 @@ namespace Foodo.API.Controllers
 		/// <returns>A success message if the product is deleted.</returns>
 		/// <response code="200">Product deleted successfully.</response>
 		/// <response code="400">Failed to delete the product.</response>
-		[HttpDelete("{id}")]
+		[HttpDelete("delete-product/{id}")]
 		public async Task<IActionResult> Delete(int id)
 		{
 			var result = await _productService.DeleteProductAsync(id);

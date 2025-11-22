@@ -7,7 +7,7 @@ namespace Foodo.Domain.Entities;
 
 public partial class TblProductsOrder
 {
-    public int ProductIorderId { get; set; }
+    public int ProductorderId { get; set; }
 
     public int ProductId { get; set; }
 
@@ -29,7 +29,7 @@ public partial class TblProductsOrder
 
     public int? DeletedBy { get; set; }
 
-    public virtual TblOrder Order { get; set; }
+    public virtual TblOrder? Order { get; set; }
 
     public virtual TblProduct Product { get; set; }
 }
