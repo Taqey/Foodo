@@ -1,6 +1,5 @@
 ﻿
 using Foodo.Application.Abstraction;
-using Foodo.Application.Implementation;
 using Foodo.Domain.Entities;
 using Foodo.Domain.Repository;
 using Foodo.Infrastructure.Helper;
@@ -17,6 +16,10 @@ using System.Text;
 using Foodo.API.Controllers;
 using Foodo.Application.Abstraction.Authentication;
 using Foodo.Application.Abstraction.Merchant;
+using Foodo.Application.Implementation.Authentication;
+using Foodo.Application.Implementation.Merchant;
+using Foodo.Application.Abstraction.Customer;
+using Foodo.Application.Implementation.Customer;
 namespace Foodo.API
 {
 	public class Program
@@ -104,7 +107,9 @@ namespace Foodo.API
 			builder.Services.AddScoped<ICreateToken, CreateToken>();
 			builder.Services.AddScoped<IEmailSenderService, EmailSenderService>();
             builder.Services.AddScoped<IProductService, ProductService>();
+			builder.Services.AddScoped<ICustomerService, CustomerService>();
 			builder.Services.AddHttpContextAccessor();
+			builder.Services.AddMemoryCache();
 			builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
 			builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("Smtp"));
 

@@ -1,4 +1,5 @@
 ﻿using Foodo.Domain.Entities;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Foodo.Domain.Repository
 {
@@ -15,7 +16,9 @@ namespace Foodo.Domain.Repository
 		public IRepository<TblProductDetail> ProductDetailRepository { get; }
 		public IRepository<TblProductsOrder> ProductsOrderRepository { get; }
 		Task<int> saveAsync();
-
+		Task<IDbContextTransaction> BeginTransactionAsync();
+		Task CommitTransactionAsync(IDbContextTransaction transaction);
+		Task RollbackTransactionAsync(IDbContextTransaction transaction);
 
 
 

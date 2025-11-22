@@ -88,5 +88,10 @@ namespace Foodo.Infrastructure.Repository
 			return list;
 		}
 
+		public async Task<IEnumerable<T>> CreateRangeAsync(IEnumerable<T> entities)
+		{
+			await _dbSet.AddRangeAsync(entities);
+			return entities;
+		}
 	}
 }

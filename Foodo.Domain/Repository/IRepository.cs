@@ -5,6 +5,7 @@ namespace Foodo.Domain.Repository
 	public interface IRepository<T> where T : class
 	{
 		Task<T> CreateAsync(T entity);
+		Task<IEnumerable<T>> CreateRangeAsync(IEnumerable<T> entities);
 		Task<T> ReadByIdAsync(int id);
 		Task<IEnumerable<T>> ReadAllAsync();
 		Task<IEnumerable<T>> ReadAllIncludingAsync(params Expression<Func<T, object>>[] includes);
