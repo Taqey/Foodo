@@ -1,4 +1,5 @@
 ﻿using Foodo.Domain.Entities;
+using Foodo.Domain.Enums;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -37,11 +38,15 @@ namespace Foodo.Infrastructure.Perisistence
 		public virtual DbSet<TblProductDetail> TblProductDetails { get; set; }
 
 		public virtual DbSet<TblProductsOrder> TblProductsOrders { get; set; }
+		public virtual DbSet<TblRestaurantCategory> TblRestaurantCategories { get; set; }
+		public virtual DbSet<TblCategoryOfRestaurant> TblCategoryOfRestaurants { get; set; }
+		public virtual DbSet<TblCategoryOfProduct> TblCategoryOfProducts { get; set; }
+		public virtual DbSet<TblProductCategory> TblProductCategories { get; set; }
 
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
 		{
-			var Roles=new List<IdentityRole>
+			var Roles = new List<IdentityRole>
 			{
 				new IdentityRole
 				{
@@ -58,7 +63,27 @@ namespace Foodo.Infrastructure.Perisistence
 					ConcurrencyStamp="23fd934c-7bcf-40e0-a41e-a253a2d3b557"
 				}
 			};
-			modelBuilder.Entity<LkpCodes>(entity => {
+			modelBuilder.Entity<TblCategoryOfRestaurant>().HasData(
+		Enum.GetValues(typeof(RestaurantCategory))
+			.Cast<RestaurantCategory>()
+			.Select(c => new TblCategoryOfRestaurant
+			{
+				CategoryId = (int)c,
+				CategoryName = c.ToString()
+			})
+);
+			modelBuilder.Entity<TblCategoryOfProduct>().HasData(
+				Enum.GetValues(typeof(FoodCategory))
+					.Cast<FoodCategory>()
+					.Select(c => new TblCategoryOfProduct
+					{
+						CategoryId = (int)c,
+						CategoryName = c.ToString()
+					})
+		);
+
+			modelBuilder.Entity<LkpCodes>(entity =>
+			{
 				entity.Property(e => e.Key).HasMaxLength(50);
 				entity.Property(e => e.CodeType).HasConversion<string>().HasMaxLength(50);
 			});
@@ -68,7 +93,7 @@ namespace Foodo.Infrastructure.Perisistence
 			modelBuilder.Entity<LkpAttribute>(entity =>
 			{
 				entity.HasKey(e => e.AttributeId);
-				
+
 				entity.Property(e => e.CreatedDate)
 					.HasDefaultValueSql("(getdate())", "DF_LkpAttributes_CreatedDate")
 					.HasColumnType("datetime");
@@ -189,9 +214,12 @@ namespace Foodo.Infrastructure.Perisistence
 					.HasMaxLength(50).HasConversion<string>();
 				entity.Property(e => e.Tax).HasColumnType("decimal(9, 2)");
 				entity.Property(e => e.TotalPrice).HasColumnType("decimal(18, 2)");
-				entity.Property(e => e.UserId)
+				entity.Property(e => e.CustomerId).HasColumnName("CustomerId")
 					.IsRequired()
 					.HasMaxLength(450);
+				entity.Property(e => e.MerchantId).HasColumnName("MerchantId")
+	.IsRequired()
+	.HasMaxLength(450);
 			});
 
 			modelBuilder.Entity<TblProduct>(entity =>
@@ -252,7 +280,43 @@ namespace Foodo.Infrastructure.Perisistence
 					.OnDelete(DeleteBehavior.ClientSetNull)
 					.HasConstraintName("FK_TblProductsOrders_TblProducts");
 			});
+			modelBuilder.Entity<TblProductCategory>(entity =>
+			{
+				entity.HasKey(pc => pc.productcategoryid);
 
+				entity.HasOne(pc => pc.Product)
+					.WithMany(p => p.ProductCategory)
+					.HasForeignKey(pc => pc.productid);
+
+				entity.HasOne(pc => pc.Category)
+					.WithMany(c => c.ProductCategories)
+					.HasForeignKey(pc => pc.categoryid);
+			});
+
+			modelBuilder.Entity<TblRestaurantCategory>(entity =>
+			{
+				entity.HasKey(rc => rc.restaurantcategoryid);
+				entity.HasOne(rc => rc.Restaurant)
+					.WithMany(m => m.TblRestaurantCategories)
+					.HasForeignKey(rc => rc.restaurantid);
+				entity.HasOne(rc => rc.Category)
+					.WithMany(c => c.RestaurantCategories)
+					.HasForeignKey(rc => rc.categoryid);
+			});
+			modelBuilder.Entity<TblCategoryOfRestaurant>(entity =>
+			{
+				entity.HasKey(e => e.CategoryId);
+				entity.Property(e => e.CategoryName)
+					.IsRequired()
+					.HasMaxLength(50);
+			});
+			modelBuilder.Entity<TblCategoryOfProduct>(entity =>
+			{
+				entity.HasKey(e => e.CategoryId);
+				entity.Property(e => e.CategoryName)
+					.IsRequired()
+					.HasMaxLength(50);
+			});
 			OnModelCreatingPartial(modelBuilder);
 		}
 

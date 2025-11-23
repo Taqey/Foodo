@@ -22,9 +22,20 @@ namespace Foodo.Application.Implementation.Customer
 			_unitOfWork = unitOfWork;
 			_userService = userService;
 		}
-		public Task<ApiResponse> CancelOrder()
+		public async Task<ApiResponse> CancelOrder(ItemByIdInput input)
 		{
-			throw new NotImplementedException();
+			var order =await _unitOfWork.OrderRepository.FindByContidtionAsync(o => o.OrderId == Convert.ToInt32(input.ItemId));
+			if (order == null)
+			{
+				return ApiResponse.Failure("Order not found");
+			}
+			order.OrderStatus = OrderState.Cancelled;
+			var result=await _unitOfWork.saveAsync();
+			if (result <= 0)
+			{
+				return ApiResponse.Failure("Failed to cancel order");
+			}
+			return ApiResponse.Success("Order cancelled successfully");
 		}
 
 		public Task<ApiResponse> EditOrder()
@@ -33,21 +44,38 @@ namespace Foodo.Application.Implementation.Customer
 		}
 
 		public async Task<ApiResponse> PlaceOrder(CreateOrderInput input)
-
 		{
 			await using var transaction = await _unitOfWork.BeginTransactionAsync();
 			try
 			{
+				var firstItem = input.Items.First();
+				var product = await _unitOfWork.ProductRepository.FindByContidtionAsync(p => p.ProductId == firstItem.ItemId);
+
+				if (product == null)
+				{
+					return new ApiResponse
+					{
+						IsSuccess = false,
+						Message = "Product not found"
+					};
+				}
+
+				var merchantId = product.UserId;
+
 				var order = new TblOrder
 				{
-					UserId = input.CustomerId,
+					CustomerId = input.CustomerId,
+					MerchantId = merchantId,
 					OrderDate = DateTime.UtcNow,
 					OrderStatus = OrderState.Pending,
 				};
+
 				var createdOrder = await _unitOfWork.OrderRepository.CreateAsync(order);
 				await _unitOfWork.saveAsync();
+
 				var orderItems = new List<TblProductsOrder>();
 				decimal totalAmount = 0;
+
 				foreach (var item in input.Items)
 				{
 					var orderItem = new TblProductsOrder
@@ -57,16 +85,22 @@ namespace Foodo.Application.Implementation.Customer
 						Quantity = item.Quantity,
 						Price = item.Price,
 					};
+
 					totalAmount += item.Price * item.Quantity;
 					orderItems.Add(orderItem);
 				}
+
 				await _unitOfWork.ProductsOrderRepository.CreateRangeAsync(orderItems);
 				await _unitOfWork.saveAsync();
-				createdOrder.TotalPrice = totalAmount;
+
 				createdOrder.Tax = Tax.Apply(totalAmount);
+				createdOrder.TotalPrice = totalAmount + createdOrder.Tax;
+
 				_unitOfWork.OrderRepository.Update(createdOrder);
 				await _unitOfWork.saveAsync();
+
 				await _unitOfWork.CommitTransactionAsync(transaction);
+
 				return new ApiResponse
 				{
 					IsSuccess = true,
@@ -79,16 +113,54 @@ namespace Foodo.Application.Implementation.Customer
 				return new ApiResponse
 				{
 					IsSuccess = false,
-					Message = $"Failed to place order{e.Message}"
+					Message = $"Failed to place order: {e.Message}"
 				};
-				throw;
 			}
+		}
+
+
+		public async Task<ApiResponse<IEnumerable<OrderDto>>> ReadAllOrders(PaginationInput input)
+		{
+			var orders =await  _unitOfWork.OrderRepository.PaginationAsync(input.Page, input.PageSize,e=>e.CustomerId==input.FilterBy);
+			var MerchantName=(await _unitOfWork.MerchantRepository.FindByContidtionAsync(e=>e.UserId==orders.FirstOrDefault().MerchantId)).StoreName;
+			var orderDtos = new List<OrderDto>();
+			foreach (var order in orders) {
+				var orderDto = new OrderDto
+				{
+					OrderId = order.OrderId,
+					MerchantId = order.MerchantId,
+					MerchantName=MerchantName,
+					CustomerId = order.CustomerId,
+					OrderDate = order.OrderDate,
+					TotalAmount = order.TotalPrice,
+					Status = (order.OrderStatus).ToString(),
+					OrderItems = new List<OrderItemDto>()
+				};
+				foreach (var item in order.TblProductsOrders)
+				{
+					var orderItemDto = new OrderItemDto
+					{
+						ItemName = item.Product.ProductsName,
+						ItemId = item.ProductId,
+						Quantity = item.Quantity,
+						Price = item.Price,
+					};
+					orderDto.OrderItems.Add(orderItemDto);
+				}
+				orderDtos.Add(orderDto);
+			}
+			return new ApiResponse<IEnumerable<OrderDto>>
+			{
+				Data = orderDtos,
+				IsSuccess = true,
+				Message = "Orders retrieved successfully"
+			};
 		}
 
 		public async Task<ApiResponse<IEnumerable<ProductDto>>> ReadAllProducts(PaginationInput input)
 		{
 
-			var result = await _unitOfWork.ProductRepository.PaginationAsync(input.Page, input.PageSize);
+			var result = await _unitOfWork.ProductRepository.PaginationAsync(input.Page, input.PageSize,null);
 			var productDtos = new List<ProductDto>();
 			foreach (var product in result)
 			{
@@ -127,7 +199,7 @@ namespace Foodo.Application.Implementation.Customer
 
 		public async Task<ApiResponse<IEnumerable<ShopDto>>> ReadAllShops(PaginationInput input)
 		{
-			var result = await _unitOfWork.MerchantRepository.PaginationAsync(input.Page, input.PageSize);
+			var result = await _unitOfWork.MerchantRepository.PaginationAsync(input.Page, input.PageSize,null);
 			var shopDtos = new List<ShopDto>();
 			foreach (var shop in result)
 			{
@@ -146,6 +218,39 @@ namespace Foodo.Application.Implementation.Customer
 				Data = shopDtos,
 				IsSuccess = true,
 				Message = "Shops retrieved successfully"
+			};
+		}
+
+		public async Task<ApiResponse<OrderDto>> ReadOrderById(ItemByIdInput input)
+		{
+			var order =await _unitOfWork.OrderRepository.FindByContidtionAsync(o => o.OrderId == Convert.ToInt32(input.ItemId));
+			OrderDto orderDto=new OrderDto
+			{
+				OrderId = order.OrderId,
+				MerchantId=order.MerchantId,
+				CustomerId = order.CustomerId,
+				OrderDate = order.OrderDate,
+				TotalAmount = order.TotalPrice,
+				Status = (order.OrderStatus).ToString(),
+				OrderItems = new List<OrderItemDto>()
+
+			};
+			foreach (var item in order.TblProductsOrders)
+			{
+				var orderItemDto = new OrderItemDto
+				{
+					ItemName= item.Product.ProductsName,
+					ItemId = item.ProductId,
+					Quantity = item.Quantity,
+					Price = item.Price,
+				};
+				orderDto.OrderItems.Add(orderItemDto);
+			}
+			return new ApiResponse<OrderDto>
+			{
+				Data = orderDto,
+				IsSuccess = true,
+				Message = "Order retrieved successfully"
 			};
 		}
 

@@ -31,7 +31,9 @@ public partial class TblOrder
     public OrderState OrderStatus { get; set; }= OrderState.Pending;
 
 
-	public string UserId { get; set; }
+	public string CustomerId { get; set; }
+	public string MerchantId { get; set; }
 
-    public virtual ICollection<TblProductsOrder>? TblProductsOrders { get; set; } = new List<TblProductsOrder>();
+
+	public virtual ICollection<TblProductsOrder>? TblProductsOrders { get; set; } = new List<TblProductsOrder>();
 }

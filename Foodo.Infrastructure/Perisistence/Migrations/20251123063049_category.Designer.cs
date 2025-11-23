@@ -4,6 +4,7 @@ using Foodo.Infrastructure.Perisistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Foodo.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251123063049_category")]
+    partial class category
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -679,12 +682,6 @@ namespace Foodo.Infrastructure.Migrations
                         .HasColumnType("datetime")
                         .HasDefaultValueSql("(getdate())", "DF_TblOrders_CreatedDate");
 
-                    b.Property<string>("CustomerId")
-                        .IsRequired()
-                        .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)")
-                        .HasColumnName("CustomerId");
-
                     b.Property<int?>("DeletedBy")
                         .HasColumnType("int");
 
@@ -693,12 +690,6 @@ namespace Foodo.Infrastructure.Migrations
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
-
-                    b.Property<string>("MerchantId")
-                        .IsRequired()
-                        .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)")
-                        .HasColumnName("MerchantId");
 
                     b.Property<DateTime>("OrderDate")
                         .ValueGeneratedOnAdd()
@@ -718,6 +709,11 @@ namespace Foodo.Infrastructure.Migrations
 
                     b.Property<int?>("UpdatedBy")
                         .HasColumnType("int");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("OrderId");
 

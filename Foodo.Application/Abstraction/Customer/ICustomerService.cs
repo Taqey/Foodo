@@ -12,8 +12,10 @@ namespace Foodo.Application.Abstraction.Customer
 		Task<ApiResponse<IEnumerable<ShopDto>>> ReadAllShops(PaginationInput input);
 		Task<ApiResponse> ReadShopsByCategory();
 		Task<ApiResponse<ShopDto>> ReadShopById(ItemByIdInput input);
+		Task<ApiResponse<IEnumerable<OrderDto>>> ReadAllOrders(PaginationInput input);
+		Task<ApiResponse<OrderDto>> ReadOrderById(ItemByIdInput input);
 		Task<ApiResponse> PlaceOrder(CreateOrderInput input);
 		Task<ApiResponse> EditOrder();
-		Task<ApiResponse> CancelOrder();
+		Task<ApiResponse> CancelOrder(ItemByIdInput input);
 	}
 }

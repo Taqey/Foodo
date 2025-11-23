@@ -16,5 +16,8 @@ public interface IProductService
 	Task<ApiResponse> DeleteProductAsync(int productId);
 	Task<ApiResponse> AddProductAttributeAsync(int productDetailId, AttributeCreateInput attributes);
 	Task<ApiResponse> RemoveProductAttributeAsync(int productDetailId, AttributeDeleteInput attributes);
+	Task <ApiResponse<List<OrderDto>>> ReadAllOrdersAsync(PaginationInput input);
+	Task <ApiResponse<OrderDto>> ReadOrderByIdAsync(int orderId);
+	Task <ApiResponse> UpdateOrderStatusAsync(int orderId, OrderStatusUpdateInput input);
 
 }

@@ -30,6 +30,7 @@ public partial class TblProduct
     public virtual ICollection<TblProductDetail> TblProductDetails { get; set; } = new List<TblProductDetail>();
 
     public virtual ICollection<TblProductsOrder> TblProductsOrders { get; set; } = new List<TblProductsOrder>();
+	public virtual ICollection<TblProductCategory> ProductCategory { get; set; } = new List<TblProductCategory>();
 
-    public virtual TblMerchant User { get; set; }
+	public virtual TblMerchant User { get; set; }
 }

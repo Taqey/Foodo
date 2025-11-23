@@ -24,5 +24,6 @@ namespace Foodo.API.Models.Request.Authentication
 		[Required]
 		public string StoreDescription { get; set; }
 
+
 	}
 }

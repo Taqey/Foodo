@@ -4,6 +4,7 @@ using Foodo.Infrastructure.Perisistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Foodo.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251123120824_add both customer and merchant to order table")]
+    partial class addbothcustomerandmerchanttoordertable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -682,8 +685,7 @@ namespace Foodo.Infrastructure.Migrations
                     b.Property<string>("CustomerId")
                         .IsRequired()
                         .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)")
-                        .HasColumnName("CustomerId");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<int?>("DeletedBy")
                         .HasColumnType("int");
@@ -697,8 +699,7 @@ namespace Foodo.Infrastructure.Migrations
                     b.Property<string>("MerchantId")
                         .IsRequired()
                         .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)")
-                        .HasColumnName("MerchantId");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<DateTime>("OrderDate")
                         .ValueGeneratedOnAdd()

@@ -8,7 +8,6 @@ using System.Security.Claims;
 
 namespace Foodo.API.Controllers
 {
-
 	/// <summary>
 	/// Provides authentication and authorization related endpoints such as login,
 	/// registration, password management, email verification, and token refreshing.
@@ -46,7 +45,6 @@ namespace Foodo.API.Controllers
 
 	[Route("api/[controller]")]
 	[ApiController]
-
 	public class AuthenticationController : ControllerBase
 	{
 		private readonly IAuthenticationService _service;
@@ -55,52 +53,44 @@ namespace Foodo.API.Controllers
 		{
 			_service = service;
 		}
+
+		#region LOGIN
+
 		/// <summary>
 		/// Logs in a user using email and password.
 		/// </summary>
-		/// <param name="request">Login request containing email and password.</param>
-		/// <returns>
-		/// Returns 200 OK with token data if login is successful.  
-		/// Returns 401 Unauthorized if email or password is incorrect.
-		/// </returns>
-		/// <remarks>
-		/// This endpoint uses form-data (<c>[FromForm]</c>).
-		/// </remarks>
-
-
+		/// <returns>Authenticated user data if login succeeds.</returns>
+		/// <response code="200">Login successful.</response>
+		/// <response code="401">Incorrect username or password.</response>
 		[HttpPost("login")]
 		public async Task<IActionResult> Login([FromForm] LoginRequest request)
 		{
-			var result = await _service.Login(new LoginInput { Email = request.Email, Password = request.Password });
-			if (!result.IsSuccess)
+			var result = await _service.Login(new LoginInput
 			{
+				Email = request.Email,
+				Password = request.Password
+			});
+
+			if (!result.IsSuccess)
 				return Unauthorized("Incorrect username or password");
-			}
+
 			return Ok(result.Data);
 		}
 
+		#endregion
+
+		#region REGISTRATION
+
 		/// <summary>
-		/// Registers a new customer account.
+		/// Registers a new customer user.
 		/// </summary>
-		/// <remarks>
-		/// This endpoint creates a new customer user with personal information, 
-		/// address details, and assigns the "Customer" role.
-		/// </remarks>
-		/// <param name="request">
-		/// Customer registration data, including email, password, name, gender, 
-		/// date of birth, phone number, and address details.
-		/// </param>
-		/// <returns>
-		/// Returns 200 OK if registration succeeds, or 409 Conflict if email/username already exists.
-		/// </returns>
+		/// <returns>A success message if registration is completed.</returns>
 		/// <response code="200">Customer registered successfully.</response>
-		/// <response code="409">Email or username already in use.</response>
-
-
+		/// <response code="409">Email or username already exists.</response>
+		/// <response code="400">Invalid registration data.</response>
 		[HttpPost("register-customer")]
 		public async Task<IActionResult> RegisterCustomer([FromForm] CustomerRegisterRequest request)
 		{
-
 			var input = new RegisterInput
 			{
 				Email = request.Email,
@@ -118,31 +108,23 @@ namespace Foodo.API.Controllers
 				PostalCode = request.PostalCode,
 				Country = request.Country
 			};
+
 			var result = await _service.Register(input);
+
 			if (!result.IsSuccess)
-			{
 				return Conflict(result.Message);
-			}
+
 			return Ok(result.Message);
 		}
-		/// <summary>
-		/// Registers a new merchant account.
-		/// </summary>
-		/// <remarks>
-		/// This endpoint creates a new merchant user, including store details,
-		/// and assigns the "Merchant" role.
-		/// </remarks>
-		/// <param name="request">
-		/// Merchant registration data including email, password, store name 
-		/// and store description.
-		/// </param>
-		/// <returns>
-		/// Returns 200 OK if registration succeeds, or 409 Conflict if email already exists.
-		/// </returns>
-		/// <response code="200">Merchant registered successfully.</response>
-		/// <response code="409">Email already in use.</response>
 
-		[HttpPost("register-Merchant")]
+		/// <summary>
+		/// Registers a new merchant user.
+		/// </summary>
+		/// <returns>Merchant info if registration is successful.</returns>
+		/// <response code="200">Merchant registered successfully.</response>
+		/// <response code="409">Email or username already exists.</response>
+		/// <response code="400">Invalid registration data.</response>
+		[HttpPost("register-merchant")]
 		public async Task<IActionResult> RegisterMerchant([FromForm] MerchantRegisterRequest request)
 		{
 			var input = new RegisterInput
@@ -154,178 +136,185 @@ namespace Foodo.API.Controllers
 				UserType = UserType.Merchant,
 				UserName = request.UserName
 			};
+
 			var result = await _service.Register(input);
+
 			if (!result.IsSuccess)
-			{
 				return Conflict(result.Message);
-			}
-			return Ok(result.Message);
 
+			return Ok(result.Data);
 		}
+
 		/// <summary>
-		/// Changes the password for the currently authenticated user.
+		/// Adds restaurant categories to a merchant account.
 		/// </summary>
-		/// <param name="request">Model containing old and new password.</param>
-		/// <returns>
-		/// Returns 204 No Content if password is changed successfully.  
-		/// Returns 400 Bad Request if validation fails.
-		/// </returns>
-		/// <remarks>
-		/// Requires Bearer authentication.  
-		/// This endpoint uses form-data (<c>[FromForm]</c>).
-		/// </remarks>
+		/// <returns>A success message if categories were added.</returns>
+		/// <response code="200">Categories added successfully.</response>
+		/// <response code="400">Failed to add categories.</response>
+		[HttpPost("add-category")]
+		public async Task<IActionResult> AddCategory([FromBody] AddCategoryRequest request)
+		{
+			var categories = request.restaurantCategories.Split(',')
+				.Select(c => Enum.Parse<RestaurantCategory>(c.Trim()))
+				.ToList();
 
+			var result = await _service.AddCategory(new CategoryInput
+			{
+				UserId = request.UserId,
+				restaurantCategories = categories
+			});
 
-		[HttpPost("change-password")]
+			if (!result.IsSuccess)
+				return BadRequest(result.Message);
+
+			return Ok(result.Message);
+		}
+
+		#endregion
+
+		#region PASSWORD MANAGEMENT
+
+		/// <summary>
+		/// Changes the password for the authenticated user.
+		/// </summary>
+		/// <returns>No content if password is changed successfully.</returns>
+		/// <response code="204">Password changed successfully.</response>
+		/// <response code="400">Failed to change password.</response>
+		/// <response code="401">User not authenticated.</response>
 		[Authorize]
+		[HttpPost("change-password")]
 		public async Task<IActionResult> ChangePassword([FromForm] ChangePasswordRequest request)
 		{
-			var UserId = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+			var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
 			var result = await _service.ChangePassword(new ChangePasswordInput
 			{
 				CurrentPassword = request.CurrentPassword,
 				NewPassword = request.NewPassword,
-				UserId = UserId
+				UserId = userId
 			});
+
 			if (!result.IsSuccess)
-			{
 				return BadRequest(result.Message);
-			}
+
 			return NoContent();
 		}
+
 		/// <summary>
 		/// Sends a password reset code to the user's email.
 		/// </summary>
-		/// <param name="request">Model containing the user's email.</param>
-		/// <returns>
-		/// Returns 200 OK if the request is submitted successfully.  
-		/// Returns 400 Bad Request if the email does not exist.
-		/// </returns>
-		/// <remarks>
-		/// This endpoint initiates the "Forget Password" flow.
-		/// </remarks>
-
-
+		/// <returns>A success message indicating the email was sent.</returns>
+		/// <response code="200">Password reset code sent successfully.</response>
+		/// <response code="400">Failed to send password reset code.</response>
 		[HttpPost("submit-forget-password-request")]
 		public async Task<IActionResult> ForgetPasswordRequest([FromForm] ForgetPasswordRequest request)
 		{
-			var result = await _service.SubmitForgetPasswordRequest(new SubmitForgetPasswordRequestInput { Email = request.Email });
+			var result = await _service.SubmitForgetPasswordRequest(
+				new SubmitForgetPasswordRequestInput { Email = request.Email });
+
 			if (!result.IsSuccess)
-			{
 				return BadRequest(result.Message);
-			}
+
 			return Ok(result.Message);
 		}
+
 		/// <summary>
-		/// Resets the user's password using the verification code.
+		/// Resets the user's password using a verification code.
 		/// </summary>
-		/// <param name="request">Model containing the reset code and new password.</param>
-		/// <returns>
-		/// Returns 200 OK if the password reset is successful.  
-		/// Returns 400 Bad Request if the code is invalid or expired.
-		/// </returns>
-		/// <remarks>
-		/// Completes the "Forget Password" process.
-		/// </remarks>
-
-
+		/// <returns>A success message if password is reset.</returns>
+		/// <response code="200">Password reset successfully.</response>
+		/// <response code="400">Invalid or expired reset code.</response>
 		[HttpPost("reset-password")]
 		public async Task<IActionResult> ResetPassword([FromForm] ResetPasswordRequest request)
 		{
-			var result = await _service.ForgetPassword(new ForgetPasswordInput { Code = request.Code, Password = request.NewPassword });
-			if (!result.IsSuccess)
+			var result = await _service.ForgetPassword(new ForgetPasswordInput
 			{
+				Code = request.Code,
+				Password = request.NewPassword
+			});
+
+			if (!result.IsSuccess)
 				return BadRequest(result.Message);
-			}
+
 			return Ok(result.Message);
 		}
+
+		#endregion
+
+		#region TOKEN MANAGEMENT
+
 		/// <summary>
-		/// Refreshes the access token using the refresh token stored in cookies.
+		/// Refreshes the access token using the stored refresh token.
 		/// </summary>
-		/// <returns>
-		/// Returns 200 OK with a new access token if the refresh is successful.  
-		/// Returns 400 Bad Request if the refresh token is invalid or expired.  
-		/// Returns 401 Unauthorized if the refresh token is missing or the user is not authenticated.
-		/// </returns>
-		/// <remarks>
-		/// Requires Authorization (Bearer token).  
-		/// Reads the refresh token from browser cookies.
-		/// </remarks>
-		/// <response code="200">A new access token was generated successfully.</response>
-		/// <response code="400">Invalid or expired refresh token.</response>
-		/// <response code="401">Refresh token is missing or user is not authenticated.</response>
-
-
-
-		[HttpPost("refresh-token")]
+		/// <returns>The new access token if refresh is successful.</returns>
+		/// <response code="200">Token refreshed successfully.</response>
+		/// <response code="400">Failed to refresh token.</response>
+		/// <response code="401">User not authenticated.</response>
 		[Authorize]
+		[HttpPost("refresh-token")]
 		public async Task<IActionResult> RefreshToken()
 		{
-			var RefreshToken = Request.Cookies["RefreshToken"];
-			var result = await _service.RefreshToken(RefreshToken);
+			var refreshToken = Request.Cookies["RefreshToken"];
+			var result = await _service.RefreshToken(refreshToken);
+
 			if (!result.IsSuccess)
-			{
 				return BadRequest(result.Message);
-			}
 
 			return Ok(result.Data);
 		}
+
+		#endregion
+
+		#region EMAIL VERIFICATION
+
 		/// <summary>
-		/// Sends a verification email request to the authenticated user.
+		/// Sends a verification email to the authenticated user.
 		/// </summary>
-		/// <remarks>
-		/// This endpoint sends a verification code to the user's email.  
-		/// The user must be authenticated.
-		/// </remarks>
-		/// <returns>
-		/// Returns 200 OK if the email was sent successfully.  
-		/// Returns 400 Bad Request if the process fails.
-		/// </returns>
+		/// <returns>A success message when the email is sent.</returns>
 		/// <response code="200">Verification email sent successfully.</response>
 		/// <response code="400">Failed to send verification email.</response>
-		/// <response code="401">User is not authenticated.</response>
-
+		/// <response code="401">User not authenticated.</response>
 		[Authorize]
 		[HttpPost("verify-email-request")]
 		public async Task<IActionResult> VerifyEmail()
 		{
-			var email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
-			var role = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
-			var result = await _service.VerifyEmailRequest(new VerifyEmailRequestInput { Email = email ,Role=role});
-			if (!result.IsSuccess)
-			{
-				return BadRequest(result.Message);
-			}
-			return Ok(result.Message);
+			var email = User.FindFirst(ClaimTypes.Email)?.Value;
+			var role = User.FindFirst(ClaimTypes.Role)?.Value;
 
+			var result = await _service.VerifyEmailRequest(new VerifyEmailRequestInput
+			{
+				Email = email,
+				Role = role
+			});
+
+			if (!result.IsSuccess)
+				return BadRequest(result.Message);
+
+			return Ok(result.Message);
 		}
+
 		/// <summary>
-		/// Confirms the email verification using the provided verification code.
+		/// Verifies the user's email using a verification code.
 		/// </summary>
-		/// <param name="request">The verification request containing the code.</param>
-		/// <remarks>
-		/// Validates the verification code previously sent to the user's email.  
-		/// Requires authentication.
-		/// </remarks>
-		/// <returns>
-		/// Returns 200 OK if the email is verified successfully.  
-		/// Returns 400 Bad Request if the code is invalid or expired.
-		/// </returns>
+		/// <returns>A success message if email is verified.</returns>
 		/// <response code="200">Email verified successfully.</response>
 		/// <response code="400">Invalid or expired verification code.</response>
-		/// <response code="401">User is not authenticated.</response>
-
+		/// <response code="401">User not authenticated.</response>
 		[Authorize]
 		[HttpPost("verify-email")]
 		public async Task<IActionResult> VerifyEmail([FromForm] VerifyEmailRequest request)
 		{
-			var email = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
-			var result = await _service.VerifyEmail(new VerifyEmailInput { Code = request.Code });
-			if (!result.IsSuccess)
+			var result = await _service.VerifyEmail(new VerifyEmailInput
 			{
+				Code = request.Code
+			});
+
+			if (!result.IsSuccess)
 				return BadRequest(result.Message);
-			}
+
 			return Ok(result.Message);
 		}
+
+		#endregion
 	}
 }
