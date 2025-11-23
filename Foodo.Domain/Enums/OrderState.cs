@@ -9,6 +9,7 @@ namespace Foodo.Domain.Enums
 		Pending,
 		Processing,
 		Completed,
-		Cancelled
+		Cancelled,
+		OutForDelivery
 	}
 }

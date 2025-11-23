@@ -250,7 +250,6 @@ namespace Foodo.API.Controllers
 		/// <response code="200">Token refreshed successfully.</response>
 		/// <response code="400">Failed to refresh token.</response>
 		/// <response code="401">User not authenticated.</response>
-		[Authorize]
 		[HttpPost("refresh-token")]
 		public async Task<IActionResult> RefreshToken()
 		{
