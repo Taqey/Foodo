@@ -260,5 +260,16 @@ namespace Foodo.API.Controllers
 		}
 
 		#endregion
+		[HttpGet("get-purchased-customers")]
+		public async Task<IActionResult> GetPurchasedCustomers()
+		{
+			var shopId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+			var result = await _productService.ReadAllPurchasedCustomersAsync(shopId);
+
+			if (!result.IsSuccess)
+				return BadRequest(result.Message);
+
+			return Ok(result.Data);
+		}
 	}
 }

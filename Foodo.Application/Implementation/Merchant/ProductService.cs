@@ -223,8 +223,15 @@ public class ProductService : IProductService
 
 	public async Task<ApiResponse<List<OrderDto>>> ReadAllOrdersAsync(PaginationInput input)
 	{
+		string cacheKey = $"orders_{input.FilterBy}";
+		if (_cache.TryGetValue(cacheKey, out List<OrderDto> cachedOrders))
+		{
+			return ApiResponse<List<OrderDto>>.Success(cachedOrders);
+		}
 		var orders = await _unitOfWork.OrderRepository.FindAllByContidtionAsync(o => o.MerchantId == input.FilterBy);
-		var MerchantName = (await _service.GetByIdAsync(input.FilterBy))?.UserName;
+		var MerchantName = (await _service.GetByIdAsync(orders.FirstOrDefault().MerchantId))?.TblMerchant.StoreName;
+		var CustomerId = (await _service.GetByIdAsync(orders.FirstOrDefault().CustomerId));
+		var CustomerName = CustomerId?.TblCustomer.FirstName;
 		var orderDtos = new List<OrderDto>();
 
 		foreach (var order in orders)
@@ -235,6 +242,7 @@ public class ProductService : IProductService
 				CustomerId = order.CustomerId,
 				MerchantId = order.MerchantId,
 				MerchantName = MerchantName,
+				CustomerName = CustomerName,
 				OrderDate = order.OrderDate,
 				TotalAmount = order.TotalPrice,
 				Status = order.OrderStatus.ToString(),
@@ -255,18 +263,26 @@ public class ProductService : IProductService
 			}
 			orderDtos.Add(orderDto);
 		}
+		var cacheEntryOptions = new MemoryCacheEntryOptions()
+			.SetSlidingExpiration(TimeSpan.FromMinutes(30))
+			.SetAbsoluteExpiration(TimeSpan.FromHours(2));
+		_cache.Set(cacheKey, orderDtos, cacheEntryOptions);
+
 		return ApiResponse<List<OrderDto>>.Success(orderDtos);
 	}
 
 	public async Task<ApiResponse<OrderDto>> ReadOrderByIdAsync(int orderId)
 	{
 		var order =await _unitOfWork.OrderRepository.ReadByIdAsync(orderId);
-		var MerchantName =(await _service.GetByIdAsync(order.MerchantId))?.UserName;
+		var MerchantName =(await _service.GetByIdAsync(order.MerchantId))?.TblMerchant.StoreName;
+		var CustomerId = (await _service.GetByIdAsync(order.CustomerId));
+		var CustomerName = CustomerId?.TblCustomer.FirstName;
 		var orderDto = new OrderDto
 		{
 			OrderId = order.OrderId,
 			CustomerId = order.CustomerId,
 			MerchantId = order.MerchantId,
+			CustomerName = CustomerName,
 			MerchantName = MerchantName,
 			OrderDate = order.OrderDate,
 			TotalAmount = order.TotalPrice,
@@ -296,5 +312,24 @@ public class ProductService : IProductService
 		order.OrderStatus = status;
 		await _unitOfWork.saveAsync();
 		return ApiResponse.Success("Order status updated successfully");
+	}
+
+	public async Task<ApiResponse<List<CustomerDto>>> ReadAllPurchasedCustomersAsync(string shopId)
+	{
+		var orders = await _unitOfWork.OrderRepository.FindAllByContidtionAsync(o => o.MerchantId == shopId);
+		var customerIds = orders.Select(o => o.CustomerId).Distinct();
+
+		var customers = await _unitOfWork.CustomerRepository.FindAllByContidtionAsync(c => customerIds.Contains(c.UserId));
+		var customerDtos = customers.Select(c => new CustomerDto
+		{
+			FullName = c.FirstName + " " + c.LastName,
+			Email = c.User.Email,
+			PhoneNumber = c.User.PhoneNumber,
+			LastPurchased = orders.Where(o => o.CustomerId == c.UserId).Max(o => o.OrderDate),
+			TotalOrders = orders.Count(o => o.CustomerId == c.UserId),
+			TotalSpent = Convert.ToDecimal(orders.Where(o => o.CustomerId == c.UserId).Sum(o => o.TotalPrice))
+		}).ToList();
+
+		return ApiResponse<List<CustomerDto>>.Success(customerDtos);
 	}
 }

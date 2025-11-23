@@ -19,5 +19,6 @@ public interface IProductService
 	Task <ApiResponse<List<OrderDto>>> ReadAllOrdersAsync(PaginationInput input);
 	Task <ApiResponse<OrderDto>> ReadOrderByIdAsync(int orderId);
 	Task <ApiResponse> UpdateOrderStatusAsync(int orderId, OrderStatusUpdateInput input);
+	Task <ApiResponse<List<CustomerDto>>> ReadAllPurchasedCustomersAsync(string shopId);
 
 }
