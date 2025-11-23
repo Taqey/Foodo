@@ -112,9 +112,18 @@ namespace Foodo.API
 			builder.Services.AddMemoryCache();
 			builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
 			builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("Smtp"));
-
-
+			builder.Services.AddCors(options =>
+			{
+				options.AddPolicy("AllowLocalhost5500",
+					policy =>
+					{
+						policy.WithOrigins("http://127.0.0.1:5500")
+							  .AllowAnyHeader()
+							  .AllowAnyMethod();
+					});
+			});
 			var app = builder.Build();
+			app.UseCors("AllowLocalhost5500");
 
 			// Configure the HTTP request pipeline.
 			if (app.Environment.IsDevelopment())

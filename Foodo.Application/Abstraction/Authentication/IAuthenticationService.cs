@@ -7,7 +7,8 @@ namespace Foodo.Application.Abstraction.Authentication
 	public interface IAuthenticationService
 	{
         Task<ApiResponse<JwtDto>> Login(LoginInput input);
-        Task<ApiResponse> Register(RegisterInput input);
+		Task<ApiResponse<UserIdDto>> Register(RegisterInput input);
+		Task<ApiResponse> AddCategory(CategoryInput input);
 		Task<ApiResponse> ChangePassword(ChangePasswordInput input);
 		Task<ApiResponse> SubmitForgetPasswordRequest(SubmitForgetPasswordRequestInput input);
 		Task<ApiResponse> ForgetPassword(ForgetPasswordInput input);

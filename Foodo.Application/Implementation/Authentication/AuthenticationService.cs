@@ -5,6 +5,7 @@ using Foodo.Application.Models.Input;
 using Foodo.Application.Models.Response;
 using Foodo.Domain.Entities;
 using Foodo.Domain.Enums;
+using Foodo.Domain.Repository;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using System.Data;
@@ -18,60 +19,96 @@ namespace Foodo.Application.Implementation.Authentication
 		private readonly ICreateToken _createToken;
 		private readonly IHttpContextAccessor _http;
 		private readonly IEmailSenderService _senderService;
+		private readonly IUnitOfWork _unitOfWork;
 
-		public AuthenticationService(IUserService userService, ICreateToken createToken, IHttpContextAccessor http,IEmailSenderService senderService)
+		public AuthenticationService(IUserService userService, ICreateToken createToken, IHttpContextAccessor http,IEmailSenderService senderService,IUnitOfWork unitOfWork)
 		{
 			_userService = userService;
 			_createToken = createToken;
 			_http = http;
 			_senderService = senderService;
+			_unitOfWork = unitOfWork;
 		}
-		public async Task<ApiResponse> Register(RegisterInput input)
+		public async Task<ApiResponse<UserIdDto>> Register(RegisterInput input)
 		{
-			ApplicationUser? existingUser = null;
-			existingUser = await _userService.GetByEmailAsync(input.Email);
+			// Check if email exists
+			var existingUser = await _userService.GetByEmailAsync(input.Email);
 			if (existingUser != null)
-			{
-				return ApiResponse.Failure("Email is already in use.");
-			}
+				return ApiResponse<UserIdDto>.Failure("Email is already in use.");
+
+			// Check if username exists
 			existingUser = await _userService.GetByUsernameAsync(input.UserName);
 			if (existingUser != null)
+				return ApiResponse<UserIdDto>.Failure("Username is already taken.");
+
+			// Create base identity user
+			var user = new ApplicationUser
 			{
-				return ApiResponse.Failure("Username is already taken.");
+				Email = input.Email,
+				UserName = input.UserName,
+				PhoneNumber = input.PhoneNumber
+			};
+
+			// 1) Create the identity user FIRST
+			var result = await _userService.CreateUserAsync(user, input.Password);
+			if (!result.Succeeded)
+			{
+				return ApiResponse<UserIdDto>.Failure("User creation failed: "
+					+ string.Join(", ", result.Errors.Select(e => e.Description)));
 			}
 
-			var user = new ApplicationUser { Email = input.Email, UserName = input.UserName, PhoneNumber = input.PhoneNumber };
-			string Role = "";
+			string role = "";
+
+			// 2) Add Customer or Merchant AFTER user is successfully created
 			if (input.UserType == UserType.Customer)
 			{
-				user.TblCustomer = new TblCustomer { FirstName = input.FirstName, LastName = input.LastName, Gender = input.Gender.ToString(), BirthDate = (DateOnly)input.DateOfBirth };
+				user.TblCustomer = new TblCustomer
+				{
+					FirstName = input.FirstName,
+					LastName = input.LastName,
+					Gender = input.Gender.ToString(),
+					BirthDate = (DateOnly)input.DateOfBirth
+				};
+
 				user.TblAdresses.Add(new TblAdress
 				{
-
 					City = input.City,
 					State = input.State,
 					PostalCode = input.PostalCode,
 					Country = input.Country,
 					IsDefault = true,
-					StreetAddress= input.StreetAddress,
-					
+					StreetAddress = input.StreetAddress,
 				});
-				Role = "Customer";
+
+				role = "Customer";
 			}
 			else
 			{
-				user.TblMerchant = new TblMerchant { StoreName = input.StoreName, StoreDescription = input.StoreDescription };
-				Role = "Merchant";
+				user.TblMerchant = new TblMerchant
+				{
+					StoreName = input.StoreName,
+					StoreDescription = input.StoreDescription
+				};
+
+
+				role = "Merchant";
+
 			}
-			IdentityResult result;
-			result = await _userService.CreateUserAsync(user, input.Password);
-			if (result.Succeeded)
+
+			// 3) Save customer/merchant data
+			await _unitOfWork.saveAsync();
+
+			// 4) Add Role
+			result = await _userService.AddRolesToUser(user, role);
+			if (!result.Succeeded)
 			{
-				result = await _userService.AddRolesToUser(user, Role);
-				return ApiResponse.Success("User registered successfully.");
+				return ApiResponse<UserIdDto>.Failure("Failed to assign role: "
+					+ string.Join(", ", result.Errors.Select(e => e.Description)));
 			}
-			return ApiResponse.Failure("User registration failed: " + string.Join(", ", result.Errors.Select(e => e.Description)));
+
+			return ApiResponse<UserIdDto>.Success(new UserIdDto { UserId = user.Id }, "User registered successfully.");
 		}
+
 		public async Task<ApiResponse<JwtDto>> Login(LoginInput input)
 		{
 			ApplicationUser? user;
@@ -248,6 +285,21 @@ namespace Foodo.Application.Implementation.Authentication
 
 				return ApiResponse.Success("Email has been verified successfully.");
 			
+		}
+
+		public async Task<ApiResponse> AddCategory(CategoryInput input)
+		{
+			var user=await _userService.GetByIdAsync(input.UserId);
+			foreach (var category in input.restaurantCategories)
+			{
+				user.TblMerchant.TblRestaurantCategories.Add(new TblRestaurantCategory
+				{
+					categoryid = (int)category
+				});
+
+			}
+			await _userService.UpdateAsync(user);
+			return ApiResponse.Success("Categories added successfully.");
 		}
 	}
 }

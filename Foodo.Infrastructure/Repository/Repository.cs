@@ -79,9 +79,13 @@ namespace Foodo.Infrastructure.Repository
 			return entity;
 		}
 
-		public async Task<IEnumerable<T>> PaginationAsync(int page = 1, int pagesize = 10)
+		public async Task<IEnumerable<T>> PaginationAsync(int page = 1, int pagesize = 10,Expression<Func<T,bool>> expression=null)
 		{
 			IQueryable<T> query = _dbSet.AsQueryable();
+			if (expression != null)
+			{
+				query = query.Where(expression);
+			}
 			int totalItems = query.Count();
 			int totalPages = (int)Math.Ceiling((double)totalItems / pagesize);
 			var list = await (query.Skip((page - 1) * pagesize).Take(pagesize)).ToListAsync();

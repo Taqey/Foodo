@@ -1,8 +1,10 @@
-﻿using Foodo.Application.Abstraction.Merchant;
+﻿using Foodo.Application.Abstraction;
+using Foodo.Application.Abstraction.Merchant;
 using Foodo.Application.Models.Dto;
 using Foodo.Application.Models.Input;
 using Foodo.Application.Models.Response;
 using Foodo.Domain.Entities;
+using Foodo.Domain.Enums;
 using Foodo.Domain.Repository;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -16,11 +18,13 @@ public class ProductService : IProductService
 {
 	private readonly IUnitOfWork _unitOfWork;
 	private readonly IMemoryCache _cache;
+	private readonly IUserService _service;
 
-	public ProductService(IUnitOfWork unitOfWork, IMemoryCache cache)
+	public ProductService(IUnitOfWork unitOfWork, IMemoryCache cache,IUserService service)
 	{
 		_unitOfWork = unitOfWork;
 		_cache = cache;
+		_service = service;
 	}
 	public async Task<ApiResponse> CreateProductAsync(ProductInput input)
 	{
@@ -215,5 +219,82 @@ public class ProductService : IProductService
 		await _unitOfWork.saveAsync();
 		_cache.Remove($"products_{product.UserId}");
 		return ApiResponse.Success("Attributes removed successfully");
+	}
+
+	public async Task<ApiResponse<List<OrderDto>>> ReadAllOrdersAsync(PaginationInput input)
+	{
+		var orders = await _unitOfWork.OrderRepository.FindAllByContidtionAsync(o => o.MerchantId == input.FilterBy);
+		var MerchantName = (await _service.GetByIdAsync(input.FilterBy))?.UserName;
+		var orderDtos = new List<OrderDto>();
+
+		foreach (var order in orders)
+		{
+			var orderDto = new OrderDto
+			{
+				OrderId = order.OrderId,
+				CustomerId = order.CustomerId,
+				MerchantId = order.MerchantId,
+				MerchantName = MerchantName,
+				OrderDate = order.OrderDate,
+				TotalAmount = order.TotalPrice,
+				Status = order.OrderStatus.ToString(),
+				OrderItems= new List<OrderItemDto>()
+			
+
+			};
+			foreach (var item in order.TblProductsOrders)
+			{
+				var orderItemDto = new OrderItemDto
+				{
+					ItemId = item.ProductId,
+					ItemName = item.Product.ProductsName,
+					Quantity = item.Quantity,
+					Price = item.Price
+				};
+				orderDto.OrderItems.Add(orderItemDto);
+			}
+			orderDtos.Add(orderDto);
+		}
+		return ApiResponse<List<OrderDto>>.Success(orderDtos);
+	}
+
+	public async Task<ApiResponse<OrderDto>> ReadOrderByIdAsync(int orderId)
+	{
+		var order =await _unitOfWork.OrderRepository.ReadByIdAsync(orderId);
+		var MerchantName =(await _service.GetByIdAsync(order.MerchantId))?.UserName;
+		var orderDto = new OrderDto
+		{
+			OrderId = order.OrderId,
+			CustomerId = order.CustomerId,
+			MerchantId = order.MerchantId,
+			MerchantName = MerchantName,
+			OrderDate = order.OrderDate,
+			TotalAmount = order.TotalPrice,
+			Status = order.OrderStatus.ToString(),
+			OrderItems = new List<OrderItemDto>()
+		};
+		foreach (var item in order.TblProductsOrders)
+		{
+			var orderItemDto = new OrderItemDto
+			{
+				ItemId = item.ProductId,
+				ItemName = item.Product.ProductsName,
+				Quantity = item.Quantity,
+				Price = item.Price
+			};
+			orderDto.OrderItems.Add(orderItemDto);
+		}
+
+		return ApiResponse<OrderDto>.Success(orderDto);
+
+	}
+
+	public async Task<ApiResponse> UpdateOrderStatusAsync(int orderId, OrderStatusUpdateInput input)
+	{
+		var order =await  _unitOfWork.OrderRepository.ReadByIdAsync(orderId);
+		var status = Enum.Parse<OrderState>(input.Status);
+		order.OrderStatus = status;
+		await _unitOfWork.saveAsync();
+		return ApiResponse.Success("Order status updated successfully");
 	}
 }

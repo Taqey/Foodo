@@ -14,6 +14,7 @@ public partial class TblMerchant
     public string StoreDescription { get; set; }
 
     public virtual ICollection<TblProduct> TblProducts { get; set; } = new List<TblProduct>();
+	public virtual ICollection<TblRestaurantCategory> TblRestaurantCategories { get; set; } = new List<TblRestaurantCategory>();
 
-    public virtual ApplicationUser User { get; set; }
+	public virtual ApplicationUser User { get; set; }
 }
