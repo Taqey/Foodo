@@ -37,7 +37,7 @@ namespace Foodo.Infrastructure.Repository
 			{
 				query = query.Include(include);
 			}
-			return await query.AsNoTracking().ToListAsync();
+			return await query.AsNoTracking().AsNoTracking().ToListAsync();
 		}
 		public void Update(T entity)
 		{
@@ -57,7 +57,7 @@ namespace Foodo.Infrastructure.Repository
 
 		public async Task<IEnumerable<T>> FindAllByContidtionAsync(Expression<Func<T, bool>> expression)
 		{
-			var List = await _dbSet.Where(expression).ToListAsync();
+			var List = await _dbSet.Where(expression).AsNoTracking().ToListAsync();
 			return List;
 		}
 
@@ -79,18 +79,26 @@ namespace Foodo.Infrastructure.Repository
 			return entity;
 		}
 
-		public async Task<IEnumerable<T>> PaginationAsync(int page = 1, int pagesize = 10,Expression<Func<T,bool>> expression=null)
+		public async Task<(IEnumerable<T> Items, int TotalCount, int TotalPages)>PaginationAsync(int page = 1, int pageSize = 10, params Expression<Func<T, bool>>[] filters)
 		{
 			IQueryable<T> query = _dbSet.AsQueryable();
-			if (expression != null)
+
+			if (filters != null)
 			{
-				query = query.Where(expression);
+				foreach (var filter in filters)
+					query = query.Where(filter);
 			}
-			int totalItems = query.Count();
-			int totalPages = (int)Math.Ceiling((double)totalItems / pagesize);
-			var list = await (query.Skip((page - 1) * pagesize).Take(pagesize)).ToListAsync();
-			return list;
+			var totalCount = await query.CountAsync();
+			var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+
+			var items = await query
+				.Skip((page - 1) * pageSize)
+				.Take(pageSize)
+				.AsNoTracking().ToListAsync();
+
+			return (items, totalCount, totalPages);
 		}
+
 
 		public async Task<IEnumerable<T>> CreateRangeAsync(IEnumerable<T> entities)
 		{

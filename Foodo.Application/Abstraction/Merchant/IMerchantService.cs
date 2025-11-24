@@ -7,18 +7,19 @@ using System.Text;
 
 namespace Foodo.Application.Abstraction.Merchant;
 
-public interface IProductService
+public interface IMerchantService
 {
 	Task<ApiResponse> CreateProductAsync(ProductInput request);
 	Task<ApiResponse<ProductDto>> ReadProductByIdAsync(int productId);
-	Task<ApiResponse<List<ProductDto>>> ReadAllProductsAsync(string UserId);
-	Task<ApiResponse> UpdateProductAsync(int productId, ProductInput request);
+	Task<ApiResponse<PaginationDto<ProductDto>>> ReadAllProductsAsync(ProductPaginationInput input);
+	Task<ApiResponse> UpdateProductAsync(ProductUpdateInput input);
 	Task<ApiResponse> DeleteProductAsync(int productId);
 	Task<ApiResponse> AddProductAttributeAsync(int productDetailId, AttributeCreateInput attributes);
 	Task<ApiResponse> RemoveProductAttributeAsync(int productDetailId, AttributeDeleteInput attributes);
-	Task <ApiResponse<List<OrderDto>>> ReadAllOrdersAsync(PaginationInput input);
-	Task <ApiResponse<OrderDto>> ReadOrderByIdAsync(int orderId);
+	Task<ApiResponse<PaginationDto<MerchantOrderDto>>> ReadAllOrdersAsync(ProductPaginationInput input);
+	Task <ApiResponse<MerchantOrderDto>> ReadOrderByIdAsync(int orderId);
 	Task <ApiResponse> UpdateOrderStatusAsync(int orderId, OrderStatusUpdateInput input);
-	Task <ApiResponse<List<CustomerDto>>> ReadAllPurchasedCustomersAsync(string shopId);
-
+	Task<ApiResponse<PaginationDto<CustomerDto>>> ReadAllPurchasedCustomersAsync(ProductPaginationInput input);
+	Task<ApiResponse> AddProductCategoriesAsync(ProductCategoryInput categoryInput);
+	Task<ApiResponse> RemoveProductCategoriesAsync(ProductCategoryInput categoryInput);
 }

@@ -80,6 +80,11 @@ namespace Foodo.Infrastructure.Services
 			var user = await _manager.Users.Include(e => e.LkpCodes).SingleOrDefaultAsync(e => e.LkpCodes.Any(t => t.Key == token && t.CodeType == CodeType.PasswordReset));
 			return user;
 		}
+		public async Task<ApplicationUser> GetUserByToken(string token)
+		{
+			return await _manager.Users
+				.SingleOrDefaultAsync(x => x.lkpRefreshTokens != null && x.lkpRefreshTokens.Any(rt => rt.Token == token));
+		}
 		public async Task<ApplicationUser> GetUserByVerificationToken(string token)
 		{
 			var user = await _manager.Users.Include(e => e.LkpCodes).SingleOrDefaultAsync(e => e.LkpCodes.Any(t => t.Key == token && t.CodeType == CodeType.EmailVerification));

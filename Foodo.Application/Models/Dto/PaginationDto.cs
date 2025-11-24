@@ -8,7 +8,7 @@ namespace Foodo.Application.Models.Dto
 	{
 		public int TotalPages {  get; set; }
 		public int TotalItems  { get; set; }
-		public List<ProductDto> Products { get; set; }= new List<ProductDto>();
+		public List<T> Items { get; set; }= new List<T>();
 
 	}
 }

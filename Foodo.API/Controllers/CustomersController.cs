@@ -51,7 +51,7 @@ namespace Foodo.API.Controllers
 		public async Task<IActionResult> GetAllproducts(PaginationRequest request)
 		{
 			var result = await _service.ReadAllProducts(
-				new PaginationInput { Page = request.PageNumber, PageSize = request.PageSize });
+				new ProductPaginationInput { Page = request.PageNumber, PageSize = request.PageSize });
 
 			if (!result.IsSuccess)
 				return BadRequest(result.Message);
@@ -82,10 +82,33 @@ namespace Foodo.API.Controllers
 		/// </summary>
 		/// <returns>Filtered list of products.</returns>
 		/// <response code="200">Products retrieved successfully.</response>
-		[HttpGet("get-all-products-by-category")]
-		public async Task<IActionResult> GetAllproductsByCategory()
+		[HttpPost("get-all-products-by-category")]
+		public async Task<IActionResult> GetAllproductsByCategory(ProductCategoryPaginationRequest request)
 		{
-			return Ok();
+
+			var result = await _service.ReadProductsByCategory(
+				new ProductPaginationByCategoryInput { Page = request.PageNumber, PageSize = request.PageSize, Category = request.Category });
+
+			if (!result.IsSuccess)
+				return BadRequest(result.Message);
+
+			return Ok(result.Data);
+		}
+		[HttpPost("get-all-products-by-restaurant")]
+		public async Task<IActionResult> GetAllProductsByRestaurant(ProductPaginationByShopRequest request)
+		{
+			var result = await _service.ReadProductsByShop(
+				new ProductPaginationByShopInput
+				{
+					Page = request.Page,
+					PageSize = request.PageSize,
+					MerchantId = request.MerchantId   // صح
+				});
+
+			if (!result.IsSuccess)
+				return BadRequest(result.Message);
+
+			return Ok(result.Data);
 		}
 
 		#endregion
@@ -102,7 +125,7 @@ namespace Foodo.API.Controllers
 		public async Task<IActionResult> GetAllShops(PaginationRequest request)
 		{
 			var result = await _service.ReadAllShops(
-				new PaginationInput { Page = request.PageNumber, PageSize = request.PageSize });
+				new ProductPaginationInput { Page = request.PageNumber, PageSize = request.PageSize });
 
 			if (!result.IsSuccess)
 				return BadRequest(result.Message);
@@ -133,10 +156,17 @@ namespace Foodo.API.Controllers
 		/// </summary>
 		/// <returns>Filtered list of shops.</returns>
 		/// <response code="200">Shops retrieved successfully.</response>
-		[HttpGet("get-all-shops-by-category")]
-		public async Task<IActionResult> GetAllShopsByCategory()
+		[HttpPost("get-all-shops-by-category")]
+		public async Task<IActionResult> GetAllShopsByCategory(ShopCategoryPaginationRequest request)
 		{
-			return Ok();
+
+			var result = await _service.ReadShopsByCategory(
+				new ShopsPaginationByCategoryInput { Page = request.PageNumber, PageSize = request.PageSize ,Category=request.Category});
+
+			if (!result.IsSuccess)
+				return BadRequest(result.Message);
+
+			return Ok(result.Data);
 		}
 
 		#endregion
@@ -157,7 +187,7 @@ namespace Foodo.API.Controllers
 			var id = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
 			var result = await _service.ReadAllOrders(
-				new PaginationInput { Page = request.PageNumber, PageSize = request.PageSize, FilterBy = id });
+				new ProductPaginationInput { Page = request.PageNumber, PageSize = request.PageSize, UserId = id });
 
 			if (!result.IsSuccess)
 				return BadRequest(result.Message);
@@ -210,19 +240,19 @@ namespace Foodo.API.Controllers
 			return Ok(result);
 		}
 
-		/// <summary>
-		/// Edits an existing order.
-		/// </summary>
-		/// <returns>Status of update.</returns>
-		/// <response code="200">Order edited successfully.</response>
-		/// <response code="400">Failed to edit order.</response>
-		/// <response code="401">User not authenticated.</response>
-		[Authorize(Roles = nameof(UserType.Customer))]
-		[HttpPut("edit-order/{id}")]
-		public async Task<IActionResult> Put(int id, [FromBody] string value)
-		{
-			return Ok("Not implemented yet.");
-		}
+		///// <summary>
+		///// Edits an existing order.
+		///// </summary>
+		///// <returns>Status of update.</returns>
+		///// <response code="200">Order edited successfully.</response>
+		///// <response code="400">Failed to edit order.</response>
+		///// <response code="401">User not authenticated.</response>
+		//[Authorize(Roles = nameof(UserType.Customer))]
+		//[HttpPut("edit-order/{id}")]
+		//public async Task<IActionResult> Put(int id, [FromBody] string value)
+		//{
+		//	return Ok("Not implemented yet.");
+		//}
 
 		/// <summary>
 		/// Cancels a customer's order.

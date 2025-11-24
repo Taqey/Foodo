@@ -8,5 +8,6 @@
 		public string ProductDescription { get; set; }
 		public string Price { get; set; }
 		public ICollection<AttributeDto> Attributes { get; set; } = new List<AttributeDto>();
+		public ICollection<string> ProductCategories { get; set; }=new List<string>();
 	}
 }

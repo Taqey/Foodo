@@ -32,9 +32,9 @@ namespace Foodo.API.Controllers
 	[ApiController]
 	public class MerchantsController : ControllerBase
 	{
-		private readonly IProductService _productService;
+		private readonly IMerchantService _productService;
 
-		public MerchantsController(IProductService productService)
+		public MerchantsController(IMerchantService productService)
 		{
 			_productService = productService;
 		}
@@ -47,11 +47,16 @@ namespace Foodo.API.Controllers
 		/// <returns>Returns 200 OK with a list of products or 400 Bad Request on failure.</returns>
 		/// <response code="200">Products retrieved successfully.</response>
 		/// <response code="400">Failed to retrieve products.</response>
-		[HttpGet("get-all-products")]
-		public async Task<ActionResult> GetAllProducts()
+		[HttpPost("get-all-products")]
+		public async Task<ActionResult> GetAllProducts(PaginationRequest request)
 		{
 			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-			var result = await _productService.ReadAllProductsAsync(userId);
+			var result = await _productService.ReadAllProductsAsync(new ProductPaginationInput
+			{
+				Page = request.PageNumber,
+				PageSize = request.PageSize,
+				UserId = userId,
+			});
 
 			if (!result.IsSuccess)
 				return BadRequest(result);
@@ -93,7 +98,8 @@ namespace Foodo.API.Controllers
 				ProductName = request.ProductName,
 				ProductDescription = request.ProductDescription,
 				Price = request.Price,
-				Attributes = request.Attributes
+				Attributes = request.Attributes,
+				Categories= request.Categories
 			});
 
 			if (!result.IsSuccess)
@@ -111,14 +117,14 @@ namespace Foodo.API.Controllers
 		/// <response code="200">Product updated successfully.</response>
 		/// <response code="400">Failed to update product.</response>
 		[HttpPut("update-product/{id}")]
-		public async Task<IActionResult> UpdateProduct(int id, [FromBody] ProductRequest request)
+		public async Task<IActionResult> UpdateProduct(int id, [FromBody] ProductUpdateRequest request)
 		{
-			var result = await _productService.UpdateProductAsync(id, new ProductInput
+			var result = await _productService.UpdateProductAsync(new ProductUpdateInput
 			{
+				productId= id,
 				ProductName = request.ProductName,
 				ProductDescription = request.ProductDescription,
 				Price = request.Price,
-				Attributes = request.Attributes
 			});
 
 			if (!result.IsSuccess)
@@ -207,11 +213,11 @@ namespace Foodo.API.Controllers
 		public async Task<ActionResult> GetAllOrders([FromBody] PaginationRequest request)
 		{
 			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-			var result = await _productService.ReadAllOrdersAsync(new PaginationInput
+			var result = await _productService.ReadAllOrdersAsync(new ProductPaginationInput
 			{
 				Page = request.PageNumber,
 				PageSize = request.PageSize,
-				FilterBy = userId
+				UserId = userId
 			});
 
 			if (!result.IsSuccess)
@@ -260,16 +266,46 @@ namespace Foodo.API.Controllers
 		}
 
 		#endregion
-		[HttpGet("get-purchased-customers")]
-		public async Task<IActionResult> GetPurchasedCustomers()
+		[HttpPost("get-purchased-customers")]
+		public async Task<IActionResult> GetPurchasedCustomers(PaginationRequest request)
 		{
 			var shopId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-			var result = await _productService.ReadAllPurchasedCustomersAsync(shopId);
+			var result = await _productService.ReadAllPurchasedCustomersAsync(new ProductPaginationInput
+			{
+				Page = request.PageNumber,
+				PageSize = request.PageSize,
+				UserId = shopId,
+			});
 
 			if (!result.IsSuccess)
 				return BadRequest(result.Message);
 
 			return Ok(result.Data);
+		}
+
+		[HttpPut("add-categories/{productId}")]
+		public async Task<IActionResult> AddCategories(int productId, [FromBody] CategoryRequest request)
+		{
+			var result = await _productService.AddProductCategoriesAsync(new ProductCategoryInput
+			{
+				restaurantCategories = request.Categories,
+				ProductId = productId
+			});
+			if (!result.IsSuccess)
+				return BadRequest(result.Message);
+			return Ok(result.Message);
+		}
+		[HttpPut("remove-categories/{productId}")]
+		public async Task<IActionResult> RemoveCategories(int productId, [FromBody] CategoryRequest request)
+		{
+			var result = await _productService.RemoveProductCategoriesAsync(new ProductCategoryInput
+			{
+				ProductId = productId,
+				restaurantCategories = request.Categories
+			});
+			if (!result.IsSuccess)
+				return BadRequest(result.Message);
+			return Ok(result.Message);
 		}
 	}
 }

@@ -176,7 +176,7 @@ namespace Foodo.Application.Implementation.Authentication
 
 		public async Task<ApiResponse<JwtDto>> RefreshToken(string Token)
 		{
-			var user = await _userService.GetUserByResetToken(Token);
+			var user = await _userService.GetUserByToken(Token);
 			if (user == null)
 			{
 				return ApiResponse<JwtDto>.Failure("Invalid refresh token.");
