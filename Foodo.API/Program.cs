@@ -106,24 +106,49 @@ namespace Foodo.API
 			builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 			builder.Services.AddScoped<ICreateToken, CreateToken>();
 			builder.Services.AddScoped<IEmailSenderService, EmailSenderService>();
-            builder.Services.AddScoped<IProductService, ProductService>();
+            builder.Services.AddScoped<IMerchantService, MerchantService>();
 			builder.Services.AddScoped<ICustomerService, CustomerService>();
 			builder.Services.AddHttpContextAccessor();
 			builder.Services.AddMemoryCache();
+			builder.Services.AddScoped<ICacheService, CacheService>();
 			builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
 			builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("Smtp"));
+			//builder.Services.AddCors(options =>
+			//{
+			//	options.AddPolicy("AllowLocalhost5500",
+			//		policy =>
+			//		{
+			//			policy.WithOrigins("http://127.0.0.1:5500")
+			//				  .AllowAnyHeader()
+			//				  .AllowAnyMethod();
+			//		});
+			//});
+			//builder.Services.AddCors(options =>
+			//{
+			//	options.AddPolicy("AllowNetlify", policy =>
+			//	{
+			//		policy.WithOrigins(
+			//				"https://extraordinary-torrone-288200.netlify.app",
+			//				"http://127.0.0.1:5500",
+			//				"http://localhost:5500"
+			//			)
+			//			.AllowAnyHeader()
+			//			.AllowAnyMethod()
+			//			.AllowCredentials();
+			//	});
+			//});
 			builder.Services.AddCors(options =>
 			{
-				options.AddPolicy("AllowLocalhost5500",
-					policy =>
-					{
-						policy.WithOrigins("http://127.0.0.1:5500")
-							  .AllowAnyHeader()
-							  .AllowAnyMethod();
-					});
+				options.AddPolicy("AllowFrontend", builder =>
+				{
+					builder.WithOrigins("https://taqey.github.io")
+						   .AllowAnyHeader()
+						   .AllowAnyMethod()
+						   .AllowCredentials();
+				});
 			});
+
 			var app = builder.Build();
-			app.UseCors("AllowLocalhost5500");
 
 			// Configure the HTTP request pipeline.
 			if (app.Environment.IsDevelopment())
@@ -139,6 +164,7 @@ namespace Foodo.API
 };
 
 			app.UseHttpsRedirection();
+			app.UseCors("AllowFrontend");
 			app.UseAuthentication();
 
 			app.UseAuthorization();
