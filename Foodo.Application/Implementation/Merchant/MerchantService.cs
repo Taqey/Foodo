@@ -78,7 +78,7 @@ public class MerchantService : IMerchantService
 			await _unitOfWork.saveAsync();
 
 			// Clear cache
-			_cacheService.RemoveByPrefix($"product:list:merchant:{input.Id}");
+			_cacheService.RemoveByPrefix($"merchant_product:list:{input.Id}");
 			await transaction.CommitAsync();
 		}
 		catch (Exception e)
@@ -93,7 +93,7 @@ public class MerchantService : IMerchantService
 
 	public async Task<ApiResponse<PaginationDto<MerchantProductDto>>> ReadAllProductsAsync(ProductPaginationInput input)
 	{
-		string cacheKey = $"product:list:merchant:{input.UserId}:{input.Page}:{input.PageSize}";
+		string cacheKey = $"merchant_product:list:{input.UserId}:{input.Page}:{input.PageSize}";
 
 		var cached = _cacheService.Get<PaginationDto<MerchantProductDto>>(cacheKey);
 		if (cached != null)
@@ -115,7 +115,7 @@ public class MerchantService : IMerchantService
 
 			// list of attributes
 			var attributesList = detail?.LkpProductDetailsAttributes?.ToList()
-								 ?? new List<LkpProductDetailsAttribute>();
+									 ?? new List<LkpProductDetailsAttribute>();
 
 			var productDto = new MerchantProductDto
 			{
@@ -125,19 +125,19 @@ public class MerchantService : IMerchantService
 				Price = detail?.Price.ToString() ?? "0",
 
 				ProductCategories = product.ProductCategory
-					.Select(c => c.Category.CategoryName)
-					.ToList(),
+						.Select(c => c.Category.CategoryName)
+						.ToList(),
 
 				// ⬅️ ProductDetailAttributes mapped here
 				ProductDetailAttributes = attributesList
-					.Select(a => new ProductDetailAttributeDto
-					{
-						Id = a.ProductDetailAttributeId,
-						AttributeName = a.Attribute.Name,
-						AttributeValue = a.Attribute.value,
-						MeasurementUnit = a.UnitOfMeasure.UnitOfMeasureName
-					})
-					.ToList()
+						.Select(a => new ProductDetailAttributeDto
+						{
+							Id = a.ProductDetailAttributeId,
+							AttributeName = a.Attribute.Name,
+							AttributeValue = a.Attribute.value,
+							MeasurementUnit = a.UnitOfMeasure.UnitOfMeasureName
+						})
+						.ToList()
 			};
 
 			productDtos.Add(productDto);
@@ -157,10 +157,9 @@ public class MerchantService : IMerchantService
 
 
 
-
 	public async Task<ApiResponse<ProductDto>> ReadProductByIdAsync(int productId)
 	{
-		string cacheKey = $"product:{productId}";
+		string cacheKey = $"merchant_product:{productId}";
 		var cached = _cacheService.Get<ProductDto>(cacheKey);
 		if (cached != null) return ApiResponse<ProductDto>.Success(cached);
 
@@ -177,8 +176,8 @@ public class MerchantService : IMerchantService
 			Price = productDetail?.Price.ToString() ?? "0",
 			Attributes = new List<AttributeDto>(),
 			ProductCategories = product.ProductCategory
-				.Select(c => c.Category.CategoryName) // مباشرة string
-				.ToList()
+					.Select(c => c.Category.CategoryName) // مباشرة string
+					.ToList()
 		};
 
 		if (productDetail != null)
@@ -218,8 +217,8 @@ public class MerchantService : IMerchantService
 		var a = await _unitOfWork.saveAsync();
 
 		// Clear cache
-		_cacheService.Remove($"product:{input.productId}");
-		_cacheService.RemoveByPrefix($"product:list:merchant:{product.UserId}");
+		_cacheService.Remove($"merchant_product:{input.productId}");
+		_cacheService.RemoveByPrefix($"merchant_product:list:{product.UserId}");
 
 		return ApiResponse.Success("Product updated successfully");
 	}
@@ -236,8 +235,8 @@ public class MerchantService : IMerchantService
 		await _unitOfWork.saveAsync();
 
 		// Clear cache
-		_cacheService.Remove($"product:{productId}");
-		_cacheService.RemoveByPrefix($"product:list:merchant:{product.UserId}");
+		_cacheService.Remove($"merchant_product:{productId}");
+		_cacheService.RemoveByPrefix($"merchant_product:list:{product.UserId}");
 
 		return ApiResponse.Success("Product deleted successfully");
 	}
@@ -274,8 +273,8 @@ public class MerchantService : IMerchantService
 		await _unitOfWork.saveAsync();
 		await transaction.CommitAsync();
 
-		_cacheService.Remove($"product:{productId}");
-		_cacheService.RemoveByPrefix($"product:list:merchant:{product.UserId}");
+		_cacheService.Remove($"merchant_product:{productId}");
+		_cacheService.RemoveByPrefix($"merchant_product:list:{product.UserId}");
 
 		return ApiResponse.Success("Attributes added successfully");
 	}
@@ -292,8 +291,8 @@ public class MerchantService : IMerchantService
 		await _unitOfWork.saveAsync();
 
 		// Clear cache
-		_cacheService.Remove($"product:{productId}");
-		_cacheService.RemoveByPrefix($"product:list:merchant:{product.UserId}");
+		_cacheService.Remove($"merchant_product:{productId}");
+		_cacheService.RemoveByPrefix($"merchant_product:list:{product.UserId}");
 
 		return ApiResponse.Success("Attributes removed successfully");
 	}
@@ -316,8 +315,8 @@ public class MerchantService : IMerchantService
 		var result = await _unitOfWork.saveAsync();
 
 		// Clear cache
-		_cacheService.Remove($"product:{product.ProductId}");
-		_cacheService.RemoveByPrefix($"product:list:merchant:{product.UserId}");
+		_cacheService.Remove($"merchant_product:{product.ProductId}");
+		_cacheService.RemoveByPrefix($"merchant_product:list:{product.UserId}");
 
 		return ApiResponse.Success("Categories added successfully");
 	}
@@ -331,7 +330,7 @@ public class MerchantService : IMerchantService
 		foreach (var item in categoryInput.restaurantCategories)
 		{
 			var category = product.ProductCategory
-				.FirstOrDefault(c => c.categoryid == (int)item);
+					.FirstOrDefault(c => c.categoryid == (int)item);
 
 			if (category != null)
 				product.ProductCategory.Remove(category);
@@ -340,8 +339,8 @@ public class MerchantService : IMerchantService
 		await _unitOfWork.saveAsync();
 
 		// Clear cache
-		_cacheService.Remove($"product:{product.ProductId}");
-		_cacheService.RemoveByPrefix($"product:list:merchant:{product.UserId}");
+		_cacheService.Remove($"merchant_product:{product.ProductId}");
+		_cacheService.RemoveByPrefix($"merchant_product:list:{product.UserId}");
 
 		return ApiResponse.Success("Categories removed successfully");
 	}
@@ -352,7 +351,7 @@ public class MerchantService : IMerchantService
 
 	public async Task<ApiResponse<PaginationDto<MerchantOrderDto>>> ReadAllOrdersAsync(ProductPaginationInput input)
 	{
-		string cacheKey = $"order:list:merchant:{input.UserId}:{input.Page}";
+		string cacheKey = $"merchant_order:list:{input.UserId}:{input.Page}";
 
 		if (_cacheService.Get<PaginationDto<MerchantOrderDto>>(cacheKey) is PaginationDto<MerchantOrderDto> cachedOrders)
 			return ApiResponse<PaginationDto<MerchantOrderDto>>.Success(cachedOrders);
@@ -410,7 +409,7 @@ public class MerchantService : IMerchantService
 
 	public async Task<ApiResponse<MerchantOrderDto>> ReadOrderByIdAsync(int orderId)
 	{
-		string cacheKey = $"order:{orderId}";
+		string cacheKey = $"merchant_order:{orderId}";
 		var cached = _cacheService.Get<MerchantOrderDto>(cacheKey);
 		if (cached != null) return ApiResponse<MerchantOrderDto>.Success(cached);
 
@@ -457,8 +456,8 @@ public class MerchantService : IMerchantService
 		await _unitOfWork.saveAsync();
 
 		// Clear cache
-		_cacheService.Remove($"order:{orderId}");
-		_cacheService.RemoveByPrefix($"order:list:merchant:{order.MerchantId}");
+		_cacheService.Remove($"merchant_order:{orderId}");
+		_cacheService.RemoveByPrefix($"merchant_order:list:{order.MerchantId}");
 
 		return ApiResponse.Success("Order status updated successfully");
 	}
@@ -469,7 +468,7 @@ public class MerchantService : IMerchantService
 
 	public async Task<ApiResponse<PaginationDto<CustomerDto>>> ReadAllPurchasedCustomersAsync(ProductPaginationInput input)
 	{
-		var cacheKey = $"customer:list:merchant:{input.UserId}:{input.Page}:{input.PageSize}";
+		var cacheKey = $"merchant_customer:list:{input.UserId}:{input.Page}:{input.PageSize}";
 
 		if (_cacheService.Get<PaginationDto<CustomerDto>>(cacheKey) is PaginationDto<CustomerDto> cachedResult)
 			return ApiResponse<PaginationDto<CustomerDto>>.Success(cachedResult);
@@ -485,11 +484,11 @@ public class MerchantService : IMerchantService
 		var customerIds = orders.Select(o => o.CustomerId).Distinct().ToList();
 
 		var customers = await _unitOfWork.CustomerRepository
-			.FindAllByContidtionAsync(c => customerIds.Contains(c.UserId));
+				.FindAllByContidtionAsync(c => customerIds.Contains(c.UserId));
 
 		var groupedOrders = orders
-			.GroupBy(o => o.CustomerId)
-			.ToDictionary(g => g.Key, g => g.ToList());
+				.GroupBy(o => o.CustomerId)
+				.ToDictionary(g => g.Key, g => g.ToList());
 
 		var customerDtos = new List<CustomerDto>();
 
