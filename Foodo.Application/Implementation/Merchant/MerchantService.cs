@@ -351,7 +351,7 @@ public class MerchantService : IMerchantService
 
 	public async Task<ApiResponse<PaginationDto<MerchantOrderDto>>> ReadAllOrdersAsync(ProductPaginationInput input)
 	{
-		string cacheKey = $"merchant_order:list:{input.UserId}:{input.Page}";
+		string cacheKey = $"merchant_order:list:{input.UserId}:{input.Page}:{input.PageSize}";
 
 		if (_cacheService.Get<PaginationDto<MerchantOrderDto>>(cacheKey) is PaginationDto<MerchantOrderDto> cachedOrders)
 			return ApiResponse<PaginationDto<MerchantOrderDto>>.Success(cachedOrders);
@@ -497,14 +497,16 @@ public class MerchantService : IMerchantService
 			if (!groupedOrders.TryGetValue(c.UserId, out var custOrders))
 				continue;
 
+			var completedOrders = custOrders.Where(o => o.OrderStatus == OrderState.Completed).ToList();
+
 			var dto = new CustomerDto
 			{
 				FullName = $"{c.FirstName} {c.LastName}",
 				Email = c.User?.Email,
 				PhoneNumber = c.User?.PhoneNumber,
-				LastPurchased = custOrders.Max(o => o.OrderDate),
-				TotalOrders = custOrders.Count,
-				TotalSpent = custOrders.Sum(o => Convert.ToDecimal(o.TotalPrice))
+				LastPurchased = completedOrders.Any() ? completedOrders.Max(o => o.OrderDate) : (DateTime?)null,
+				TotalOrders = custOrders.Count, // كل الأوردرز
+				TotalSpent = completedOrders.Sum(o => Convert.ToDecimal(o.TotalPrice)) // بس المكتملة
 			};
 
 			customerDtos.Add(dto);
@@ -521,6 +523,8 @@ public class MerchantService : IMerchantService
 
 		return ApiResponse<PaginationDto<CustomerDto>>.Success(paginationDto);
 	}
+
+
 
 	#endregion
 }
