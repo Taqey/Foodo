@@ -21,14 +21,16 @@ namespace Foodo.Application.Implementation.Authentication
 		private readonly IHttpContextAccessor _http;
 		private readonly IEmailSenderService _senderService;
 		private readonly IUnitOfWork _unitOfWork;
+		private readonly ICacheService _cacheService;
 
-		public AuthenticationService(IUserService userService, ICreateToken createToken, IHttpContextAccessor http,IEmailSenderService senderService,IUnitOfWork unitOfWork)
+		public AuthenticationService(IUserService userService, ICreateToken createToken, IHttpContextAccessor http,IEmailSenderService senderService,IUnitOfWork unitOfWork,ICacheService cacheService)
 		{
 			_userService = userService;
 			_createToken = createToken;
 			_http = http;
 			_senderService = senderService;
 			_unitOfWork = unitOfWork;
+			_cacheService = cacheService;
 		}
 		public async Task<ApiResponse<UserIdDto>> Register(RegisterInput input)
 		{
@@ -105,6 +107,10 @@ namespace Foodo.Application.Implementation.Authentication
 			{
 				return ApiResponse<UserIdDto>.Failure("Failed to assign role: "
 					+ string.Join(", ", result.Errors.Select(e => e.Description)));
+			}
+			if (input.UserType == UserType.Merchant)
+			{
+				_cacheService.RemoveByPrefix("merchant:");
 			}
 
 			return ApiResponse<UserIdDto>.Success(new UserIdDto { UserId = user.Id }, "User registered successfully.");
