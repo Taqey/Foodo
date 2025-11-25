@@ -205,8 +205,10 @@ namespace Foodo.Application.Implementation.Authentication
 				HttpOnly = true,
 				Expires = RefreshToken.ExpiresOn.ToUniversalTime(),
 				SameSite = SameSiteMode.None,
-				Secure = true
+				Secure = true,
+				Path = "/"
 			};
+
 			_http.HttpContext.Response.Cookies.Append("RefreshToken", RefreshToken.Token, cookieOptions);
 			user.lkpRefreshTokens.Add(new lkpRefreshToken { Token = RefreshToken.Token, CreatedAt = RefreshToken.CreatedOn, ExpiresAt = RefreshToken.ExpiresOn });
 			await _userService.UpdateAsync(user);
