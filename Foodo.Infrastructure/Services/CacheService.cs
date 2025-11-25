@@ -1,4 +1,4 @@
-﻿using Foodo.Application.Abstraction;
+﻿using Foodo.Application.Abstraction.InfraRelated;
 using Microsoft.Extensions.Caching.Memory;
 using System;
 using System.Collections.Generic;

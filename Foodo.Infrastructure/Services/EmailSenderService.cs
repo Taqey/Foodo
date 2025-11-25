@@ -1,4 +1,4 @@
-﻿using Foodo.Application.Abstraction;
+﻿using Foodo.Application.Abstraction.InfraRelated;
 using Foodo.Application.Models.Response;
 using Foodo.Infrastructure.Helper;
 using MailKit.Net.Smtp;

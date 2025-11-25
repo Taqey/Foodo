@@ -1,7 +1,9 @@
 ﻿using Foodo.API.Models.Request;
+using Foodo.API.Models.Request.Merchant;
 using Foodo.Application.Abstraction.Merchant;
 using Foodo.Application.Models.Dto;
 using Foodo.Application.Models.Input;
+using Foodo.Application.Models.Input.Merchant;
 using Foodo.Application.Models.Response;
 using Foodo.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
@@ -13,7 +15,7 @@ namespace Foodo.API.Controllers
 	/// <summary>
 	/// Provides endpoints to manage products and orders for merchants, including
 	/// creating, updating, deleting products, managing product attributes, 
-	/// and handling orders.
+	/// handling orders, and managing product categories.
 	/// </summary>
 	/// <remarks>
 	/// <para>This controller handles all merchant-related operations:</para>
@@ -21,6 +23,7 @@ namespace Foodo.API.Controllers
 	///     <item><description>Retrieve, create, update, and delete products</description></item>
 	///     <item><description>Add or remove product attributes</description></item>
 	///     <item><description>Retrieve orders and update order status</description></item>
+	///     <item><description>Manage product categories</description></item>
 	/// </list>
 	/// <para>
 	/// All endpoints require Bearer authentication and "Merchant" role.
@@ -44,7 +47,8 @@ namespace Foodo.API.Controllers
 		/// <summary>
 		/// Retrieves all products for the currently logged-in merchant.
 		/// </summary>
-		/// <returns>Returns 200 OK with a list of products or 400 Bad Request on failure.</returns>
+		/// <param name="request">Pagination request.</param>
+		/// <returns>List of products.</returns>
 		/// <response code="200">Products retrieved successfully.</response>
 		/// <response code="400">Failed to retrieve products.</response>
 		[HttpPost("get-all-products")]
@@ -68,7 +72,7 @@ namespace Foodo.API.Controllers
 		/// Retrieves a product by its ID.
 		/// </summary>
 		/// <param name="id">ID of the product.</param>
-		/// <returns>Returns 200 OK with product data or 400 Bad Request on failure.</returns>
+		/// <returns>Product details.</returns>
 		/// <response code="200">Product retrieved successfully.</response>
 		/// <response code="400">Failed to retrieve product.</response>
 		[HttpGet("get-product-by-id/{id}")]
@@ -84,8 +88,8 @@ namespace Foodo.API.Controllers
 		/// <summary>
 		/// Creates a new product for the logged-in merchant.
 		/// </summary>
-		/// <param name="request">Product creation request containing name, description, price, and attributes.</param>
-		/// <returns>Returns 200 OK if successful or 400 Bad Request on failure.</returns>
+		/// <param name="request">Product creation request.</param>
+		/// <returns>Confirmation message.</returns>
 		/// <response code="200">Product created successfully.</response>
 		/// <response code="400">Failed to create product.</response>
 		[HttpPost("create-product")]
@@ -99,7 +103,7 @@ namespace Foodo.API.Controllers
 				ProductDescription = request.ProductDescription,
 				Price = request.Price,
 				Attributes = request.Attributes,
-				Categories= request.Categories
+				Categories = request.Categories
 			});
 
 			if (!result.IsSuccess)
@@ -111,9 +115,9 @@ namespace Foodo.API.Controllers
 		/// <summary>
 		/// Updates an existing product by its ID.
 		/// </summary>
-		/// <param name="id">ID of the product to update.</param>
+		/// <param name="id">ID of the product.</param>
 		/// <param name="request">Updated product details.</param>
-		/// <returns>Returns 200 OK if successful or 400 Bad Request on failure.</returns>
+		/// <returns>Confirmation message.</returns>
 		/// <response code="200">Product updated successfully.</response>
 		/// <response code="400">Failed to update product.</response>
 		[HttpPut("update-product/{id}")]
@@ -121,7 +125,7 @@ namespace Foodo.API.Controllers
 		{
 			var result = await _productService.UpdateProductAsync(new ProductUpdateInput
 			{
-				productId= id,
+				productId = id,
 				ProductName = request.ProductName,
 				ProductDescription = request.ProductDescription,
 				Price = request.Price,
@@ -136,8 +140,8 @@ namespace Foodo.API.Controllers
 		/// <summary>
 		/// Deletes a product by its ID.
 		/// </summary>
-		/// <param name="id">ID of the product to delete.</param>
-		/// <returns>Returns 200 OK if deleted or 400 Bad Request on failure.</returns>
+		/// <param name="id">ID of the product.</param>
+		/// <returns>Confirmation message.</returns>
 		/// <response code="200">Product deleted successfully.</response>
 		/// <response code="400">Failed to delete product.</response>
 		[HttpDelete("delete-product/{id}")]
@@ -159,7 +163,7 @@ namespace Foodo.API.Controllers
 		/// </summary>
 		/// <param name="id">ID of the product.</param>
 		/// <param name="request">Attributes to add.</param>
-		/// <returns>Returns 200 OK if attributes are added or 400 Bad Request on failure.</returns>
+		/// <returns>Confirmation message.</returns>
 		/// <response code="200">Attributes added successfully.</response>
 		/// <response code="400">Failed to add attributes.</response>
 		[HttpPut("add-attribute")]
@@ -181,7 +185,7 @@ namespace Foodo.API.Controllers
 		/// </summary>
 		/// <param name="id">ID of the product.</param>
 		/// <param name="request">Attributes to remove.</param>
-		/// <returns>Returns 200 OK if attributes are removed or 400 Bad Request on failure.</returns>
+		/// <returns>Confirmation message.</returns>
 		/// <response code="200">Attributes removed successfully.</response>
 		/// <response code="400">Failed to remove attributes.</response>
 		[HttpPut("remove-attribute")]
@@ -206,7 +210,7 @@ namespace Foodo.API.Controllers
 		/// Retrieves all orders of the currently logged-in merchant.
 		/// </summary>
 		/// <param name="request">Pagination request.</param>
-		/// <returns>Returns 200 OK with a list of orders or 400 Bad Request on failure.</returns>
+		/// <returns>List of orders.</returns>
 		/// <response code="200">Orders retrieved successfully.</response>
 		/// <response code="400">Failed to retrieve orders.</response>
 		[HttpPost("get-all-orders")]
@@ -230,7 +234,7 @@ namespace Foodo.API.Controllers
 		/// Retrieves a specific order by ID.
 		/// </summary>
 		/// <param name="id">Order ID.</param>
-		/// <returns>Returns 200 OK with order details or 400 Bad Request on failure.</returns>
+		/// <returns>Order details.</returns>
 		/// <response code="200">Order retrieved successfully.</response>
 		/// <response code="400">Failed to retrieve order.</response>
 		[HttpGet("get-order-by-id/{id}")]
@@ -248,7 +252,7 @@ namespace Foodo.API.Controllers
 		/// </summary>
 		/// <param name="id">Order ID.</param>
 		/// <param name="request">New order status.</param>
-		/// <returns>Returns 200 OK if status updated or 400 Bad Request on failure.</returns>
+		/// <returns>Confirmation message.</returns>
 		/// <response code="200">Order status updated successfully.</response>
 		/// <response code="400">Failed to update order status.</response>
 		[HttpPut("update-order-status/{id}")]
@@ -266,6 +270,66 @@ namespace Foodo.API.Controllers
 		}
 
 		#endregion
+
+		#region Product Categories
+
+		/// <summary>
+		/// Adds categories to a product.
+		/// </summary>
+		/// <param name="productId">ID of the product.</param>
+		/// <param name="request">Categories to add.</param>
+		/// <returns>Confirmation message.</returns>
+		/// <response code="200">Categories added successfully.</response>
+		/// <response code="400">Failed to add categories.</response>
+		[HttpPut("add-categories/{productId}")]
+		public async Task<IActionResult> AddCategories(int productId, [FromBody] CategoryRequest request)
+		{
+			var result = await _productService.AddProductCategoriesAsync(new ProductCategoryInput
+			{
+				restaurantCategories = request.Categories,
+				ProductId = productId
+			});
+
+			if (!result.IsSuccess)
+				return BadRequest(result.Message);
+
+			return Ok(result.Message);
+		}
+
+		/// <summary>
+		/// Removes categories from a product.
+		/// </summary>
+		/// <param name="productId">ID of the product.</param>
+		/// <param name="request">Categories to remove.</param>
+		/// <returns>Confirmation message.</returns>
+		/// <response code="200">Categories removed successfully.</response>
+		/// <response code="400">Failed to remove categories.</response>
+		[HttpPut("remove-categories/{productId}")]
+		public async Task<IActionResult> RemoveCategories(int productId, [FromBody] CategoryRequest request)
+		{
+			var result = await _productService.RemoveProductCategoriesAsync(new ProductCategoryInput
+			{
+				ProductId = productId,
+				restaurantCategories = request.Categories
+			});
+
+			if (!result.IsSuccess)
+				return BadRequest(result.Message);
+
+			return Ok(result.Message);
+		}
+
+		#endregion
+
+		#region Purchased Customers
+
+		/// <summary>
+		/// Retrieves all customers who purchased from the logged-in merchant.
+		/// </summary>
+		/// <param name="request">Pagination request.</param>
+		/// <returns>List of purchased customers.</returns>
+		/// <response code="200">Customers retrieved successfully.</response>
+		/// <response code="400">Failed to retrieve customers.</response>
 		[HttpPost("get-purchased-customers")]
 		public async Task<IActionResult> GetPurchasedCustomers(PaginationRequest request)
 		{
@@ -283,29 +347,6 @@ namespace Foodo.API.Controllers
 			return Ok(result.Data);
 		}
 
-		[HttpPut("add-categories/{productId}")]
-		public async Task<IActionResult> AddCategories(int productId, [FromBody] CategoryRequest request)
-		{
-			var result = await _productService.AddProductCategoriesAsync(new ProductCategoryInput
-			{
-				restaurantCategories = request.Categories,
-				ProductId = productId
-			});
-			if (!result.IsSuccess)
-				return BadRequest(result.Message);
-			return Ok(result.Message);
-		}
-		[HttpPut("remove-categories/{productId}")]
-		public async Task<IActionResult> RemoveCategories(int productId, [FromBody] CategoryRequest request)
-		{
-			var result = await _productService.RemoveProductCategoriesAsync(new ProductCategoryInput
-			{
-				ProductId = productId,
-				restaurantCategories = request.Categories
-			});
-			if (!result.IsSuccess)
-				return BadRequest(result.Message);
-			return Ok(result.Message);
-		}
+		#endregion
 	}
 }

@@ -1,5 +1,8 @@
 ﻿using Foodo.Application.Models.Dto;
+using Foodo.Application.Models.Dto.Customer;
+using Foodo.Application.Models.Dto.Merchant;
 using Foodo.Application.Models.Input;
+using Foodo.Application.Models.Input.Merchant;
 using Foodo.Application.Models.Response;
 using System;
 using System.Collections.Generic;
@@ -11,7 +14,7 @@ public interface IMerchantService
 {
 	Task<ApiResponse> CreateProductAsync(ProductInput request);
 	Task<ApiResponse<ProductDto>> ReadProductByIdAsync(int productId);
-	Task<ApiResponse<PaginationDto<ProductDto>>> ReadAllProductsAsync(ProductPaginationInput input);
+	Task<ApiResponse<PaginationDto<MerchantProductDto>>> ReadAllProductsAsync(ProductPaginationInput input);
 	Task<ApiResponse> UpdateProductAsync(ProductUpdateInput input);
 	Task<ApiResponse> DeleteProductAsync(int productId);
 	Task<ApiResponse> AddProductAttributeAsync(int productDetailId, AttributeCreateInput attributes);
