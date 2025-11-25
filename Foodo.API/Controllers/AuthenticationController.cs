@@ -256,6 +256,11 @@ namespace Foodo.API.Controllers
 		public async Task<IActionResult> RefreshToken()
 		{
 			var refreshToken = Request.Cookies["RefreshToken"];
+
+			// Add explicit check for missing cookie
+			if (string.IsNullOrEmpty(refreshToken))
+				return BadRequest("Refresh token not found. Please login again.");
+
 			var result = await _service.RefreshToken(refreshToken);
 
 			if (!result.IsSuccess)

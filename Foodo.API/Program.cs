@@ -120,23 +120,24 @@ namespace Foodo.API
 				{
 					builder.SetIsOriginAllowed(origin =>
 					{
-						// Allow GitHub Pages
-						if (origin == "https://taqey.github.io") return true;
+						// Allow GitHub Pages (any sub-path)
+						if (origin.StartsWith("https://taqey.github.io")) return true;
 
 						// Allow localhost (any port)
 						if (origin.StartsWith("http://localhost:") ||
 							origin.StartsWith("http://127.0.0.1:")) return true;
 
-						// Allow file:// protocol for local development
-						if (origin == "null") return true; // file:// sends null as origin
+						// Allow file:// protocol
+						if (origin == "null") return true;
 
 						return false;
 					})
-					   .AllowAnyHeader()
-					   .AllowAnyMethod()
-					   .AllowCredentials();
+					.AllowAnyHeader()
+					.AllowAnyMethod()
+					.AllowCredentials();
 				});
 			});
+
 
 			var app = builder.Build();
 
@@ -149,15 +150,11 @@ namespace Foodo.API
 				app.UseSwaggerUI();
 
 			app.UseHttpsRedirection();
+			app.UseRouting();
 			app.UseCors("AllowFrontend");
 			app.UseAuthentication();
-
 			app.UseAuthorization();
-
-
 			app.MapControllers();
-
-
 			app.Run();
 		}
 	}
