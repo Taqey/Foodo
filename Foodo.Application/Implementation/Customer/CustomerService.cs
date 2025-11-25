@@ -1,7 +1,10 @@
-﻿using Foodo.Application.Abstraction;
-using Foodo.Application.Abstraction.Customer;
+﻿using Foodo.Application.Abstraction.Customer;
+using Foodo.Application.Abstraction.InfraRelated;
 using Foodo.Application.Models.Dto;
+using Foodo.Application.Models.Dto.Customer;
 using Foodo.Application.Models.Input;
+using Foodo.Application.Models.Input.Customer;
+using Foodo.Application.Models.Input.Merchant;
 using Foodo.Application.Models.Response;
 using Foodo.Domain.Entities;
 using Foodo.Domain.Enums;

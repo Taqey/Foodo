@@ -1,6 +1,8 @@
 ﻿using Foodo.API.Models.Request.Authentication;
 using Foodo.Application.Abstraction.Authentication;
 using Foodo.Application.Models.Input;
+using Foodo.Application.Models.Input.Auth;
+using Foodo.Application.Models.Input.Merchant;
 using Foodo.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

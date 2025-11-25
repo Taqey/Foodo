@@ -1,7 +1,10 @@
-﻿using Foodo.Application.Abstraction;
+﻿using Foodo.Application.Abstraction.InfraRelated;
 using Foodo.Application.Abstraction.Merchant;
 using Foodo.Application.Models.Dto;
+using Foodo.Application.Models.Dto.Customer;
+using Foodo.Application.Models.Dto.Merchant;
 using Foodo.Application.Models.Input;
+using Foodo.Application.Models.Input.Merchant;
 using Foodo.Application.Models.Response;
 using Foodo.Domain.Entities;
 using Foodo.Domain.Enums;
@@ -88,14 +91,14 @@ public class MerchantService : IMerchantService
 
 	}
 
-	public async Task<ApiResponse<PaginationDto<ProductDto>>> ReadAllProductsAsync(ProductPaginationInput input)
+	public async Task<ApiResponse<PaginationDto<MerchantProductDto>>> ReadAllProductsAsync(ProductPaginationInput input)
 	{
 		string cacheKey = $"product:list:merchant:{input.UserId}:{input.Page}:{input.PageSize}";
 
-		var cached = _cacheService.Get<PaginationDto<ProductDto>>(cacheKey);
+		var cached = _cacheService.Get<PaginationDto<MerchantProductDto>>(cacheKey);
 		if (cached != null)
 		{
-			return ApiResponse<PaginationDto<ProductDto>>.Success(cached);
+			return ApiResponse<PaginationDto<MerchantProductDto>>.Success(cached);
 		}
 
 		var (products, totalCount, totalPages) = await _unitOfWork.ProductRepository.PaginationAsync(
@@ -104,45 +107,43 @@ public class MerchantService : IMerchantService
 			p => p.UserId == input.UserId
 		);
 
-		var productDtos = new List<ProductDto>();
+		var productDtos = new List<MerchantProductDto>();
 
 		foreach (var product in products)
 		{
-			var productDto = new ProductDto
+			var detail = product.TblProductDetails.FirstOrDefault();
+
+			// list of attributes
+			var attributesList = detail?.LkpProductDetailsAttributes?.ToList()
+								 ?? new List<LkpProductDetailsAttribute>();
+
+			var productDto = new MerchantProductDto
 			{
 				ProductId = product.ProductId,
 				ProductName = product.ProductsName,
 				ProductDescription = product.ProductDescription,
-				Price = product.TblProductDetails.FirstOrDefault()?.Price.ToString() ?? "0",
-				Attributes = new List<AttributeDto>(),
+				Price = detail?.Price.ToString() ?? "0",
+
 				ProductCategories = product.ProductCategory
-				.Select(c => c.Category.CategoryName) // مباشرة string
-				.ToList()
-			};
+					.Select(c => c.Category.CategoryName)
+					.ToList(),
 
-			// Attributes
-			var detail = product.TblProductDetails.FirstOrDefault();
-			if (detail != null)
-			{
-				foreach (var pda in detail.LkpProductDetailsAttributes)
-				{
-					var attributeDto = new AttributeDto
+				// ⬅️ ProductDetailAttributes mapped here
+				ProductDetailAttributes = attributesList
+					.Select(a => new ProductDetailAttributeDto
 					{
-						Name = pda.Attribute.Name,
-						Value = pda.Attribute.value,
-						MeasurementUnit = pda.UnitOfMeasure.UnitOfMeasureName
-					};
-
-					productDto.Attributes.Add(attributeDto);
-				}
-			}
-
-
+						Id = a.ProductDetailAttributeId,
+						AttributeName = a.Attribute.Name,
+						AttributeValue = a.Attribute.value,
+						MeasurementUnit = a.UnitOfMeasure.UnitOfMeasureName
+					})
+					.ToList()
+			};
 
 			productDtos.Add(productDto);
 		}
 
-		var paginationDto = new PaginationDto<ProductDto>
+		var paginationDto = new PaginationDto<MerchantProductDto>
 		{
 			TotalItems = totalCount,
 			TotalPages = totalPages,
@@ -151,8 +152,10 @@ public class MerchantService : IMerchantService
 
 		_cacheService.Set(cacheKey, paginationDto);
 
-		return ApiResponse<PaginationDto<ProductDto>>.Success(paginationDto);
+		return ApiResponse<PaginationDto<MerchantProductDto>>.Success(paginationDto);
 	}
+
+
 
 
 	public async Task<ApiResponse<ProductDto>> ReadProductByIdAsync(int productId)

@@ -1,6 +1,4 @@
-﻿
-using Foodo.Application.Abstraction;
-using Foodo.Domain.Entities;
+﻿using Foodo.Domain.Entities;
 using Foodo.Domain.Repository;
 using Foodo.Infrastructure.Helper;
 using Foodo.Infrastructure.Perisistence;
@@ -20,6 +18,7 @@ using Foodo.Application.Implementation.Authentication;
 using Foodo.Application.Implementation.Merchant;
 using Foodo.Application.Abstraction.Customer;
 using Foodo.Application.Implementation.Customer;
+using Foodo.Application.Abstraction.InfraRelated;
 namespace Foodo.API
 {
 	public class Program
@@ -79,10 +78,10 @@ namespace Foodo.API
 			{
 				options.TokenValidationParameters = new TokenValidationParameters
 				{
-					ValidateIssuer = false,
-					ValidateAudience = false,
+					ValidateIssuer = true,
+					ValidateAudience = true,
 					ValidateLifetime = true,
-					ValidateIssuerSigningKey = false,
+					ValidateIssuerSigningKey = true,
 					ClockSkew = TimeSpan.Zero,
 					ValidAudience = builder.Configuration["Jwt:Audience"],
 					ValidIssuer = builder.Configuration["Jwt:Issuer"],
@@ -98,53 +97,44 @@ namespace Foodo.API
 				options.Password.RequireUppercase = true;
 				options.Password.RequireNonAlphanumeric = true;
 				options.Password.RequiredLength = 8;
-				
+
 			}).AddRoles<IdentityRole>().AddEntityFrameworkStores<AppDbContext>().AddDefaultTokenProviders();
-			builder.Services.AddScoped(typeof(IRepository<>),typeof(Repository<>));
+			builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 			builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 			builder.Services.AddScoped<IUserService, UserService>();
 			builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 			builder.Services.AddScoped<ICreateToken, CreateToken>();
 			builder.Services.AddScoped<IEmailSenderService, EmailSenderService>();
-            builder.Services.AddScoped<IMerchantService, MerchantService>();
+			builder.Services.AddScoped<IMerchantService, MerchantService>();
 			builder.Services.AddScoped<ICustomerService, CustomerService>();
 			builder.Services.AddHttpContextAccessor();
 			builder.Services.AddMemoryCache();
 			builder.Services.AddScoped<ICacheService, CacheService>();
 			builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
 			builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("Smtp"));
-			//builder.Services.AddCors(options =>
-			//{
-			//	options.AddPolicy("AllowLocalhost5500",
-			//		policy =>
-			//		{
-			//			policy.WithOrigins("http://127.0.0.1:5500")
-			//				  .AllowAnyHeader()
-			//				  .AllowAnyMethod();
-			//		});
-			//});
-			//builder.Services.AddCors(options =>
-			//{
-			//	options.AddPolicy("AllowNetlify", policy =>
-			//	{
-			//		policy.WithOrigins(
-			//				"https://extraordinary-torrone-288200.netlify.app",
-			//				"http://127.0.0.1:5500",
-			//				"http://localhost:5500"
-			//			)
-			//			.AllowAnyHeader()
-			//			.AllowAnyMethod()
-			//			.AllowCredentials();
-			//	});
-			//});
+
+			// CORS Configuration
 			builder.Services.AddCors(options =>
 			{
 				options.AddPolicy("AllowFrontend", builder =>
 				{
-					builder.WithOrigins("https://taqey.github.io")
-						   .AllowAnyHeader()
-						   .AllowAnyMethod()
-						   .AllowCredentials();
+					builder.SetIsOriginAllowed(origin =>
+					{
+						// Allow GitHub Pages
+						if (origin == "https://taqey.github.io") return true;
+
+						// Allow localhost (any port)
+						if (origin.StartsWith("http://localhost:") ||
+							origin.StartsWith("http://127.0.0.1:")) return true;
+
+						// Allow file:// protocol for local development
+						if (origin == "null") return true; // file:// sends null as origin
+
+						return false;
+					})
+					   .AllowAnyHeader()
+					   .AllowAnyMethod()
+					   .AllowCredentials();
 				});
 			});
 
@@ -154,14 +144,9 @@ namespace Foodo.API
 			if (app.Environment.IsDevelopment())
 			{
 				app.MapOpenApi();
+			}
 				app.UseSwagger();
 				app.UseSwaggerUI();
-			}
-
-               if (app.Environment.IsDevelopment())
-{
-   app.MapOpenApi();
-};
 
 			app.UseHttpsRedirection();
 			app.UseCors("AllowFrontend");

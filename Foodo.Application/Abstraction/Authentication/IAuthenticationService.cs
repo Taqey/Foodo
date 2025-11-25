@@ -1,5 +1,6 @@
-﻿using Foodo.Application.Models.Dto;
-using Foodo.Application.Models.Input;
+﻿using Foodo.Application.Models.Dto.Auth;
+using Foodo.Application.Models.Input.Auth;
+using Foodo.Application.Models.Input.Merchant;
 using Foodo.Application.Models.Response;
 
 namespace Foodo.Application.Abstraction.Authentication

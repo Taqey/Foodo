@@ -1,4 +1,4 @@
-﻿using Foodo.Application.Models.Dto;
+﻿using Foodo.Application.Models.Dto.Auth;
 using Foodo.Domain.Entities;
 
 namespace Foodo.Application.Abstraction.Authentication

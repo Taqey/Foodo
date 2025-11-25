@@ -1,6 +1,6 @@
-﻿using Foodo.Application.Abstraction;
-using Foodo.Application.Abstraction.Authentication;
-using Foodo.Application.Models.Dto;
+﻿using Foodo.Application.Abstraction.Authentication;
+using Foodo.Application.Abstraction.InfraRelated;
+using Foodo.Application.Models.Dto.Auth;
 using Foodo.Domain.Entities;
 using Foodo.Infrastructure.Helper;
 using Microsoft.Extensions.Options;
