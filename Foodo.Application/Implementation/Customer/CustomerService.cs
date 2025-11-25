@@ -119,7 +119,7 @@ namespace Foodo.Application.Implementation.Customer
 
 		public async Task<ApiResponse<PaginationDto<CustomerOrderDto>>> ReadAllOrders(ProductPaginationInput input)
 		{
-			string cacheKey = $"customer_order:list:{input.UserId}:{input.Page}";
+			string cacheKey = $"customer_order:list:{input.UserId}:{input.Page}:{input.PageSize}";
 			var cached = _cacheService.Get<PaginationDto<CustomerOrderDto>>(cacheKey);
 			if (cached != null)
 				return ApiResponse<PaginationDto<CustomerOrderDto>>.Success(cached);
@@ -204,7 +204,7 @@ namespace Foodo.Application.Implementation.Customer
 
 		public async Task<ApiResponse<PaginationDto<ProductDto>>> ReadAllProducts(ProductPaginationInput input)
 		{
-			string cacheKey = $"customer_product:list:all:{input.Page}";
+			string cacheKey = $"customer_product:list:all:{input.Page}:{input.PageSize}";
 			var cached = _cacheService.Get<PaginationDto<ProductDto>>(cacheKey);
 			if (cached != null) return ApiResponse<PaginationDto<ProductDto>>.Success(cached);
 
@@ -276,7 +276,7 @@ namespace Foodo.Application.Implementation.Customer
 
 		public async Task<ApiResponse<PaginationDto<ProductDto>>> ReadProductsByCategory(ProductPaginationByCategoryInput input)
 		{
-			string cacheKey = $"customer_product:list:category:{input.Category}:{input.Page}";
+			string cacheKey = $"customer_product:list:category:{input.Category}:{input.Page}:{input.PageSize}";
 			var cached = _cacheService.Get<PaginationDto<ProductDto>>(cacheKey);
 			if (cached != null) return ApiResponse<PaginationDto<ProductDto>>.Success(cached);
 
@@ -309,7 +309,7 @@ namespace Foodo.Application.Implementation.Customer
 
 		public async Task<ApiResponse<PaginationDto<ProductDto>>> ReadProductsByShop(ProductPaginationByShopInput input)
 		{
-			string cacheKey = $"customer_product:list:shop:{input.MerchantId}:{input.Page}";
+			string cacheKey = $"customer_product:list:shop:{input.MerchantId}:{input.Page}:{input.PageSize}";
 			var user =await _userService.GetByIdAsync(input.MerchantId);
 			var (products, totalCount, totalPages) = await _unitOfWork.ProductRepository.PaginationAsync(input.Page,input.PageSize,e=>e.UserId==input.MerchantId);
 			if (products == null || !products.Any())
@@ -360,7 +360,7 @@ namespace Foodo.Application.Implementation.Customer
 
 		public async Task<ApiResponse<PaginationDto<ShopDto>>> ReadAllShops(ProductPaginationInput input)
 		{
-			string cacheKey = $"customer_merchant:list:all:{input.Page}";
+			string cacheKey = $"customer_merchant:list:all:{input.Page}:{input.PageSize}";
 			var cached = _cacheService.Get<PaginationDto<ShopDto>>(cacheKey);
 			if (cached != null) return ApiResponse<PaginationDto<ShopDto>>.Success(cached);
 
@@ -415,7 +415,7 @@ namespace Foodo.Application.Implementation.Customer
 
 		public async Task<ApiResponse<PaginationDto<ShopDto>>> ReadShopsByCategory(ShopsPaginationByCategoryInput input)
 		{
-			string cacheKey = $"customer_merchant:list:category:{input.Category}:{input.Page}";
+			string cacheKey = $"customer_merchant:list:category:{input.Category}:{input.Page}:{input.PageSize}";
 			var cached = _cacheService.Get<PaginationDto<ShopDto>>(cacheKey);
 			if (cached != null) return ApiResponse<PaginationDto<ShopDto>>.Success(cached);
 
