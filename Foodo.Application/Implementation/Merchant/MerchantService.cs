@@ -79,6 +79,12 @@ public class MerchantService : IMerchantService
 
 			// Clear cache
 			_cacheService.RemoveByPrefix($"merchant_product:list:{input.Id}");
+			_cacheService.RemoveByPrefix($"customer_product:list:all");
+			_cacheService.RemoveByPrefix($"customer_product:list:shop:{input.Id}");
+			_cacheService.RemoveByPrefix($"customer_product:list:category");
+
+
+
 			await transaction.CommitAsync();
 		}
 		catch (Exception e)
@@ -155,8 +161,6 @@ public class MerchantService : IMerchantService
 		return ApiResponse<PaginationDto<MerchantProductDto>>.Success(paginationDto);
 	}
 
-
-
 	public async Task<ApiResponse<ProductDto>> ReadProductByIdAsync(int productId)
 	{
 		string cacheKey = $"merchant_product:{productId}";
@@ -197,7 +201,6 @@ public class MerchantService : IMerchantService
 		return ApiResponse<ProductDto>.Success(productDto);
 	}
 
-
 	public async Task<ApiResponse> UpdateProductAsync(ProductUpdateInput input)
 	{
 		var product = await _unitOfWork.ProductRepository.ReadByIdAsync(input.productId);
@@ -220,6 +223,12 @@ public class MerchantService : IMerchantService
 		_cacheService.Remove($"merchant_product:{input.productId}");
 		_cacheService.RemoveByPrefix($"merchant_product:list:{product.UserId}");
 
+		_cacheService.RemoveByPrefix($"customer_product:list:all");
+		_cacheService.RemoveByPrefix($"customer_product:list:shop:{product.UserId}");
+		_cacheService.RemoveByPrefix($"customer_product:list:category");
+		_cacheService.Remove($"customer_product:{input.productId}");
+
+
 		return ApiResponse.Success("Product updated successfully");
 	}
 	
@@ -237,6 +246,11 @@ public class MerchantService : IMerchantService
 		// Clear cache
 		_cacheService.Remove($"merchant_product:{productId}");
 		_cacheService.RemoveByPrefix($"merchant_product:list:{product.UserId}");
+
+		_cacheService.RemoveByPrefix($"customer_product:list:all");
+		_cacheService.RemoveByPrefix($"customer_product:list:shop:{product.UserId}");
+		_cacheService.RemoveByPrefix($"customer_product:list:category");
+		_cacheService.Remove($"customer_product:{productId}");
 
 		return ApiResponse.Success("Product deleted successfully");
 	}
@@ -276,6 +290,12 @@ public class MerchantService : IMerchantService
 		_cacheService.Remove($"merchant_product:{productId}");
 		_cacheService.RemoveByPrefix($"merchant_product:list:{product.UserId}");
 
+
+		_cacheService.RemoveByPrefix($"customer_product:list:all");
+		_cacheService.RemoveByPrefix($"customer_product:list:shop:{product.UserId}");
+		_cacheService.RemoveByPrefix($"customer_product:list:category");
+		_cacheService.Remove($"customer_product:{productId}");
+
 		return ApiResponse.Success("Attributes added successfully");
 	}
 
@@ -293,6 +313,12 @@ public class MerchantService : IMerchantService
 		// Clear cache
 		_cacheService.Remove($"merchant_product:{productId}");
 		_cacheService.RemoveByPrefix($"merchant_product:list:{product.UserId}");
+
+
+		_cacheService.RemoveByPrefix($"customer_product:list:all");
+		_cacheService.RemoveByPrefix($"customer_product:list:shop:{product.UserId}");
+		_cacheService.RemoveByPrefix($"customer_product:list:category");
+		_cacheService.Remove($"customer_product:{productId}");
 
 		return ApiResponse.Success("Attributes removed successfully");
 	}
@@ -318,6 +344,12 @@ public class MerchantService : IMerchantService
 		_cacheService.Remove($"merchant_product:{product.ProductId}");
 		_cacheService.RemoveByPrefix($"merchant_product:list:{product.UserId}");
 
+
+		_cacheService.RemoveByPrefix($"customer_product:list:all");
+		_cacheService.RemoveByPrefix($"customer_product:list:shop:{product.UserId}");
+		_cacheService.RemoveByPrefix($"customer_product:list:category");
+		_cacheService.Remove($"customer_product:{product.ProductId}");
+
 		return ApiResponse.Success("Categories added successfully");
 	}
 
@@ -341,6 +373,11 @@ public class MerchantService : IMerchantService
 		// Clear cache
 		_cacheService.Remove($"merchant_product:{product.ProductId}");
 		_cacheService.RemoveByPrefix($"merchant_product:list:{product.UserId}");
+
+		_cacheService.RemoveByPrefix($"customer_product:list:all");
+		_cacheService.RemoveByPrefix($"customer_product:list:shop:{product.UserId}");
+		_cacheService.RemoveByPrefix($"customer_product:list:category");
+		_cacheService.Remove($"customer_product:{product.ProductId}");
 
 		return ApiResponse.Success("Categories removed successfully");
 	}
@@ -458,6 +495,9 @@ public class MerchantService : IMerchantService
 		// Clear cache
 		_cacheService.Remove($"merchant_order:{orderId}");
 		_cacheService.RemoveByPrefix($"merchant_order:list:{order.MerchantId}");
+
+		_cacheService.Remove($"customer_order:{orderId}");
+		_cacheService.RemoveByPrefix($"customer_order:list:{order.CustomerId}");
 
 		return ApiResponse.Success("Order status updated successfully");
 	}

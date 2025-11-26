@@ -42,8 +42,14 @@ namespace Foodo.Application.Implementation.Customer
 				return ApiResponse.Failure("Failed to cancel order");
 
 			// Clear cache for this order
+
 			_cacheService.Remove($"customer_order:{input.ItemId}");
-			_cacheService.RemoveByPrefix($"customer_order:list");
+			_cacheService.RemoveByPrefix($"customer_order:list:{order.CustomerId}");
+
+			// Clear merchant caches
+			_cacheService.RemoveByPrefix($"merchant_order:{input.ItemId}");
+			_cacheService.RemoveByPrefix($"merchant_order:list:{order.MerchantId}");
+
 
 			return ApiResponse.Success("Order cancelled successfully");
 		}
@@ -104,9 +110,11 @@ namespace Foodo.Application.Implementation.Customer
 
 				await _unitOfWork.CommitTransactionAsync(transaction);
 
-				// Clear related cache
-				_cacheService.RemoveByPrefix($"customer_order:list");
-				_cacheService.RemoveByPrefix($"customer_order:");
+				// Clear customer cache
+				_cacheService.RemoveByPrefix($"customer_order:list:{input.CustomerId}");
+				//_cacheService.RemoveByPrefix($"customer_order:");
+				// Clear merchant cache
+				_cacheService.RemoveByPrefix($"merchant_order:list:{merchantId}");
 
 				return ApiResponse.Success("Order placed successfully");
 			}
