@@ -14,9 +14,9 @@ namespace Foodo.Application.Abstraction.InfraRelated
 		Task<IdentityResult> ChangePasswordAsync(ApplicationUser applicationUser, string oldPassword, string newPassword);
 		Task<IdentityResult> ForgetPasswordAsync(ApplicationUser applicationUser, string newPassword);
 		Task<ApplicationUser> GetUserByResetToken(string token);
-		Task<ApplicationUser> GetUserByToken(string token);
+		Task<ApplicationUser> GetUserByRefreshToken(string token);
 		Task<ApplicationUser> GetUserByVerificationToken(string token);
-		Task UpdateAsync(ApplicationUser user);
+		Task<IdentityResult> UpdateAsync(ApplicationUser user);
 		Task<IdentityResult> AddRolesToUser(ApplicationUser user, string Role);
 		Task<IList<string>> GetRolesForUser(ApplicationUser user);
 		Task<ApplicationUser> GetUserByResetCode(string Code);
