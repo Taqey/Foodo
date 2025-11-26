@@ -110,7 +110,7 @@ namespace Foodo.Application.Implementation.Authentication
 			}
 			if (input.UserType == UserType.Merchant)
 			{
-				_cacheService.RemoveByPrefix("merchant:");
+				_cacheService.RemoveByPrefix("customer_merchant");
 			}
 
 			return ApiResponse<UserIdDto>.Success(new UserIdDto { UserId = user.Id }, "User registered successfully.");
