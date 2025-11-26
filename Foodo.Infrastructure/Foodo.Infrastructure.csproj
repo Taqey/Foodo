@@ -17,11 +17,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Foodo.Application\Foodo.Application.csproj" />
+    <Folder Include="Perisistence\Migrations\" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Perisistence\Migrations\" />
+    <ProjectReference Include="..\Foodo.Application\Foodo.Application.csproj" />
   </ItemGroup>
 
 </Project>

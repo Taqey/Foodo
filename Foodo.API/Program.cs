@@ -19,6 +19,10 @@ using Foodo.Application.Implementation.Merchant;
 using Foodo.Application.Abstraction.Customer;
 using Foodo.Application.Implementation.Customer;
 using Foodo.Application.Abstraction.InfraRelated;
+using Foodo.Application.Abstraction.Profile.MerchantProfile;
+using Foodo.Application.Implementation.Profile.MerchantProfile;
+using Foodo.Application.Abstraction.Profile.CustomerProfile;
+using Foodo.Application.Implementation.Profile.CustomerProfile;
 namespace Foodo.API
 {
 	public class Program
@@ -107,6 +111,8 @@ namespace Foodo.API
 			builder.Services.AddScoped<IEmailSenderService, EmailSenderService>();
 			builder.Services.AddScoped<IMerchantService, MerchantService>();
 			builder.Services.AddScoped<ICustomerService, CustomerService>();
+			builder.Services.AddScoped<IMerchantProfileService, MerchantProfileService>();
+			builder.Services.AddScoped<ICustomerProfileService, CustomerProfileService>();
 			builder.Services.AddHttpContextAccessor();
 			builder.Services.AddMemoryCache();
 			builder.Services.AddScoped<ICacheService, CacheService>();
