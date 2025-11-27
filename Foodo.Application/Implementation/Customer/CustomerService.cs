@@ -49,6 +49,8 @@ namespace Foodo.Application.Implementation.Customer
 			// Clear merchant caches
 			_cacheService.RemoveByPrefix($"merchant_order:{input.ItemId}");
 			_cacheService.RemoveByPrefix($"merchant_order:list:{order.MerchantId}");
+			_cacheService.RemoveByPrefix($"merchant_customer:list:{order.MerchantId}");
+
 
 
 			return ApiResponse.Success("Order cancelled successfully");
@@ -71,13 +73,14 @@ namespace Foodo.Application.Implementation.Customer
 					return ApiResponse.Failure("Product not found");
 
 				var merchantId = product.UserId;
-
+				var customerAdress= ((await _userService.GetByIdAsync(input.CustomerId)).TblAdresses.FirstOrDefault(e=>e.IsDefault==true)).AddressId;
 				var order = new TblOrder
 				{
 					CustomerId = input.CustomerId,
 					MerchantId = merchantId,
 					OrderDate = DateTime.UtcNow,
 					OrderStatus = OrderState.Pending,
+					BillingAddressId=customerAdress
 				};
 
 				var createdOrder = await _unitOfWork.OrderRepository.CreateAsync(order);
@@ -115,6 +118,8 @@ namespace Foodo.Application.Implementation.Customer
 				//_cacheService.RemoveByPrefix($"customer_order:");
 				// Clear merchant cache
 				_cacheService.RemoveByPrefix($"merchant_order:list:{merchantId}");
+				_cacheService.RemoveByPrefix($"merchant_customer:list:{order.MerchantId}");
+
 
 				return ApiResponse.Success("Order placed successfully");
 			}
@@ -148,22 +153,35 @@ namespace Foodo.Application.Implementation.Customer
 
 			var merchantName = (await _unitOfWork.MerchantRepository.FindByContidtionAsync(e => e.UserId == orders.First().MerchantId)).StoreName;
 
-			var orderDtos = orders.Select(order => new CustomerOrderDto
+			var orderDtos = new List<CustomerOrderDto>();
+
+			foreach (var order in orders)
 			{
-				OrderId = order.OrderId,
-				MerchantId = order.MerchantId,
-				MerchantName = merchantName,
-				OrderDate = order.OrderDate,
-				TotalAmount = order.TotalPrice,
-				Status = order.OrderStatus.ToString(),
-				OrderItems = order.TblProductsOrders.Select(item => new OrderItemDto
+				// هات العنوان
+				var address = await _unitOfWork.AdressRepository.ReadByIdAsync(order.BillingAddressId);
+
+				// ابني الـ DTO
+				var dto = new CustomerOrderDto
 				{
-					ItemId = item.ProductId,
-					ItemName = item.Product.ProductsName,
-					Quantity = item.Quantity,
-					Price = item.Price
-				}).ToList()
-			}).ToList();
+					OrderId = order.OrderId,
+					MerchantId = order.MerchantId,
+					MerchantName = merchantName,
+					OrderDate = order.OrderDate,
+					TotalAmount = order.TotalPrice,
+					Status = order.OrderStatus.ToString(),
+					billingAddress = address?.StreetAddress ?? "No Address",
+					OrderItems = order.TblProductsOrders.Select(item => new OrderItemDto
+					{
+						ItemId = item.ProductId,
+						ItemName = item.Product.ProductsName,
+						Quantity = item.Quantity,
+						Price = item.Price
+					}).ToList()
+				};
+
+				orderDtos.Add(dto);
+			}
+
 
 			var resultDto = new PaginationDto<CustomerOrderDto>
 			{
@@ -185,6 +203,8 @@ namespace Foodo.Application.Implementation.Customer
 			var order = await _unitOfWork.OrderRepository.FindByContidtionAsync(o => o.OrderId == Convert.ToInt32(input.ItemId));
 			if (order == null) return ApiResponse<CustomerOrderDto>.Failure("Order not found");
 			var MerchantName = (await _userService.GetByIdAsync(order.MerchantId)).TblMerchant.StoreName;
+			var address = await _unitOfWork.AdressRepository.ReadByIdAsync(order.BillingAddressId);
+
 			var orderDto = new CustomerOrderDto
 			{
 				OrderId = order.OrderId,
@@ -193,6 +213,8 @@ namespace Foodo.Application.Implementation.Customer
 				OrderDate = order.OrderDate,
 				TotalAmount = order.TotalPrice,
 				Status = order.OrderStatus.ToString(),
+				billingAddress = address?.StreetAddress ?? "No Address",
+
 				OrderItems = order.TblProductsOrders.Select(item => new OrderItemDto
 				{
 					ItemId = item.ProductId,

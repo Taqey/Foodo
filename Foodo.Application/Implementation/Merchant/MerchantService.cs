@@ -498,6 +498,9 @@ public class MerchantService : IMerchantService
 
 		_cacheService.Remove($"customer_order:{orderId}");
 		_cacheService.RemoveByPrefix($"customer_order:list:{order.CustomerId}");
+		_cacheService.RemoveByPrefix($"merchant_customer:list:{order.MerchantId}");
+
+
 
 		return ApiResponse.Success("Order status updated successfully");
 	}
