@@ -42,6 +42,7 @@ namespace Foodo.Infrastructure.Perisistence
 		public virtual DbSet<TblCategoryOfRestaurant> TblCategoryOfRestaurants { get; set; }
 		public virtual DbSet<TblCategoryOfProduct> TblCategoryOfProducts { get; set; }
 		public virtual DbSet<TblProductCategory> TblProductCategories { get; set; }
+		public virtual DbSet<TblDriver> TblDrivers { get; set; }
 
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -220,6 +221,8 @@ namespace Foodo.Infrastructure.Perisistence
 				entity.Property(e => e.MerchantId).HasColumnName("MerchantId")
 	.IsRequired()
 	.HasMaxLength(450);
+				entity.Property(e => e.PaidMoney).HasColumnType("decimal(18, 2)");
+
 			});
 
 			modelBuilder.Entity<TblProduct>(entity =>
@@ -317,6 +320,13 @@ namespace Foodo.Infrastructure.Perisistence
 					.IsRequired()
 					.HasMaxLength(50);
 			});
+			modelBuilder.Entity<TblDriver>(entity =>
+			{
+				entity.Property(e => e.FirstName).HasMaxLength(50).IsRequired();
+				entity.Property(e => e.LastName).HasMaxLength(50).IsRequired();
+				entity.HasKey(e => e.UserId);
+				entity.HasOne(e => e.User).WithOne(e => e.TblDriver).HasForeignKey<TblDriver>(e=>e.UserId);
+			}); 
 			OnModelCreatingPartial(modelBuilder);
 		}
 

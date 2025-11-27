@@ -110,7 +110,8 @@ namespace Foodo.Application.Implementation.Authentication
 			}
 			if (input.UserType == UserType.Merchant)
 			{
-				_cacheService.RemoveByPrefix("customer_merchant");
+				_cacheService.RemoveByPrefix("customer_merchant:list:");
+
 			}
 
 			return ApiResponse<UserIdDto>.Success(new UserIdDto { UserId = user.Id }, "User registered successfully.");
@@ -267,7 +268,7 @@ namespace Foodo.Application.Implementation.Authentication
 			user.LkpCodes.Add(new LkpCodes { Key = code, CreatedAt = DateTime.UtcNow, ExpiresAt = DateTime.UtcNow.AddMinutes(10), CodeType = CodeType.EmailVerification });
 			await _userService.UpdateAsync(user);
 
-			var result =_senderService.SendEmailAsync(input.Email, "User", "Verify your email", $"Your Reset Password code is {code}");
+			var result =_senderService.SendEmailAsync(input.Email, "User", "Verify your email", $"Your Email Verification code is {code}");
 			return ApiResponse.Success("Verification email sent.");
 		}
 

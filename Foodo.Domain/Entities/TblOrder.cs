@@ -29,8 +29,9 @@ public partial class TblOrder
     public int? DeletedBy { get; set; }
 
     public OrderState OrderStatus { get; set; }= OrderState.Pending;
-
-
+	public int BillingAddressId { get; set; }
+	public string? DriverId { get; set; }
+	public decimal? PaidMoney { get; set; }
 	public string CustomerId { get; set; }
 	public string MerchantId { get; set; }
 

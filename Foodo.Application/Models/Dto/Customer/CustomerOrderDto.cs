@@ -14,6 +14,7 @@ namespace Foodo.Application.Models.Dto.Customer
 		public DateTime OrderDate { get; set; }
 		public decimal? TotalAmount { get; set; }
 		public string Status { get; set; }
+		public string billingAddress { get; set; }
 		public List<OrderItemDto> OrderItems { get; set; } = new List<OrderItemDto>();
 	}
 }
