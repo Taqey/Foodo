@@ -241,7 +241,7 @@ namespace Foodo.Application.Implementation.Authentication
 				Name = user.TblCustomer.FirstName;
 			}
 			var code = RandomNumberGenerator.GetInt32(100000, 999999).ToString();
-			user.LkpCodes.Add(new LkpCodes { Key = code, CreatedAt = DateTime.UtcNow, ExpiresAt = DateTime.UtcNow.AddMinutes(10), CodeType = CodeType.PasswordReset });
+			user.LkpCodes.Add(new LkpCode { Key = code, CreatedAt = DateTime.UtcNow, ExpiresAt = DateTime.UtcNow.AddMinutes(10), CodeType = CodeType.PasswordReset });
 			await _userService.UpdateAsync(user);
 			var result=await _senderService.SendEmailAsync(input.Email, Name, "Password Reset", $"Your Reset Password code is {code}");
 			return result;
@@ -265,7 +265,7 @@ namespace Foodo.Application.Implementation.Authentication
 				Name = user.TblCustomer.FirstName;
 			}
 			var code = RandomNumberGenerator.GetInt32(100000, 999999).ToString();
-			user.LkpCodes.Add(new LkpCodes { Key = code, CreatedAt = DateTime.UtcNow, ExpiresAt = DateTime.UtcNow.AddMinutes(10), CodeType = CodeType.EmailVerification });
+			user.LkpCodes.Add(new LkpCode { Key = code, CreatedAt = DateTime.UtcNow, ExpiresAt = DateTime.UtcNow.AddMinutes(10), CodeType = CodeType.EmailVerification });
 			await _userService.UpdateAsync(user);
 
 			var result =_senderService.SendEmailAsync(input.Email, "User", "Verify your email", $"Your Email Verification code is {code}");

@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Foodo.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class Initial : Migration
+    public partial class clean : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -94,6 +94,32 @@ namespace Foodo.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "TblCategoryOfProducts",
+                columns: table => new
+                {
+                    CategoryId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    CategoryName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TblCategoryOfProducts", x => x.CategoryId);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TblCategoryOfRestaurants",
+                columns: table => new
+                {
+                    CategoryId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    CategoryName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TblCategoryOfRestaurants", x => x.CategoryId);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "TblOrders",
                 columns: table => new
                 {
@@ -102,8 +128,8 @@ namespace Foodo.Infrastructure.Migrations
                     DeletedDate = table.Column<DateTime>(type: "datetime", nullable: true),
                     OrderDate = table.Column<DateTime>(type: "datetime", nullable: false, defaultValueSql: "(getdate())")
                         .Annotation("Relational:DefaultConstraintName", "DF_TblOrders_OrderDate"),
-                    TotalPrice = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    Tax = table.Column<decimal>(type: "decimal(9,2)", nullable: false),
+                    TotalPrice = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    Tax = table.Column<decimal>(type: "decimal(9,2)", nullable: true),
                     CreatedBy = table.Column<int>(type: "int", nullable: true),
                     IsDeleted = table.Column<bool>(type: "bit", nullable: false),
                     CreatedDate = table.Column<DateTime>(type: "datetime", nullable: false, defaultValueSql: "(getdate())")
@@ -111,7 +137,11 @@ namespace Foodo.Infrastructure.Migrations
                     UpdatedBy = table.Column<int>(type: "int", nullable: true),
                     DeletedBy = table.Column<int>(type: "int", nullable: true),
                     OrderStatus = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    UserId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false)
+                    BillingAddressId = table.Column<int>(type: "int", nullable: false),
+                    DriverId = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    PaidMoney = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    CustomerId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
+                    MerchantId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -225,7 +255,7 @@ namespace Foodo.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "LkpCodes",
+                name: "LkpCode",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -239,9 +269,9 @@ namespace Foodo.Infrastructure.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_LkpCodes", x => x.Id);
+                    table.PrimaryKey("PK_LkpCode", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_LkpCodes_AspNetUsers_ApplicationUserId",
+                        name: "FK_LkpCode_AspNetUsers_ApplicationUserId",
                         column: x => x.ApplicationUserId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id");
@@ -267,6 +297,24 @@ namespace Foodo.Infrastructure.Migrations
                         column: x => x.ApplicationUserId,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "LkpUserPhotos",
+                columns: table => new
+                {
+                    UserId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
+                    Url = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_LkpUserPhotos", x => x.UserId);
+                    table.ForeignKey(
+                        name: "FK_LkpUserPhotos_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -302,7 +350,7 @@ namespace Foodo.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "TblCustomer",
+                name: "TblCustomers",
                 columns: table => new
                 {
                     UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
@@ -313,7 +361,7 @@ namespace Foodo.Infrastructure.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_TblCustomer", x => x.UserId);
+                    table.PrimaryKey("PK_TblCustomers", x => x.UserId);
                     table.ForeignKey(
                         name: "FK_TblCustomer_ApplicationUser",
                         column: x => x.UserId,
@@ -322,7 +370,29 @@ namespace Foodo.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "TblMerchant",
+                name: "TblDrivers",
+                columns: table => new
+                {
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    FirstName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    LastName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    Gender = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    BirthDate = table.Column<DateOnly>(type: "date", nullable: false),
+                    NationalId = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TblDrivers", x => x.UserId);
+                    table.ForeignKey(
+                        name: "FK_TblDrivers_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TblMerchants",
                 columns: table => new
                 {
                     UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
@@ -331,7 +401,7 @@ namespace Foodo.Infrastructure.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_TblMerchant", x => x.UserId);
+                    table.PrimaryKey("PK_TblMerchants", x => x.UserId);
                     table.ForeignKey(
                         name: "FK_TblMerchant_ApplicationUser",
                         column: x => x.UserId,
@@ -362,8 +432,60 @@ namespace Foodo.Infrastructure.Migrations
                     table.ForeignKey(
                         name: "FK_TblProducts_TblMerchant",
                         column: x => x.UserId,
-                        principalTable: "TblMerchant",
+                        principalTable: "TblMerchants",
                         principalColumn: "UserId");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TblRestaurantCategories",
+                columns: table => new
+                {
+                    restaurantcategoryid = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    restaurantid = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    categoryid = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TblRestaurantCategories", x => x.restaurantcategoryid);
+                    table.ForeignKey(
+                        name: "FK_TblRestaurantCategories_TblCategoryOfRestaurants_categoryid",
+                        column: x => x.categoryid,
+                        principalTable: "TblCategoryOfRestaurants",
+                        principalColumn: "CategoryId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_TblRestaurantCategories_TblMerchants_restaurantid",
+                        column: x => x.restaurantid,
+                        principalTable: "TblMerchants",
+                        principalColumn: "UserId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TblProductCategories",
+                columns: table => new
+                {
+                    productcategoryid = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    productid = table.Column<int>(type: "int", nullable: false),
+                    categoryid = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TblProductCategories", x => x.productcategoryid);
+                    table.ForeignKey(
+                        name: "FK_TblProductCategories_TblCategoryOfProducts_categoryid",
+                        column: x => x.categoryid,
+                        principalTable: "TblCategoryOfProducts",
+                        principalColumn: "CategoryId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_TblProductCategories_TblProducts_productid",
+                        column: x => x.productid,
+                        principalTable: "TblProducts",
+                        principalColumn: "ProductId",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -393,10 +515,32 @@ namespace Foodo.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "TblProductPhotos",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ProductId = table.Column<int>(type: "int", nullable: false),
+                    Url = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
+                    isMain = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TblProductPhotos", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_TblProductPhotos_TblProducts_ProductId",
+                        column: x => x.ProductId,
+                        principalTable: "TblProducts",
+                        principalColumn: "ProductId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "TblProductsOrders",
                 columns: table => new
                 {
-                    ProductIOrderId = table.Column<int>(type: "int", nullable: false),
+                    ProductOrderId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     ProductId = table.Column<int>(type: "int", nullable: false),
                     OrderId = table.Column<int>(type: "int", nullable: false),
                     DeletedDate = table.Column<DateTime>(type: "datetime", nullable: true),
@@ -411,7 +555,7 @@ namespace Foodo.Infrastructure.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_TblProductsOrders", x => x.ProductIOrderId);
+                    table.PrimaryKey("PK_TblProductsOrders", x => x.ProductOrderId);
                     table.ForeignKey(
                         name: "FK_TblProductsOrders_TblOrders",
                         column: x => x.OrderId,
@@ -466,6 +610,75 @@ namespace Foodo.Infrastructure.Migrations
                     { "d6d2f11c-6482-4b9f-8e59-24e997ac635b", "d6d2f11c-6482-4b9f-8e59-24e997ac635b", "Customer", "CUSTOMER" }
                 });
 
+            migrationBuilder.InsertData(
+                table: "TblCategoryOfProducts",
+                columns: new[] { "CategoryId", "CategoryName" },
+                values: new object[,]
+                {
+                    { 1, "Burger" },
+                    { 2, "Pizza" },
+                    { 3, "Pasta" },
+                    { 4, "Sandwich" },
+                    { 5, "Grill" },
+                    { 6, "FriedChicken" },
+                    { 7, "Seafood" },
+                    { 8, "Salad" },
+                    { 9, "Soup" },
+                    { 10, "Dessert" },
+                    { 11, "IceCream" },
+                    { 12, "Juice" },
+                    { 13, "Coffee" },
+                    { 14, "Beverage" },
+                    { 15, "Appetizer" },
+                    { 16, "MainCourse" },
+                    { 17, "SideDish" },
+                    { 18, "Shawarma" },
+                    { 19, "Kebab" },
+                    { 20, "Sushi" },
+                    { 21, "Tacos" },
+                    { 22, "Noodles" },
+                    { 23, "RiceDishes" },
+                    { 24, "Pastry" },
+                    { 25, "Breakfast" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "TblCategoryOfRestaurants",
+                columns: new[] { "CategoryId", "CategoryName" },
+                values: new object[,]
+                {
+                    { 1, "FastFood" },
+                    { 2, "CasualDining" },
+                    { 3, "FineDining" },
+                    { 4, "Cafe" },
+                    { 5, "Bakery" },
+                    { 6, "DessertShop" },
+                    { 7, "JuiceBar" },
+                    { 8, "Seafood" },
+                    { 9, "Steakhouse" },
+                    { 10, "Pizzeria" },
+                    { 11, "BBQ" },
+                    { 12, "FamilyRestaurant" },
+                    { 13, "HealthyFood" },
+                    { 14, "Vegetarian" },
+                    { 15, "Vegan" },
+                    { 16, "FoodTruck" },
+                    { 17, "Buffet" },
+                    { 18, "Sandwiches" },
+                    { 19, "Egyptian" },
+                    { 20, "Italian" },
+                    { 21, "American" },
+                    { 22, "Mexican" },
+                    { 23, "Turkish" },
+                    { 24, "Chinese" },
+                    { 25, "Japanese" },
+                    { 26, "Indian" },
+                    { 27, "Lebanese" },
+                    { 28, "Syrian" },
+                    { 29, "Greek" },
+                    { 30, "French" }
+                });
+
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
                 table: "AspNetRoleClaims",
@@ -506,8 +719,8 @@ namespace Foodo.Infrastructure.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_LkpCodes_ApplicationUserId",
-                table: "LkpCodes",
+                name: "IX_LkpCode_ApplicationUserId",
+                table: "LkpCode",
                 column: "ApplicationUserId");
 
             migrationBuilder.CreateIndex(
@@ -536,8 +749,23 @@ namespace Foodo.Infrastructure.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_TblProductCategories_categoryid",
+                table: "TblProductCategories",
+                column: "categoryid");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TblProductCategories_productid",
+                table: "TblProductCategories",
+                column: "productid");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_TblProductDetails_ProductId",
                 table: "TblProductDetails",
+                column: "ProductId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TblProductPhotos_ProductId",
+                table: "TblProductPhotos",
                 column: "ProductId");
 
             migrationBuilder.CreateIndex(
@@ -554,6 +782,16 @@ namespace Foodo.Infrastructure.Migrations
                 name: "IX_TblProductsOrders_ProductId",
                 table: "TblProductsOrders",
                 column: "ProductId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TblRestaurantCategories_categoryid",
+                table: "TblRestaurantCategories",
+                column: "categoryid");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TblRestaurantCategories_restaurantid",
+                table: "TblRestaurantCategories",
+                column: "restaurantid");
         }
 
         /// <inheritdoc />
@@ -575,7 +813,7 @@ namespace Foodo.Infrastructure.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
-                name: "LkpCodes");
+                name: "LkpCode");
 
             migrationBuilder.DropTable(
                 name: "LkpProductDetailsAttributes");
@@ -584,13 +822,28 @@ namespace Foodo.Infrastructure.Migrations
                 name: "lkpRefreshToken");
 
             migrationBuilder.DropTable(
+                name: "LkpUserPhotos");
+
+            migrationBuilder.DropTable(
                 name: "TblAdresses");
 
             migrationBuilder.DropTable(
-                name: "TblCustomer");
+                name: "TblCustomers");
+
+            migrationBuilder.DropTable(
+                name: "TblDrivers");
+
+            migrationBuilder.DropTable(
+                name: "TblProductCategories");
+
+            migrationBuilder.DropTable(
+                name: "TblProductPhotos");
 
             migrationBuilder.DropTable(
                 name: "TblProductsOrders");
+
+            migrationBuilder.DropTable(
+                name: "TblRestaurantCategories");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
@@ -605,13 +858,19 @@ namespace Foodo.Infrastructure.Migrations
                 name: "TblProductDetails");
 
             migrationBuilder.DropTable(
+                name: "TblCategoryOfProducts");
+
+            migrationBuilder.DropTable(
                 name: "TblOrders");
+
+            migrationBuilder.DropTable(
+                name: "TblCategoryOfRestaurants");
 
             migrationBuilder.DropTable(
                 name: "TblProducts");
 
             migrationBuilder.DropTable(
-                name: "TblMerchant");
+                name: "TblMerchants");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");

@@ -1,4 +1,6 @@
-﻿namespace Foodo.Application.Models.Dto.Merchant
+﻿using Foodo.Application.Models.Dto.Photo;
+
+namespace Foodo.Application.Models.Dto.Merchant
 {
 	public class MerchantProductDto
 	{
@@ -11,6 +13,7 @@
 
 		public string Price { get; set; }
 		public ICollection<string> ProductCategories { get; set; } = new List<string>();
+		public ICollection<ProductPhotosDto> Urls {  get; set; } = new List<ProductPhotosDto>();
 	}
 
 }

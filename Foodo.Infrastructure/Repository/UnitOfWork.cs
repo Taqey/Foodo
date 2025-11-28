@@ -19,6 +19,8 @@ namespace Foodo.Infrastructure.Repository
 		public IRepository<TblProduct> ProductRepository { get; }
 		public IRepository<TblProductDetail> ProductDetailRepository { get; }
 		public IRepository<TblProductsOrder> ProductsOrderRepository { get; }
+		public IRepository<TblProductPhoto> ProductPhotoRepository { get; }
+
 
 		public UnitOfWork(
 			AppDbContext context,
@@ -31,7 +33,8 @@ namespace Foodo.Infrastructure.Repository
 			IRepository<TblOrder> OrderRepository,
 			IRepository<TblProduct> ProductRepository,
 			IRepository<TblProductDetail> ProductDetailRepository,
-			IRepository<TblProductsOrder> ProductsOrderRepository
+			IRepository<TblProductsOrder> ProductsOrderRepository,
+			IRepository<TblProductPhoto> ProductPhotoRepository
 		)
 		{
 			_context = context;
@@ -46,6 +49,7 @@ namespace Foodo.Infrastructure.Repository
 			this.ProductRepository = ProductRepository;
 			this.ProductDetailRepository = ProductDetailRepository;
 			this.ProductsOrderRepository = ProductsOrderRepository;
+			this.ProductPhotoRepository= ProductPhotoRepository;
 		}
 
 		public async Task<int> saveAsync()

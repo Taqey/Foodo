@@ -2,7 +2,7 @@
 
 namespace Foodo.Domain.Entities
 {
-	public class LkpCodes
+	public class LkpCode
 	{
 		public int Id { get; set; }
 		public string Key { get; set; }

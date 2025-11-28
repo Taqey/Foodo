@@ -12,7 +12,7 @@ namespace Foodo.Application.Abstraction.Merchant;
 
 public interface IMerchantService
 {
-	Task<ApiResponse> CreateProductAsync(ProductInput request);
+	Task<ApiResponse<CreateProductDto>> CreateProductAsync(ProductInput request);
 	Task<ApiResponse<ProductDto>> ReadProductByIdAsync(int productId);
 	Task<ApiResponse<PaginationDto<MerchantProductDto>>> ReadAllProductsAsync(ProductPaginationInput input);
 	Task<ApiResponse> UpdateProductAsync(ProductUpdateInput input);
