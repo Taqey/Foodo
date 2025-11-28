@@ -13,7 +13,8 @@ public partial class ApplicationUser: IdentityUser
     public virtual TblCustomer TblCustomer { get; set; }
 	public virtual TblDriver TblDriver { get; set; }
     public virtual TblMerchant TblMerchant { get; set; }
+	public virtual LkpUserPhoto UserPhoto { get; set; }
     public virtual ICollection<TblAdress> TblAdresses { get; set; } = new List<TblAdress>();
 	public virtual ICollection<lkpRefreshToken> lkpRefreshTokens { get; set; } = new List<lkpRefreshToken>();	
-	public virtual ICollection<LkpCodes> LkpCodes { get; set; } = new List<LkpCodes>();
+	public virtual ICollection<LkpCode> LkpCodes { get; set; } = new List<LkpCode>();
 }

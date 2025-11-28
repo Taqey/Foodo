@@ -1,4 +1,6 @@
-﻿namespace Foodo.Application.Models.Dto
+﻿using Foodo.Application.Models.Dto.Photo;
+
+namespace Foodo.Application.Models.Dto
 {
 	public class ProductDto
 	{
@@ -9,5 +11,7 @@
 		public string Price { get; set; }
 		public ICollection<AttributeDto> Attributes { get; set; } = new List<AttributeDto>();
 		public ICollection<string> ProductCategories { get; set; }=new List<string>();
+		public ICollection<ProductPhotosDto> Urls { get; set; } = new List<ProductPhotosDto>();
+
 	}
 }

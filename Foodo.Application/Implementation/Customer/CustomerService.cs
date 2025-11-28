@@ -2,6 +2,7 @@
 using Foodo.Application.Abstraction.InfraRelated;
 using Foodo.Application.Models.Dto;
 using Foodo.Application.Models.Dto.Customer;
+using Foodo.Application.Models.Dto.Photo;
 using Foodo.Application.Models.Input;
 using Foodo.Application.Models.Input.Customer;
 using Foodo.Application.Models.Input.Merchant;
@@ -263,7 +264,15 @@ namespace Foodo.Application.Implementation.Customer
 					Name = pda.Attribute.Name,
 					Value = pda.Attribute.value,
 					MeasurementUnit = pda.UnitOfMeasure.UnitOfMeasureName
-				}).ToList() ?? new List<AttributeDto>()
+				}).ToList() ?? new List<AttributeDto>(),
+				Urls = product.ProductPhotos
+		.Select(p => new ProductPhotosDto
+		{
+			url = p.Url,
+			isMain = p.isMain
+		})
+		.ToList()
+
 			}).ToList();
 
 			var resultDto = new PaginationDto<ProductDto>
@@ -297,7 +306,15 @@ namespace Foodo.Application.Implementation.Customer
 					Name = pda.Attribute.Name,
 					Value = pda.Attribute.value,
 					MeasurementUnit = pda.UnitOfMeasure.UnitOfMeasureName
-				}).ToList() ?? new List<AttributeDto>()
+				}).ToList() ?? new List<AttributeDto>(),
+				Urls = product.ProductPhotos
+		.Select(p => new ProductPhotosDto
+		{
+			url = p.Url,
+			isMain = p.isMain
+		})
+		.ToList()
+
 			};
 
 			_cacheService.Set(cacheKey, productDto);
@@ -310,7 +327,7 @@ namespace Foodo.Application.Implementation.Customer
 			var cached = _cacheService.Get<PaginationDto<ProductDto>>(cacheKey);
 			if (cached != null) return ApiResponse<PaginationDto<ProductDto>>.Success(cached);
 
-			var (products, totalCount, totalPages) = await _unitOfWork.ProductRepository.PaginationAsync(input.Page, input.PageSize, p => p.ProductCategory.Any(c => c.categoryid == (int)input.Category));
+			var (products, totalCount, totalPages) = await _unitOfWork.ProductRepository.PaginationAsync(input.Page, input.PageSize, p => p.ProductCategories.Any(c => c.categoryid == (int)input.Category));
 
 			var productDtos = products.Select(product => new ProductDto
 			{
@@ -323,7 +340,15 @@ namespace Foodo.Application.Implementation.Customer
 					Name = pda.Attribute.Name,
 					Value = pda.Attribute.value,
 					MeasurementUnit = pda.UnitOfMeasure.UnitOfMeasureName
-				}).ToList() ?? new List<AttributeDto>()
+				}).ToList() ?? new List<AttributeDto>(),
+				Urls = product.ProductPhotos
+		.Select(p => new ProductPhotosDto
+		{
+			url = p.Url,
+			isMain = p.isMain
+		})
+		.ToList()
+
 			}).ToList();
 
 			var resultDto = new PaginationDto<ProductDto>
@@ -368,9 +393,17 @@ namespace Foodo.Application.Implementation.Customer
 					MeasurementUnit = pda.UnitOfMeasure.UnitOfMeasureName
 				}).ToList() ?? new List<AttributeDto>(),
 
-				ProductCategories = product.ProductCategory
+				ProductCategories = product.ProductCategories
 	.Select(c => ((FoodCategory)c.categoryid).ToString())
-	.ToList()
+	.ToList(),
+				Urls = product.ProductPhotos
+		.Select(p => new ProductPhotosDto
+		{
+			url = p.Url,
+			isMain = p.isMain
+		})
+		.ToList()
+
 
 			}).ToList();
 
@@ -403,7 +436,7 @@ namespace Foodo.Application.Implementation.Customer
 				ShopDescription = shop.StoreDescription,
 				Categories = shop.TblRestaurantCategories
 	.Select(c => ((RestaurantCategory)c.categoryid).ToString())
-	.ToList()
+	.ToList(),url=shop.User.UserPhoto.Url,
 
 			}).ToList();
 
@@ -435,7 +468,8 @@ namespace Foodo.Application.Implementation.Customer
 				ShopDescription = shop.StoreDescription,
 						Categories = shop.TblRestaurantCategories
 .Select(c => ((RestaurantCategory)c.categoryid).ToString())
-.ToList()
+.ToList(),
+				url = shop.User.UserPhoto.Url
 			};
 
 
@@ -470,7 +504,8 @@ namespace Foodo.Application.Implementation.Customer
 				ShopDescription = shop.StoreDescription,
 				Categories = shop.TblRestaurantCategories
 	.Select(c => ((RestaurantCategory)c.categoryid).ToString())
-	.ToList()
+	.ToList(),
+				url = shop.User.UserPhoto.Url
 
 			}).ToList();
 

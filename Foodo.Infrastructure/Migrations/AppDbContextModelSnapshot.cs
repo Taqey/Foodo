@@ -4,7 +4,6 @@ using Foodo.Infrastructure.Perisistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -12,11 +11,9 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Foodo.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251121145707_test")]
-    partial class test
+    partial class AppDbContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -133,10 +130,10 @@ namespace Foodo.Infrastructure.Migrations
 
                     b.HasKey("AttributeId");
 
-                    b.ToTable("LkpAttributes");
+                    b.ToTable("LkpAttributes", (string)null);
                 });
 
-            modelBuilder.Entity("Foodo.Domain.Entities.LkpCodes", b =>
+            modelBuilder.Entity("Foodo.Domain.Entities.LkpCode", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -170,7 +167,7 @@ namespace Foodo.Infrastructure.Migrations
 
                     b.HasIndex("ApplicationUserId");
 
-                    b.ToTable("LkpCodes");
+                    b.ToTable("LkpCode");
                 });
 
             modelBuilder.Entity("Foodo.Domain.Entities.LkpMeasureUnit", b =>
@@ -208,7 +205,7 @@ namespace Foodo.Infrastructure.Migrations
 
                     b.HasKey("UnitOfMeasureId");
 
-                    b.ToTable("LkpMeasureUnits");
+                    b.ToTable("LkpMeasureUnits", (string)null);
                 });
 
             modelBuilder.Entity("Foodo.Domain.Entities.LkpProductDetailsAttribute", b =>
@@ -236,7 +233,23 @@ namespace Foodo.Infrastructure.Migrations
 
                     b.HasIndex("UnitOfMeasureId");
 
-                    b.ToTable("LkpProductDetailsAttributes");
+                    b.ToTable("LkpProductDetailsAttributes", (string)null);
+                });
+
+            modelBuilder.Entity("Foodo.Domain.Entities.LkpUserPhoto", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("LkpUserPhotos", (string)null);
                 });
 
             modelBuilder.Entity("Foodo.Domain.Entities.TblAdress", b =>
@@ -300,7 +313,322 @@ namespace Foodo.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("TblAdresses");
+                    b.ToTable("TblAdresses", (string)null);
+                });
+
+            modelBuilder.Entity("Foodo.Domain.Entities.TblCategoryOfProduct", b =>
+                {
+                    b.Property<int>("CategoryId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CategoryId"));
+
+                    b.Property<string>("CategoryName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("CategoryId");
+
+                    b.ToTable("TblCategoryOfProducts", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            CategoryId = 1,
+                            CategoryName = "Burger"
+                        },
+                        new
+                        {
+                            CategoryId = 2,
+                            CategoryName = "Pizza"
+                        },
+                        new
+                        {
+                            CategoryId = 3,
+                            CategoryName = "Pasta"
+                        },
+                        new
+                        {
+                            CategoryId = 4,
+                            CategoryName = "Sandwich"
+                        },
+                        new
+                        {
+                            CategoryId = 5,
+                            CategoryName = "Grill"
+                        },
+                        new
+                        {
+                            CategoryId = 6,
+                            CategoryName = "FriedChicken"
+                        },
+                        new
+                        {
+                            CategoryId = 7,
+                            CategoryName = "Seafood"
+                        },
+                        new
+                        {
+                            CategoryId = 8,
+                            CategoryName = "Salad"
+                        },
+                        new
+                        {
+                            CategoryId = 9,
+                            CategoryName = "Soup"
+                        },
+                        new
+                        {
+                            CategoryId = 10,
+                            CategoryName = "Dessert"
+                        },
+                        new
+                        {
+                            CategoryId = 11,
+                            CategoryName = "IceCream"
+                        },
+                        new
+                        {
+                            CategoryId = 12,
+                            CategoryName = "Juice"
+                        },
+                        new
+                        {
+                            CategoryId = 13,
+                            CategoryName = "Coffee"
+                        },
+                        new
+                        {
+                            CategoryId = 14,
+                            CategoryName = "Beverage"
+                        },
+                        new
+                        {
+                            CategoryId = 15,
+                            CategoryName = "Appetizer"
+                        },
+                        new
+                        {
+                            CategoryId = 16,
+                            CategoryName = "MainCourse"
+                        },
+                        new
+                        {
+                            CategoryId = 17,
+                            CategoryName = "SideDish"
+                        },
+                        new
+                        {
+                            CategoryId = 18,
+                            CategoryName = "Shawarma"
+                        },
+                        new
+                        {
+                            CategoryId = 19,
+                            CategoryName = "Kebab"
+                        },
+                        new
+                        {
+                            CategoryId = 20,
+                            CategoryName = "Sushi"
+                        },
+                        new
+                        {
+                            CategoryId = 21,
+                            CategoryName = "Tacos"
+                        },
+                        new
+                        {
+                            CategoryId = 22,
+                            CategoryName = "Noodles"
+                        },
+                        new
+                        {
+                            CategoryId = 23,
+                            CategoryName = "RiceDishes"
+                        },
+                        new
+                        {
+                            CategoryId = 24,
+                            CategoryName = "Pastry"
+                        },
+                        new
+                        {
+                            CategoryId = 25,
+                            CategoryName = "Breakfast"
+                        });
+                });
+
+            modelBuilder.Entity("Foodo.Domain.Entities.TblCategoryOfRestaurant", b =>
+                {
+                    b.Property<int>("CategoryId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CategoryId"));
+
+                    b.Property<string>("CategoryName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("CategoryId");
+
+                    b.ToTable("TblCategoryOfRestaurants", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            CategoryId = 1,
+                            CategoryName = "FastFood"
+                        },
+                        new
+                        {
+                            CategoryId = 2,
+                            CategoryName = "CasualDining"
+                        },
+                        new
+                        {
+                            CategoryId = 3,
+                            CategoryName = "FineDining"
+                        },
+                        new
+                        {
+                            CategoryId = 4,
+                            CategoryName = "Cafe"
+                        },
+                        new
+                        {
+                            CategoryId = 5,
+                            CategoryName = "Bakery"
+                        },
+                        new
+                        {
+                            CategoryId = 6,
+                            CategoryName = "DessertShop"
+                        },
+                        new
+                        {
+                            CategoryId = 7,
+                            CategoryName = "JuiceBar"
+                        },
+                        new
+                        {
+                            CategoryId = 8,
+                            CategoryName = "Seafood"
+                        },
+                        new
+                        {
+                            CategoryId = 9,
+                            CategoryName = "Steakhouse"
+                        },
+                        new
+                        {
+                            CategoryId = 10,
+                            CategoryName = "Pizzeria"
+                        },
+                        new
+                        {
+                            CategoryId = 11,
+                            CategoryName = "BBQ"
+                        },
+                        new
+                        {
+                            CategoryId = 12,
+                            CategoryName = "FamilyRestaurant"
+                        },
+                        new
+                        {
+                            CategoryId = 13,
+                            CategoryName = "HealthyFood"
+                        },
+                        new
+                        {
+                            CategoryId = 14,
+                            CategoryName = "Vegetarian"
+                        },
+                        new
+                        {
+                            CategoryId = 15,
+                            CategoryName = "Vegan"
+                        },
+                        new
+                        {
+                            CategoryId = 16,
+                            CategoryName = "FoodTruck"
+                        },
+                        new
+                        {
+                            CategoryId = 17,
+                            CategoryName = "Buffet"
+                        },
+                        new
+                        {
+                            CategoryId = 18,
+                            CategoryName = "Sandwiches"
+                        },
+                        new
+                        {
+                            CategoryId = 19,
+                            CategoryName = "Egyptian"
+                        },
+                        new
+                        {
+                            CategoryId = 20,
+                            CategoryName = "Italian"
+                        },
+                        new
+                        {
+                            CategoryId = 21,
+                            CategoryName = "American"
+                        },
+                        new
+                        {
+                            CategoryId = 22,
+                            CategoryName = "Mexican"
+                        },
+                        new
+                        {
+                            CategoryId = 23,
+                            CategoryName = "Turkish"
+                        },
+                        new
+                        {
+                            CategoryId = 24,
+                            CategoryName = "Chinese"
+                        },
+                        new
+                        {
+                            CategoryId = 25,
+                            CategoryName = "Japanese"
+                        },
+                        new
+                        {
+                            CategoryId = 26,
+                            CategoryName = "Indian"
+                        },
+                        new
+                        {
+                            CategoryId = 27,
+                            CategoryName = "Lebanese"
+                        },
+                        new
+                        {
+                            CategoryId = 28,
+                            CategoryName = "Syrian"
+                        },
+                        new
+                        {
+                            CategoryId = 29,
+                            CategoryName = "Greek"
+                        },
+                        new
+                        {
+                            CategoryId = 30,
+                            CategoryName = "French"
+                        });
                 });
 
             modelBuilder.Entity("Foodo.Domain.Entities.TblCustomer", b =>
@@ -328,7 +656,38 @@ namespace Foodo.Infrastructure.Migrations
 
                     b.HasKey("UserId");
 
-                    b.ToTable("TblCustomer", (string)null);
+                    b.ToTable("TblCustomers", (string)null);
+                });
+
+            modelBuilder.Entity("Foodo.Domain.Entities.TblDriver", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateOnly>("BirthDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Gender")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("NationalId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("TblDrivers", (string)null);
                 });
 
             modelBuilder.Entity("Foodo.Domain.Entities.TblMerchant", b =>
@@ -348,7 +707,7 @@ namespace Foodo.Infrastructure.Migrations
 
                     b.HasKey("UserId");
 
-                    b.ToTable("TblMerchant", (string)null);
+                    b.ToTable("TblMerchants", (string)null);
                 });
 
             modelBuilder.Entity("Foodo.Domain.Entities.TblOrder", b =>
@@ -359,6 +718,9 @@ namespace Foodo.Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("OrderId"));
 
+                    b.Property<int>("BillingAddressId")
+                        .HasColumnType("int");
+
                     b.Property<int?>("CreatedBy")
                         .HasColumnType("int");
 
@@ -367,14 +729,29 @@ namespace Foodo.Infrastructure.Migrations
                         .HasColumnType("datetime")
                         .HasDefaultValueSql("(getdate())", "DF_TblOrders_CreatedDate");
 
+                    b.Property<string>("CustomerId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("CustomerId");
+
                     b.Property<int?>("DeletedBy")
                         .HasColumnType("int");
 
                     b.Property<DateTime?>("DeletedDate")
                         .HasColumnType("datetime");
 
+                    b.Property<string>("DriverId")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
+
+                    b.Property<string>("MerchantId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)")
+                        .HasColumnName("MerchantId");
 
                     b.Property<DateTime>("OrderDate")
                         .ValueGeneratedOnAdd()
@@ -386,23 +763,21 @@ namespace Foodo.Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<decimal>("Tax")
+                    b.Property<decimal?>("PaidMoney")
+                        .HasColumnType("decimal(18, 2)");
+
+                    b.Property<decimal?>("Tax")
                         .HasColumnType("decimal(9, 2)");
 
-                    b.Property<decimal>("TotalPrice")
+                    b.Property<decimal?>("TotalPrice")
                         .HasColumnType("decimal(18, 2)");
 
                     b.Property<int?>("UpdatedBy")
                         .HasColumnType("int");
 
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)");
-
                     b.HasKey("OrderId");
 
-                    b.ToTable("TblOrders");
+                    b.ToTable("TblOrders", (string)null);
                 });
 
             modelBuilder.Entity("Foodo.Domain.Entities.TblProduct", b =>
@@ -452,7 +827,30 @@ namespace Foodo.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("TblProducts");
+                    b.ToTable("TblProducts", (string)null);
+                });
+
+            modelBuilder.Entity("Foodo.Domain.Entities.TblProductCategory", b =>
+                {
+                    b.Property<int>("productcategoryid")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("productcategoryid"));
+
+                    b.Property<int>("categoryid")
+                        .HasColumnType("int");
+
+                    b.Property<int>("productid")
+                        .HasColumnType("int");
+
+                    b.HasKey("productcategoryid");
+
+                    b.HasIndex("categoryid");
+
+                    b.HasIndex("productid");
+
+                    b.ToTable("TblProductCategories", (string)null);
                 });
 
             modelBuilder.Entity("Foodo.Domain.Entities.TblProductDetail", b =>
@@ -491,14 +889,43 @@ namespace Foodo.Infrastructure.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("TblProductDetails");
+                    b.ToTable("TblProductDetails", (string)null);
+                });
+
+            modelBuilder.Entity("Foodo.Domain.Entities.TblProductPhoto", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<bool>("isMain")
+                        .HasColumnType("bit");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("TblProductPhotos", (string)null);
                 });
 
             modelBuilder.Entity("Foodo.Domain.Entities.TblProductsOrder", b =>
                 {
-                    b.Property<int>("ProductIorderId")
+                    b.Property<int>("ProductorderId")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int")
-                        .HasColumnName("ProductIOrderId");
+                        .HasColumnName("ProductOrderId");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ProductorderId"));
 
                     b.Property<int?>("CreatedBy")
                         .HasColumnType("int");
@@ -532,13 +959,37 @@ namespace Foodo.Infrastructure.Migrations
                     b.Property<int?>("UpdatedBy")
                         .HasColumnType("int");
 
-                    b.HasKey("ProductIorderId");
+                    b.HasKey("ProductorderId");
 
                     b.HasIndex("OrderId");
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("TblProductsOrders");
+                    b.ToTable("TblProductsOrders", (string)null);
+                });
+
+            modelBuilder.Entity("Foodo.Domain.Entities.TblRestaurantCategory", b =>
+                {
+                    b.Property<int>("restaurantcategoryid")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("restaurantcategoryid"));
+
+                    b.Property<int>("categoryid")
+                        .HasColumnType("int");
+
+                    b.Property<string>("restaurantid")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("restaurantcategoryid");
+
+                    b.HasIndex("categoryid");
+
+                    b.HasIndex("restaurantid");
+
+                    b.ToTable("TblRestaurantCategories", (string)null);
                 });
 
             modelBuilder.Entity("Foodo.Domain.Entities.lkpRefreshToken", b =>
@@ -722,7 +1173,7 @@ namespace Foodo.Infrastructure.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("Foodo.Domain.Entities.LkpCodes", b =>
+            modelBuilder.Entity("Foodo.Domain.Entities.LkpCode", b =>
                 {
                     b.HasOne("Foodo.Domain.Entities.ApplicationUser", null)
                         .WithMany("LkpCodes")
@@ -759,6 +1210,17 @@ namespace Foodo.Infrastructure.Migrations
                     b.Navigation("UnitOfMeasure");
                 });
 
+            modelBuilder.Entity("Foodo.Domain.Entities.LkpUserPhoto", b =>
+                {
+                    b.HasOne("Foodo.Domain.Entities.ApplicationUser", "user")
+                        .WithOne("UserPhoto")
+                        .HasForeignKey("Foodo.Domain.Entities.LkpUserPhoto", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("user");
+                });
+
             modelBuilder.Entity("Foodo.Domain.Entities.TblAdress", b =>
                 {
                     b.HasOne("Foodo.Domain.Entities.ApplicationUser", "User")
@@ -776,6 +1238,17 @@ namespace Foodo.Infrastructure.Migrations
                         .HasForeignKey("Foodo.Domain.Entities.TblCustomer", "UserId")
                         .IsRequired()
                         .HasConstraintName("FK_TblCustomer_ApplicationUser");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Foodo.Domain.Entities.TblDriver", b =>
+                {
+                    b.HasOne("Foodo.Domain.Entities.ApplicationUser", "User")
+                        .WithOne("TblDriver")
+                        .HasForeignKey("Foodo.Domain.Entities.TblDriver", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("User");
                 });
@@ -802,6 +1275,25 @@ namespace Foodo.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Foodo.Domain.Entities.TblProductCategory", b =>
+                {
+                    b.HasOne("Foodo.Domain.Entities.TblCategoryOfProduct", "Category")
+                        .WithMany("ProductCategories")
+                        .HasForeignKey("categoryid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Foodo.Domain.Entities.TblProduct", "Product")
+                        .WithMany("ProductCategories")
+                        .HasForeignKey("productid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+
+                    b.Navigation("Product");
+                });
+
             modelBuilder.Entity("Foodo.Domain.Entities.TblProductDetail", b =>
                 {
                     b.HasOne("Foodo.Domain.Entities.TblProduct", "Product")
@@ -812,6 +1304,17 @@ namespace Foodo.Infrastructure.Migrations
                         .HasConstraintName("FK_TblProductDetails_TblProducts");
 
                     b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("Foodo.Domain.Entities.TblProductPhoto", b =>
+                {
+                    b.HasOne("Foodo.Domain.Entities.TblProduct", "TblProduct")
+                        .WithMany("ProductPhotos")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("TblProduct");
                 });
 
             modelBuilder.Entity("Foodo.Domain.Entities.TblProductsOrder", b =>
@@ -831,6 +1334,25 @@ namespace Foodo.Infrastructure.Migrations
                     b.Navigation("Order");
 
                     b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("Foodo.Domain.Entities.TblRestaurantCategory", b =>
+                {
+                    b.HasOne("Foodo.Domain.Entities.TblCategoryOfRestaurant", "Category")
+                        .WithMany("RestaurantCategories")
+                        .HasForeignKey("categoryid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Foodo.Domain.Entities.TblMerchant", "Restaurant")
+                        .WithMany("TblRestaurantCategories")
+                        .HasForeignKey("restaurantid")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+
+                    b.Navigation("Restaurant");
                 });
 
             modelBuilder.Entity("Foodo.Domain.Entities.lkpRefreshToken", b =>
@@ -899,7 +1421,11 @@ namespace Foodo.Infrastructure.Migrations
 
                     b.Navigation("TblCustomer");
 
+                    b.Navigation("TblDriver");
+
                     b.Navigation("TblMerchant");
+
+                    b.Navigation("UserPhoto");
 
                     b.Navigation("lkpRefreshTokens");
                 });
@@ -914,9 +1440,21 @@ namespace Foodo.Infrastructure.Migrations
                     b.Navigation("LkpProductDetailsAttributes");
                 });
 
+            modelBuilder.Entity("Foodo.Domain.Entities.TblCategoryOfProduct", b =>
+                {
+                    b.Navigation("ProductCategories");
+                });
+
+            modelBuilder.Entity("Foodo.Domain.Entities.TblCategoryOfRestaurant", b =>
+                {
+                    b.Navigation("RestaurantCategories");
+                });
+
             modelBuilder.Entity("Foodo.Domain.Entities.TblMerchant", b =>
                 {
                     b.Navigation("TblProducts");
+
+                    b.Navigation("TblRestaurantCategories");
                 });
 
             modelBuilder.Entity("Foodo.Domain.Entities.TblOrder", b =>
@@ -926,6 +1464,10 @@ namespace Foodo.Infrastructure.Migrations
 
             modelBuilder.Entity("Foodo.Domain.Entities.TblProduct", b =>
                 {
+                    b.Navigation("ProductCategories");
+
+                    b.Navigation("ProductPhotos");
+
                     b.Navigation("TblProductDetails");
 
                     b.Navigation("TblProductsOrders");

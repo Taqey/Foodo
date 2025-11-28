@@ -1,4 +1,19 @@
-﻿using Foodo.Domain.Entities;
+﻿using Foodo.API.Controllers;
+using Foodo.Application.Abstraction.Authentication;
+using Foodo.Application.Abstraction.Customer;
+using Foodo.Application.Abstraction.InfraRelated;
+using Foodo.Application.Abstraction.InfrastructureRelatedServices;
+using Foodo.Application.Abstraction.Merchant;
+using Foodo.Application.Abstraction.Photo;
+using Foodo.Application.Abstraction.Profile.CustomerProfile;
+using Foodo.Application.Abstraction.Profile.MerchantProfile;
+using Foodo.Application.Implementation.Authentication;
+using Foodo.Application.Implementation.Customer;
+using Foodo.Application.Implementation.Merchant;
+using Foodo.Application.Implementation.Photo;
+using Foodo.Application.Implementation.Profile.CustomerProfile;
+using Foodo.Application.Implementation.Profile.MerchantProfile;
+using Foodo.Domain.Entities;
 using Foodo.Domain.Repository;
 using Foodo.Infrastructure.Helper;
 using Foodo.Infrastructure.Perisistence;
@@ -11,18 +26,6 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using System.Reflection;
 using System.Text;
-using Foodo.API.Controllers;
-using Foodo.Application.Abstraction.Authentication;
-using Foodo.Application.Abstraction.Merchant;
-using Foodo.Application.Implementation.Authentication;
-using Foodo.Application.Implementation.Merchant;
-using Foodo.Application.Abstraction.Customer;
-using Foodo.Application.Implementation.Customer;
-using Foodo.Application.Abstraction.InfraRelated;
-using Foodo.Application.Abstraction.Profile.MerchantProfile;
-using Foodo.Application.Implementation.Profile.MerchantProfile;
-using Foodo.Application.Abstraction.Profile.CustomerProfile;
-using Foodo.Application.Implementation.Profile.CustomerProfile;
 namespace Foodo.API
 {
 	public class Program
@@ -113,11 +116,14 @@ namespace Foodo.API
 			builder.Services.AddScoped<ICustomerService, CustomerService>();
 			builder.Services.AddScoped<IMerchantProfileService, MerchantProfileService>();
 			builder.Services.AddScoped<ICustomerProfileService, CustomerProfileService>();
+			builder.Services.AddScoped<IPhotoAccessorService, PhotoAccessorService>();
+			builder.Services.AddScoped<IPhotoService, PhotoService>();
 			builder.Services.AddHttpContextAccessor();
 			builder.Services.AddMemoryCache();
 			builder.Services.AddScoped<ICacheService, CacheService>();
 			builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
 			builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("Smtp"));
+			builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("Cloudinary"));
 
 			// CORS Configuration
 			builder.Services.AddCors(options =>
@@ -156,8 +162,8 @@ namespace Foodo.API
 				app.UseSwaggerUI();
 
 			app.UseHttpsRedirection();
-			app.UseRouting();
 			app.UseCors("AllowFrontend");
+			app.UseRouting();
 			app.UseAuthentication();
 			app.UseAuthorization();
 			app.MapControllers();

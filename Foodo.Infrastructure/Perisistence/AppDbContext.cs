@@ -43,6 +43,8 @@ namespace Foodo.Infrastructure.Perisistence
 		public virtual DbSet<TblCategoryOfProduct> TblCategoryOfProducts { get; set; }
 		public virtual DbSet<TblProductCategory> TblProductCategories { get; set; }
 		public virtual DbSet<TblDriver> TblDrivers { get; set; }
+		public virtual DbSet<LkpUserPhoto> LkpUsersPhotos { get; set; }
+		public virtual DbSet<TblProductPhoto> TblProductPhotos { get; set; }
 
 
 		protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -83,7 +85,7 @@ namespace Foodo.Infrastructure.Perisistence
 					})
 		);
 
-			modelBuilder.Entity<LkpCodes>(entity =>
+			modelBuilder.Entity<LkpCode>(entity =>
 			{
 				entity.Property(e => e.Key).HasMaxLength(50);
 				entity.Property(e => e.CodeType).HasConversion<string>().HasMaxLength(50);
@@ -93,6 +95,8 @@ namespace Foodo.Infrastructure.Perisistence
 
 			modelBuilder.Entity<LkpAttribute>(entity =>
 			{
+				entity.ToTable("LkpAttributes");
+
 				entity.HasKey(e => e.AttributeId);
 
 				entity.Property(e => e.CreatedDate)
@@ -109,6 +113,8 @@ namespace Foodo.Infrastructure.Perisistence
 
 			modelBuilder.Entity<LkpMeasureUnit>(entity =>
 			{
+				entity.ToTable("LkpMeasureUnits");
+
 				entity.HasKey(e => e.UnitOfMeasureId);
 				entity.Property(e => e.UnitOfMeasureName)
 	.IsRequired()
@@ -121,6 +127,8 @@ namespace Foodo.Infrastructure.Perisistence
 
 			modelBuilder.Entity<LkpProductDetailsAttribute>(entity =>
 			{
+				entity.ToTable("LkpProductDetailsAttributes");
+
 				entity.HasKey(e => e.ProductDetailAttributeId);
 
 
@@ -139,6 +147,8 @@ namespace Foodo.Infrastructure.Perisistence
 
 			modelBuilder.Entity<TblAdress>(entity =>
 			{
+				entity.ToTable("TblAdresses");
+
 				entity.HasKey(e => e.AddressId);
 
 				entity.Property(e => e.City).HasMaxLength(50);
@@ -160,9 +170,10 @@ namespace Foodo.Infrastructure.Perisistence
 
 			modelBuilder.Entity<TblCustomer>(entity =>
 			{
+				entity.ToTable("TblCustomers");
+
 				entity.HasKey(e => e.UserId);
 
-				entity.ToTable("TblCustomer");
 
 				entity.Property(e => e.FirstName)
 					.IsRequired()
@@ -182,9 +193,10 @@ namespace Foodo.Infrastructure.Perisistence
 
 			modelBuilder.Entity<TblMerchant>(entity =>
 			{
+				entity.ToTable("TblMerchants");
+
 				entity.HasKey(e => e.UserId);
 
-				entity.ToTable("TblMerchant");
 
 				entity.Property(e => e.StoreDescription)
 					.IsRequired()
@@ -201,6 +213,8 @@ namespace Foodo.Infrastructure.Perisistence
 
 			modelBuilder.Entity<TblOrder>(entity =>
 			{
+				entity.ToTable("TblOrders");
+
 				entity.HasKey(e => e.OrderId);
 
 				entity.Property(e => e.CreatedDate)
@@ -227,6 +241,8 @@ namespace Foodo.Infrastructure.Perisistence
 
 			modelBuilder.Entity<TblProduct>(entity =>
 			{
+				entity.ToTable("TblProducts");
+
 				entity.HasKey(e => e.ProductId);
 
 				entity.Property(e => e.CreatedDate)
@@ -251,6 +267,8 @@ namespace Foodo.Infrastructure.Perisistence
 
 			modelBuilder.Entity<TblProductDetail>(entity =>
 			{
+				entity.ToTable("TblProductDetails");
+
 				entity.HasKey(e => e.ProductDetailId);
 
 				entity.Property(e => e.Price).HasColumnType("decimal(9, 2)");
@@ -262,6 +280,8 @@ namespace Foodo.Infrastructure.Perisistence
 
 			modelBuilder.Entity<TblProductsOrder>(entity =>
 			{
+				entity.ToTable("TblProductsOrders");
+
 				entity.HasKey(e => e.ProductorderId);
 
 				entity.Property(e => e.ProductorderId)
@@ -285,10 +305,12 @@ namespace Foodo.Infrastructure.Perisistence
 			});
 			modelBuilder.Entity<TblProductCategory>(entity =>
 			{
+				entity.ToTable("TblProductCategories");
+
 				entity.HasKey(pc => pc.productcategoryid);
 
 				entity.HasOne(pc => pc.Product)
-					.WithMany(p => p.ProductCategory)
+					.WithMany(p => p.ProductCategories)
 					.HasForeignKey(pc => pc.productid);
 
 				entity.HasOne(pc => pc.Category)
@@ -298,6 +320,8 @@ namespace Foodo.Infrastructure.Perisistence
 
 			modelBuilder.Entity<TblRestaurantCategory>(entity =>
 			{
+				entity.ToTable("TblRestaurantCategories");
+
 				entity.HasKey(rc => rc.restaurantcategoryid);
 				entity.HasOne(rc => rc.Restaurant)
 					.WithMany(m => m.TblRestaurantCategories)
@@ -308,6 +332,8 @@ namespace Foodo.Infrastructure.Perisistence
 			});
 			modelBuilder.Entity<TblCategoryOfRestaurant>(entity =>
 			{
+				entity.ToTable("TblCategoryOfRestaurants");
+
 				entity.HasKey(e => e.CategoryId);
 				entity.Property(e => e.CategoryName)
 					.IsRequired()
@@ -315,6 +341,8 @@ namespace Foodo.Infrastructure.Perisistence
 			});
 			modelBuilder.Entity<TblCategoryOfProduct>(entity =>
 			{
+				entity.ToTable("TblCategoryOfProducts");
+
 				entity.HasKey(e => e.CategoryId);
 				entity.Property(e => e.CategoryName)
 					.IsRequired()
@@ -322,11 +350,37 @@ namespace Foodo.Infrastructure.Perisistence
 			});
 			modelBuilder.Entity<TblDriver>(entity =>
 			{
+				entity.ToTable("TblDrivers");
+
 				entity.Property(e => e.FirstName).HasMaxLength(50).IsRequired();
 				entity.Property(e => e.LastName).HasMaxLength(50).IsRequired();
 				entity.HasKey(e => e.UserId);
 				entity.HasOne(e => e.User).WithOne(e => e.TblDriver).HasForeignKey<TblDriver>(e=>e.UserId);
-			}); 
+			});
+			modelBuilder.Entity<LkpUserPhoto>(entity =>
+			{
+				entity.ToTable("LkpUserPhotos");
+				entity.HasKey(e=>e.UserId);
+				entity.Property(e => e.UserId).HasMaxLength(450);
+				entity.Property(e=>e.Url).HasMaxLength(450).IsRequired();
+				entity.HasOne(e=>e.user).WithOne(e=>e.UserPhoto).HasForeignKey<LkpUserPhoto>(e=>e.UserId);
+				
+
+			});
+			modelBuilder.Entity<TblProductPhoto>(entity =>
+			{
+				entity.ToTable("TblProductPhotos");
+				modelBuilder.Entity<TblProductPhoto>()
+	.HasOne(p => p.TblProduct)
+	.WithMany(p => p.ProductPhotos)
+	.HasForeignKey(p => p.ProductId)
+	.OnDelete(DeleteBehavior.Cascade);
+
+				entity.HasKey(e=>e.Id);
+				entity.Property(e => e.Url).HasMaxLength(450).IsRequired();
+
+
+			});
 			OnModelCreatingPartial(modelBuilder);
 		}
 

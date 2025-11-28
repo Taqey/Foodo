@@ -3,6 +3,7 @@ using Foodo.Application.Abstraction.Merchant;
 using Foodo.Application.Models.Dto;
 using Foodo.Application.Models.Dto.Customer;
 using Foodo.Application.Models.Dto.Merchant;
+using Foodo.Application.Models.Dto.Photo;
 using Foodo.Application.Models.Input;
 using Foodo.Application.Models.Input.Merchant;
 using Foodo.Application.Models.Response;
@@ -31,13 +32,13 @@ public class MerchantService : IMerchantService
 
 	#region Products
 
-	public async Task<ApiResponse> CreateProductAsync(ProductInput input)
+	public async Task<ApiResponse<CreateProductDto>> CreateProductAsync(ProductInput input)
 	{
 		var transaction = await _unitOfWork.BeginTransactionAsync();
-
+		TblProduct Productresult;
 		try
 		{
-			var Productresult = await _unitOfWork.ProductRepository.CreateAsync(new TblProduct
+			Productresult = await _unitOfWork.ProductRepository.CreateAsync(new TblProduct
 			{
 				UserId = input.Id,
 				ProductsName = input.ProductName,
@@ -73,7 +74,7 @@ public class MerchantService : IMerchantService
 
 			foreach (var item in Categories)
 			{
-				Productresult.ProductCategory.Add(new TblProductCategory { productid = Productresult.ProductId, categoryid = (int)item });
+				Productresult.ProductCategories.Add(new TblProductCategory { productid = Productresult.ProductId, categoryid = (int)item });
 			}
 			await _unitOfWork.saveAsync();
 
@@ -90,10 +91,10 @@ public class MerchantService : IMerchantService
 		catch (Exception e)
 		{
 			await transaction.RollbackAsync();
-			return ApiResponse.Failure($"Failed to create product: {e.Message}");
+			return ApiResponse<CreateProductDto>.Failure($"Failed to create product: {e.Message}");
 		}
 
-		return ApiResponse.Success("Product created successfully");
+		return new ApiResponse<CreateProductDto> { IsSuccess = true, Message = "Product created successfully", Data = new CreateProductDto { ProductId = Productresult.ProductId } };
 
 	}
 
@@ -130,7 +131,7 @@ public class MerchantService : IMerchantService
 				ProductDescription = product.ProductDescription,
 				Price = detail?.Price.ToString() ?? "0",
 
-				ProductCategories = product.ProductCategory
+				ProductCategories = product.ProductCategories
 						.Select(c => c.Category.CategoryName)
 						.ToList(),
 
@@ -143,7 +144,14 @@ public class MerchantService : IMerchantService
 							AttributeValue = a.Attribute.value,
 							MeasurementUnit = a.UnitOfMeasure.UnitOfMeasureName
 						})
-						.ToList()
+						.ToList(),
+				Urls = product.ProductPhotos
+		.Select(p => new ProductPhotosDto
+		{
+			url = p.Url,
+			isMain = p.isMain
+		})
+		.ToList()
 			};
 
 			productDtos.Add(productDto);
@@ -179,9 +187,18 @@ public class MerchantService : IMerchantService
 			ProductDescription = product.ProductDescription,
 			Price = productDetail?.Price.ToString() ?? "0",
 			Attributes = new List<AttributeDto>(),
-			ProductCategories = product.ProductCategory
+			ProductCategories = product.ProductCategories
 					.Select(c => c.Category.CategoryName) // مباشرة string
-					.ToList()
+					.ToList(),
+			Urls = product.ProductPhotos
+		.Select(p => new ProductPhotosDto
+		{
+			url = p.Url,
+			isMain = p.isMain
+		})
+		.ToList()
+
+
 		};
 
 		if (productDetail != null)
@@ -231,7 +248,7 @@ public class MerchantService : IMerchantService
 
 		return ApiResponse.Success("Product updated successfully");
 	}
-	
+
 	public async Task<ApiResponse> DeleteProductAsync(int productId)
 	{
 		var product = await _unitOfWork.ProductRepository.ReadByIdAsync(productId);
@@ -254,7 +271,7 @@ public class MerchantService : IMerchantService
 
 		return ApiResponse.Success("Product deleted successfully");
 	}
-	
+
 	public async Task<ApiResponse> AddProductAttributeAsync(int productId, AttributeCreateInput attributes)
 	{
 		var product = await _unitOfWork.ProductRepository.ReadByIdAsync(productId);
@@ -277,8 +294,8 @@ public class MerchantService : IMerchantService
 
 			var productDetailAttribute = new LkpProductDetailsAttribute
 			{
-				Attribute = attribute,           
-				UnitOfMeasure = measureUnit,     
+				Attribute = attribute,
+				UnitOfMeasure = measureUnit,
 				ProductDetailId = productDetail.ProductDetailId
 			};
 			await _unitOfWork.ProductDetailsAttributeRepository.CreateAsync(productDetailAttribute);
@@ -332,11 +349,11 @@ public class MerchantService : IMerchantService
 		}
 		foreach (var item in categoryInput.restaurantCategories)
 		{
-			if (product.ProductCategory.Where(c => c.categoryid == (int)item).Any())
+			if (product.ProductCategories.Where(c => c.categoryid == (int)item).Any())
 			{
 				continue;
 			}
-			product.ProductCategory.Add(new TblProductCategory { productid = categoryInput.ProductId, categoryid = (int)item });
+			product.ProductCategories.Add(new TblProductCategory { productid = categoryInput.ProductId, categoryid = (int)item });
 		}
 		var result = await _unitOfWork.saveAsync();
 
@@ -361,11 +378,11 @@ public class MerchantService : IMerchantService
 
 		foreach (var item in categoryInput.restaurantCategories)
 		{
-			var category = product.ProductCategory
+			var category = product.ProductCategories
 					.FirstOrDefault(c => c.categoryid == (int)item);
 
 			if (category != null)
-				product.ProductCategory.Remove(category);
+				product.ProductCategories.Remove(category);
 		}
 
 		await _unitOfWork.saveAsync();
