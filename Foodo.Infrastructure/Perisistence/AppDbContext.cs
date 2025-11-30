@@ -200,7 +200,7 @@ namespace Foodo.Infrastructure.Perisistence
 
 				entity.Property(e => e.StoreDescription)
 					.IsRequired()
-					.HasMaxLength(100);
+					.HasMaxLength(250);
 				entity.Property(e => e.StoreName)
 					.IsRequired()
 					.HasMaxLength(50);
@@ -251,7 +251,7 @@ namespace Foodo.Infrastructure.Perisistence
 				entity.Property(e => e.DeletedDate).HasColumnType("datetime");
 				entity.Property(e => e.ProductDescription)
 					.IsRequired()
-					.HasMaxLength(100);
+					.HasMaxLength(250);
 				entity.Property(e => e.ProductsName)
 					.IsRequired()
 					.HasMaxLength(50);

@@ -436,7 +436,8 @@ namespace Foodo.Application.Implementation.Customer
 				ShopDescription = shop.StoreDescription,
 				Categories = shop.TblRestaurantCategories
 	.Select(c => ((RestaurantCategory)c.categoryid).ToString())
-	.ToList(),url=shop.User.UserPhoto.Url,
+	.ToList(),
+				url=shop.User?.UserPhoto?.Url??null,
 
 			}).ToList();
 
@@ -505,7 +506,7 @@ namespace Foodo.Application.Implementation.Customer
 				Categories = shop.TblRestaurantCategories
 	.Select(c => ((RestaurantCategory)c.categoryid).ToString())
 	.ToList(),
-				url = shop.User.UserPhoto.Url
+				url = shop.User?.UserPhoto?.Url??null
 
 			}).ToList();
 
