@@ -17,12 +17,14 @@ namespace Foodo.Application.Implementation.Photo
 		private readonly IPhotoAccessorService _photoAccessor;
 		private readonly IUserService _userService;
 		private readonly IUnitOfWork _unitOfWork;
+		private readonly ICacheService _cacheService;
 
-		public PhotoService(IPhotoAccessorService photoAccessor,IUserService userService,IUnitOfWork unitOfWork)
+		public PhotoService(IPhotoAccessorService photoAccessor,IUserService userService,IUnitOfWork unitOfWork,ICacheService cacheService)
 		{
 			_photoAccessor = photoAccessor;
 			_userService = userService;
 			_unitOfWork = unitOfWork;
+			_cacheService = cacheService;
 		}
 
 
@@ -72,29 +74,32 @@ namespace Foodo.Application.Implementation.Photo
 			if (product.ProductPhotos == null)
 				product.ProductPhotos = new List<TblProductPhoto>();
 
-			var dtoList = new List<GetPhotosDto>();
-
+			// 1️⃣ أضف الصور بدون إنشاء DTO الآن
 			foreach (var photo in result.Where(p => p.IsSuccess))
 			{
-				var newPhoto = new TblProductPhoto
+				product.ProductPhotos.Add(new TblProductPhoto
 				{
 					ProductId = product.ProductId,
 					Url = photo.Url,
 					isMain = false
-				};
-
-				product.ProductPhotos.Add(newPhoto);
-
-				// اضبط الـ DTO بعد الحفظ عشان ناخد الـ Id من قاعدة البيانات
-				dtoList.Add(new GetPhotosDto
-				{
-					url = newPhoto.Url,
-					UrlId = newPhoto.Id
 				});
 			}
 
+			// 2️⃣ احفظ أولاً لتوليد IDs
 			await _unitOfWork.saveAsync();
 
+			// 3️⃣ الآن أنشئ الـ DTO باستخدام IDs الصحيحة
+			var dtoList = product.ProductPhotos
+				.Select(p => new GetPhotosDto
+				{
+					url = p.Url,
+					UrlId = p.Id
+				})
+				.ToList();
+			_cacheService.RemoveByPrefix($"merchant_product:list:{product.UserId}");
+			_cacheService.RemoveByPrefix($"customer_product:list:all");
+			_cacheService.RemoveByPrefix($"customer_product:list:shop:{product.UserId}");
+			_cacheService.RemoveByPrefix($"customer_product:list:category");
 			return new ApiResponse<List<GetPhotosDto>>
 			{
 				IsSuccess = true,
@@ -113,19 +118,25 @@ namespace Foodo.Application.Implementation.Photo
 			}
 
 			var productPhotos = await _unitOfWork.ProductPhotoRepository
-				.FindAllByContidtionAsync(p => p.ProductId == photo.ProductId && p.isMain);
+				.FindAllByContidtionAsync(p => p.ProductId == photo.ProductId);
 
 			foreach (var p in productPhotos)
 			{
 				p.isMain = false;
+				_unitOfWork.ProductPhotoRepository.Update(p); // مهم جدًا
 			}
 
 			photo.isMain = true;
+			_unitOfWork.ProductPhotoRepository.Update(photo); // مهم جدًا
 
 			await _unitOfWork.saveAsync();
-
+			_cacheService.RemoveByPrefix($"merchant_product:list:{photo.TblProduct.UserId}");
+			_cacheService.RemoveByPrefix($"customer_product:list:all");
+			_cacheService.RemoveByPrefix($"customer_product:list:shop:{photo.TblProduct.UserId}");
+			_cacheService.RemoveByPrefix($"customer_product:list:category");
 			return new ApiResponse { IsSuccess = true, Message = "Image set as main successfully" };
 		}
+
 
 
 		public async Task<ApiResponse<GetPhotoDto>> ReadUserPhoto(GetUserPhotoInput input)

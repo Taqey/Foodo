@@ -171,9 +171,6 @@ public class MerchantService : IMerchantService
 
 	public async Task<ApiResponse<ProductDto>> ReadProductByIdAsync(int productId)
 	{
-		string cacheKey = $"merchant_product:{productId}";
-		var cached = _cacheService.Get<ProductDto>(cacheKey);
-		if (cached != null) return ApiResponse<ProductDto>.Success(cached);
 
 		var product = await _unitOfWork.ProductRepository.ReadByIdAsync(productId);
 		if (product == null) return ApiResponse<ProductDto>.Failure("Product not found");
@@ -214,7 +211,6 @@ public class MerchantService : IMerchantService
 			}
 		}
 
-		_cacheService.Set(cacheKey, productDto);
 		return ApiResponse<ProductDto>.Success(productDto);
 	}
 
