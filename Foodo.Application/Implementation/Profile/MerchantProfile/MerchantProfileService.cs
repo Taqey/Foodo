@@ -5,6 +5,8 @@ using Foodo.Application.Models.Input.Profile.Merchant;
 using Foodo.Application.Models.Response;
 using Foodo.Domain.Entities;
 using Foodo.Domain.Enums;
+using Foodo.Domain.Repository;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -14,14 +16,16 @@ namespace Foodo.Application.Implementation.Profile.MerchantProfile
 	public class MerchantProfileService : IMerchantProfileService
 	{
 		private readonly IUserService _userService;
+		private readonly IUnitOfWork _unitOfWork;
 
-		public MerchantProfileService(IUserService userService)
+		public MerchantProfileService(IUserService userService,IUnitOfWork unitOfWork)
 		{
 			_userService = userService;
+			_unitOfWork = unitOfWork;
 		}
 		public async Task<ApiResponse> AddAdress(MerchantAddAdressInput input)
 		{
-			var user =await _userService.GetByIdAsync(input.MerchantId);
+			var user =await _unitOfWork.UserCustomRepository.ReadMerchants().Where(e=>e.Id==input.MerchantId).FirstOrDefaultAsync();
 			if (user == null) {
 			return new ApiResponse { Message="user not found",IsSuccess=false};
 			}
@@ -39,7 +43,7 @@ namespace Foodo.Application.Implementation.Profile.MerchantProfile
 
 		public async Task<ApiResponse<MerchantProfileDto>> GetMerchantProfile(MerchantProfileInput input)
 		{
-			var user = await _userService.GetByIdAsync(input.MerchantId);
+			var user = await _unitOfWork.UserCustomRepository.ReadMerchants().Where(e => e.Id == input.MerchantId).FirstOrDefaultAsync();
 			if (user == null) {
 				return new ApiResponse<MerchantProfileDto> { IsSuccess = false, Message = "use not found" };
 			}
@@ -82,7 +86,7 @@ namespace Foodo.Application.Implementation.Profile.MerchantProfile
 
 		public async Task<ApiResponse> RemoveAdress(MerchantRemoveAdressInput input)
 		{
-			var user = await _userService.GetByIdAsync(input.MerchantId);
+			var user = await _unitOfWork.UserCustomRepository.ReadMerchants().Where(e => e.Id == input.MerchantId).FirstOrDefaultAsync();
 			if (user == null)
 			{
 				return new ApiResponse { IsSuccess = false, Message = "user not found" };

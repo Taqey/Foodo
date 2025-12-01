@@ -33,5 +33,5 @@ public partial class TblProduct
 	public virtual ICollection<TblProductCategory> ProductCategories { get; set; } = new List<TblProductCategory>();
 	public virtual ICollection<TblProductPhoto> ProductPhotos { get; set; }=new List<TblProductPhoto>();
 
-	public virtual TblMerchant User { get; set; }
+	public virtual TblMerchant Merchant { get; set; }
 }

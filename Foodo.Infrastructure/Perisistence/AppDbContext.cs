@@ -259,7 +259,7 @@ namespace Foodo.Infrastructure.Perisistence
 					.IsRequired()
 					.HasMaxLength(450);
 
-				entity.HasOne(d => d.User).WithMany(p => p.TblProducts)
+				entity.HasOne(d => d.Merchant).WithMany(p => p.TblProducts)
 					.HasForeignKey(d => d.UserId)
 					.OnDelete(DeleteBehavior.ClientSetNull)
 					.HasConstraintName("FK_TblProducts_TblMerchant");

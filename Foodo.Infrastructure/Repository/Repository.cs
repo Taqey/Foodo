@@ -41,24 +41,12 @@ namespace Foodo.Infrastructure.Repository
 		}
 		public void Update(T entity)
 		{
-			var key = _context.Model.FindEntityType(typeof(T)).FindPrimaryKey().Properties.First();
 
-			var keyValue = entity.GetType().GetProperty(key.Name).GetValue(entity);
-
-			var local = _context.Set<T>()
-								.Local
-								.FirstOrDefault(e =>
-									keyValue.Equals(e.GetType().GetProperty(key.Name).GetValue(e)));
-
-			if (local != null)
-			{
-				// Detach old instance
-				_context.Entry(local).State = EntityState.Detached;
-			}
-
-			// Attach new instance
-			_context.Attach(entity);
 			_context.Entry(entity).State = EntityState.Modified;
+		}
+		public void Attach(T entity)
+		{
+			_dbSet.Attach(entity);
 		}
 
 		public void Delete(T entity)

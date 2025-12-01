@@ -10,6 +10,7 @@ namespace Foodo.Domain.Repository
 		Task<IEnumerable<T>> ReadAllAsync();
 		Task<IEnumerable<T>> ReadAllIncludingAsync(params Expression<Func<T, object>>[] includes);
 		void Update(T entity);
+		void Attach(T entity);
 		void Delete(T entity);
 		void DeleteAll();
 		Task <T> FindByContidtionAsync(Expression<Func<T, bool>> expression);

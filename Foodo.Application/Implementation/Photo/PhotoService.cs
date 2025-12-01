@@ -6,6 +6,7 @@ using Foodo.Application.Models.Input.Photo;
 using Foodo.Application.Models.Response;
 using Foodo.Domain.Entities;
 using Foodo.Domain.Repository;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -30,7 +31,7 @@ namespace Foodo.Application.Implementation.Photo
 
 		public async Task<ApiResponse> AddUserPhoto(AddPhotoInput input)
 		{
-			var user = await _userService.GetByIdAsync(input.Id);
+			var user = await _unitOfWork.UserCustomRepository.ReadMerchants().Where(e => e.Id == input.Id).FirstOrDefaultAsync();
 			var result=await _photoAccessor.AddPhoto(input);
 			if (!result.IsSuccess)
 			{
@@ -61,7 +62,7 @@ namespace Foodo.Application.Implementation.Photo
 				};
 			}
 
-			var product = await _unitOfWork.ProductRepository.ReadByIdAsync(input.ProductId);
+			var product = await _unitOfWork.ProductCustomRepository.ReadProducts().Where(e => e.ProductId == input.ProductId).FirstOrDefaultAsync();
 			if (product == null)
 			{
 				return new ApiResponse<List<GetPhotosDto>>
@@ -75,6 +76,7 @@ namespace Foodo.Application.Implementation.Photo
 				product.ProductPhotos = new List<TblProductPhoto>();
 
 			// 1️⃣ أضف الصور بدون إنشاء DTO الآن
+				_unitOfWork.ProductRepository.Attach(product);
 			foreach (var photo in result.Where(p => p.IsSuccess))
 			{
 				product.ProductPhotos.Add(new TblProductPhoto
@@ -111,48 +113,86 @@ namespace Foodo.Application.Implementation.Photo
 
 		public async Task<ApiResponse> SetProductPhotoMain(SetPhotoMainInput input)
 		{
-			var photo = await _unitOfWork.ProductPhotoRepository.ReadByIdAsync(input.id);
+			// 1) هات الصورة المطلوبة (Tracked)
+			var photo = await _unitOfWork.productPhotoCustomRepository.ReadPhotos().Where(e=>e.Id == input.id).FirstOrDefaultAsync();
 			if (photo == null)
 			{
-				return new ApiResponse { IsSuccess = false, Message = "Photo not found" };
+				return new ApiResponse
+				{
+					IsSuccess = false,
+					Message = "Photo not found"
+				};
 			}
 
-			var productPhotos = await _unitOfWork.ProductPhotoRepository
-				.FindAllByContidtionAsync(p => p.ProductId == photo.ProductId);
+			// 2) هات باقي الصور (Tracked برضه)
+			var productPhotos = await _unitOfWork.productPhotoCustomRepository
+				.ReadPhotos().Where(p => p.ProductId == photo.ProductId).ToListAsync();
 
+			// 3) خلي كل الصور isMain = false
 			foreach (var p in productPhotos)
 			{
 				p.isMain = false;
-				_unitOfWork.ProductPhotoRepository.Update(p); // مهم جدًا
+				// ❌ بدون Update(p)
 			}
 
+			// 4) خلي الصورة المطلوبة هي الـ Main
 			photo.isMain = true;
-			_unitOfWork.ProductPhotoRepository.Update(photo); // مهم جدًا
+			// ❌ بدون Update(photo)
 
+			// 5) حفظ التعديلات
 			await _unitOfWork.saveAsync();
+
+			// 6) Clear Cache
 			_cacheService.RemoveByPrefix($"merchant_product:list:{photo.TblProduct.UserId}");
 			_cacheService.RemoveByPrefix($"customer_product:list:all");
 			_cacheService.RemoveByPrefix($"customer_product:list:shop:{photo.TblProduct.UserId}");
 			_cacheService.RemoveByPrefix($"customer_product:list:category");
-			return new ApiResponse { IsSuccess = true, Message = "Image set as main successfully" };
+
+			return new ApiResponse
+			{
+				IsSuccess = true,
+				Message = "Image set as main successfully"
+			};
 		}
+
 
 
 
 		public async Task<ApiResponse<GetPhotoDto>> ReadUserPhoto(GetUserPhotoInput input)
 		{
-			var user = await _userService.GetByIdAsync(input.Id);
-			if (user==null)
+			var user = await _unitOfWork.UserCustomRepository
+				.ReadMerchants()
+				.Where(e => e.Id == input.Id)
+				.FirstOrDefaultAsync();
+
+			if (user == null)
 			{
-				return new ApiResponse<GetPhotoDto> { IsSuccess = false, Message = "User not found" };
+				return new ApiResponse<GetPhotoDto>
+				{
+					IsSuccess = false,
+					Message = "User not found"
+				};
 			}
-			var url = user.UserPhoto.Url;
-			if (string.IsNullOrEmpty(url))
+
+			// check if photo exists
+			if (user.UserPhoto == null || string.IsNullOrEmpty(user.UserPhoto.Url))
 			{
-				return new ApiResponse<GetPhotoDto> { IsSuccess = false, Message = "Image not found" };
+				return new ApiResponse<GetPhotoDto>
+				{
+					IsSuccess = false,
+					Message = "Image not found"
+				};
 			}
-			var dto = new GetPhotoDto { url=url};
-			return new ApiResponse<GetPhotoDto> { Data=dto,Message="Image retrived",IsSuccess=true };
+
+			var dto = new GetPhotoDto { url = user.UserPhoto.Url };
+
+			return new ApiResponse<GetPhotoDto>
+			{
+				Data = dto,
+				Message = "Image retrieved",
+				IsSuccess = true
+			};
 		}
+
 	}
 }

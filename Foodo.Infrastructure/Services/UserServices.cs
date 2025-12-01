@@ -83,7 +83,7 @@ namespace Foodo.Infrastructure.Services
 		}
 		public async Task<ApplicationUser> GetUserByRefreshToken(string token)
 		{
-			return await _manager.Users
+			return await _manager.Users.Include(e=>e.lkpRefreshTokens)
 				.SingleOrDefaultAsync(x => x.lkpRefreshTokens != null && x.lkpRefreshTokens.Any(rt => rt.Token == token));
 		}
 		public async Task<ApplicationUser> GetUserByVerificationToken(string token)

@@ -20,11 +20,11 @@ namespace Foodo.API.Controllers
 			_service = service;
 		}
 		// GET: api/<PhotosController>
-		[HttpGet]
-		public IEnumerable<string> Get()
-		{
-			return new string[] { "value1", "value2" };
-		}
+		//[HttpGet]
+		//public IEnumerable<string> Get()
+		//{
+		//	return new string[] { "value1", "value2" };
+		//}
 
 		// GET api/<PhotosController>/5
 		[HttpGet("get-user-photo")]
@@ -98,6 +98,7 @@ namespace Foodo.API.Controllers
 		[HttpPut("set-photo-main/{id}")]
 		public async Task<IActionResult> Put(int id)
 		{
+			var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;	
 			var result = await _service.SetProductPhotoMain(new SetPhotoMainInput { id=id});
 			if (!result.IsSuccess)
 			{
@@ -108,9 +109,9 @@ namespace Foodo.API.Controllers
 		}
 
 		// DELETE api/<PhotosController>/5
-		[HttpDelete("{id}")]
-		public void Delete(int id)
-		{
-		}
+		//[HttpDelete("{id}")]
+		//public void Delete(int id)
+		//{
+		//}
 	}
 }
