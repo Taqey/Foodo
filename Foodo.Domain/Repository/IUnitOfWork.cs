@@ -16,6 +16,12 @@ namespace Foodo.Domain.Repository
 		public IRepository<TblProductDetail> ProductDetailRepository { get; }
 		public IRepository<TblProductsOrder> ProductsOrderRepository { get; }
 		public IRepository <TblProductPhoto> ProductPhotoRepository { get; }
+		public IProductRepository ProductCustomRepository { get; }
+		public IRestaurantRepository RestaurantCustomRepository { get; }
+		public IUserRepository UserCustomRepository { get; }
+		public IOrderRepository OrderCustomRepository { get; }
+		public IProductPhotoCustomRepository productPhotoCustomRepository { get; }
+
 		Task<int> saveAsync();
 		Task<IDbContextTransaction> BeginTransactionAsync();
 		Task CommitTransactionAsync(IDbContextTransaction transaction);

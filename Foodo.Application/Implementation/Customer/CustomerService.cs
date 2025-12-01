@@ -10,6 +10,9 @@ using Foodo.Application.Models.Response;
 using Foodo.Domain.Entities;
 using Foodo.Domain.Enums;
 using Foodo.Domain.Repository;
+using Microsoft.EntityFrameworkCore;
+using System.Net;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace Foodo.Application.Implementation.Customer
 {
@@ -68,20 +71,23 @@ namespace Foodo.Application.Implementation.Customer
 			try
 			{
 				var firstItem = input.Items.First();
-				var product = await _unitOfWork.ProductRepository.FindByContidtionAsync(p => p.ProductId == firstItem.ItemId);
-
+				//var product = await _unitOfWork.ProductRepository.FindByContidtionAsync(p => p.ProductId == firstItem.ItemId);
+				var product = await _unitOfWork.ProductCustomRepository.ReadProducts().Where(p => p.ProductId == firstItem.ItemId).Select(e =>new { e.Merchant.UserId}).FirstOrDefaultAsync(); 
 				if (product == null)
 					return ApiResponse.Failure("Product not found");
 
 				var merchantId = product.UserId;
-				var customerAdress= ((await _userService.GetByIdAsync(input.CustomerId)).TblAdresses.FirstOrDefault(e=>e.IsDefault==true)).AddressId;
+				var customerAdress =await _unitOfWork.UserCustomRepository.ReadCustomer().Where(e=>e.Id==input.CustomerId).SelectMany(e=>e.TblAdresses).Where(e=>e.IsDefault==true).Select(e=>e.AddressId).FirstOrDefaultAsync();
+				if (customerAdress == 0)
+    return ApiResponse.Failure("Customer has no default address");
+
 				var order = new TblOrder
 				{
 					CustomerId = input.CustomerId,
 					MerchantId = merchantId,
 					OrderDate = DateTime.UtcNow,
 					OrderStatus = OrderState.Pending,
-					BillingAddressId=customerAdress
+					BillingAddressId = customerAdress
 				};
 
 				var createdOrder = await _unitOfWork.OrderRepository.CreateAsync(order);
@@ -138,9 +144,11 @@ namespace Foodo.Application.Implementation.Customer
 			if (cached != null)
 				return ApiResponse<PaginationDto<CustomerOrderDto>>.Success(cached);
 
-			var (orders, totalCount, totalPages) = await _unitOfWork.OrderRepository.PaginationAsync(input.Page, input.PageSize, e => e.CustomerId == input.UserId);
-
-			if (orders == null || !orders.Any())
+			var OrderQuery = _unitOfWork.OrderCustomRepository.ReadOrdersInclude().Where(e => e.CustomerId == input.UserId);
+			var totalCount = await OrderQuery.CountAsync();
+			var totalPages = (int)Math.Ceiling(totalCount / (double)input.PageSize);
+			var FilterOrderQuery = OrderQuery.Skip((input.Page-1)*input.PageSize).Take(input.PageSize);
+			if (totalCount == 0)
 			{
 				var emptyResult = new PaginationDto<CustomerOrderDto>
 				{
@@ -151,44 +159,38 @@ namespace Foodo.Application.Implementation.Customer
 				_cacheService.Set(cacheKey, emptyResult);
 				return ApiResponse<PaginationDto<CustomerOrderDto>>.Success(emptyResult);
 			}
-
-			var merchantName = (await _unitOfWork.MerchantRepository.FindByContidtionAsync(e => e.UserId == orders.First().MerchantId)).StoreName;
-
-			var orderDtos = new List<CustomerOrderDto>();
-
-			foreach (var order in orders)
+			var customerAddresses = await _unitOfWork.UserCustomRepository.ReadCustomer()
+											.Where(c => c.Id == input.UserId)
+											.SelectMany(c => c.TblAdresses)
+											.ToListAsync();
+			var orders =await FilterOrderQuery.AsAsyncEnumerable().Select(e => new CustomerOrderDto
 			{
-				// هات العنوان
-				var address = await _unitOfWork.AdressRepository.ReadByIdAsync(order.BillingAddressId);
-
-				// ابني الـ DTO
-				var dto = new CustomerOrderDto
+				OrderId = e.OrderId,
+				MerchantId = e.MerchantId,
+				MerchantName = e.TblProductsOrders.Select(p => p.Product.Merchant.StoreName).FirstOrDefault(),
+				OrderDate = e.OrderDate,
+				TotalAmount = e.TotalPrice,
+				Status = e.OrderStatus.ToString(),
+				billingAddress = customerAddresses
+						.Where(a => a.AddressId == e.BillingAddressId)
+						.Select(a => a.StreetAddress)
+						.FirstOrDefault(),
+				OrderItems = e.TblProductsOrders.Select(p => new OrderItemDto
 				{
-					OrderId = order.OrderId,
-					MerchantId = order.MerchantId,
-					MerchantName = merchantName,
-					OrderDate = order.OrderDate,
-					TotalAmount = order.TotalPrice,
-					Status = order.OrderStatus.ToString(),
-					billingAddress = address?.StreetAddress ?? "No Address",
-					OrderItems = order.TblProductsOrders.Select(item => new OrderItemDto
-					{
-						ItemId = item.ProductId,
-						ItemName = item.Product.ProductsName,
-						Quantity = item.Quantity,
-						Price = item.Price
-					}).ToList()
-				};
+					ItemId = p.ProductId,
+					ItemName = p.Product.ProductsName,
+					Quantity = p.Quantity,
+					Price = p.Price
+				}).ToList()
+			}).ToListAsync();
 
-				orderDtos.Add(dto);
-			}
 
 
 			var resultDto = new PaginationDto<CustomerOrderDto>
 			{
 				TotalItems = totalCount,
 				TotalPages = totalPages,
-				Items = orderDtos
+				Items = orders
 			};
 
 			_cacheService.Set(cacheKey, resultDto);
@@ -198,50 +200,79 @@ namespace Foodo.Application.Implementation.Customer
 		public async Task<ApiResponse<CustomerOrderDto>> ReadOrderById(ItemByIdInput input)
 		{
 			string cacheKey = $"customer_order:{input.ItemId}";
+
 			var cached = _cacheService.Get<CustomerOrderDto>(cacheKey);
-			if (cached != null) return ApiResponse<CustomerOrderDto>.Success(cached);
+			if (cached != null)
+				return ApiResponse<CustomerOrderDto>.Success(cached);
 
-			var order = await _unitOfWork.OrderRepository.FindByContidtionAsync(o => o.OrderId == Convert.ToInt32(input.ItemId));
-			if (order == null) return ApiResponse<CustomerOrderDto>.Failure("Order not found");
-			var MerchantName = (await _userService.GetByIdAsync(order.MerchantId)).TblMerchant.StoreName;
-			var address = await _unitOfWork.AdressRepository.ReadByIdAsync(order.BillingAddressId);
+			int orderId = Convert.ToInt32(input.ItemId);
 
+			var orderQuery =
+				_unitOfWork.OrderCustomRepository.ReadOrdersInclude()
+				.Where(o => o.OrderId == orderId)
+				.Select(e => new
+				{
+					e.OrderId,
+					e.MerchantId,
+					MerchantName = e.TblProductsOrders
+									.Select(p => p.Product.Merchant.StoreName)
+									.FirstOrDefault(),
+					e.OrderDate,
+					e.TotalPrice,
+					Status = e.OrderStatus.ToString(),
+					e.BillingAddressId,
+					CustomerId = e.CustomerId,
+					OrderItems = e.TblProductsOrders.Select(p => new OrderItemDto
+					{
+						ItemId = p.ProductId,
+						ItemName = p.Product.ProductsName,
+						Quantity = p.Quantity,
+						Price = p.Price
+					}).ToList()
+				});
+
+			var orderData = await orderQuery.FirstOrDefaultAsync();
+
+			if (orderData == null)
+				return ApiResponse<CustomerOrderDto>.Failure("Order not found");
+
+			// --------- Retrieve Customer Addresses ----------
+
+
+			string billingAddress =(await _unitOfWork.AdressRepository.ReadByIdAsync(orderId)).StreetAddress;
+
+			// --------- Build Final DTO ----------
 			var orderDto = new CustomerOrderDto
 			{
-				OrderId = order.OrderId,
-				MerchantId = order.MerchantId,
-				MerchantName= MerchantName,
-				OrderDate = order.OrderDate,
-				TotalAmount = order.TotalPrice,
-				Status = order.OrderStatus.ToString(),
-				billingAddress = address?.StreetAddress ?? "No Address",
-
-				OrderItems = order.TblProductsOrders.Select(item => new OrderItemDto
-				{
-					ItemId = item.ProductId,
-					ItemName = item.Product.ProductsName,
-					Quantity = item.Quantity,
-					Price = item.Price
-				}).ToList()
+				OrderId = orderData.OrderId,
+				MerchantId = orderData.MerchantId,
+				MerchantName = orderData.MerchantName,
+				OrderDate = orderData.OrderDate,
+				TotalAmount = orderData.TotalPrice,
+				Status = orderData.Status,
+				billingAddress = billingAddress,
+				OrderItems = orderData.OrderItems
 			};
 
 			_cacheService.Set(cacheKey, orderDto);
+
 			return ApiResponse<CustomerOrderDto>.Success(orderDto);
 		}
+
 
 		#endregion
 
 		#region Products
-
 		public async Task<ApiResponse<PaginationDto<ProductDto>>> ReadAllProducts(ProductPaginationInput input)
 		{
 			string cacheKey = $"customer_product:list:all:{input.Page}:{input.PageSize}";
 			var cached = _cacheService.Get<PaginationDto<ProductDto>>(cacheKey);
 			if (cached != null) return ApiResponse<PaginationDto<ProductDto>>.Success(cached);
 
-			var (products, totalCount, totalPages) = await _unitOfWork.ProductRepository.PaginationAsync(input.Page, input.PageSize, null);
+			var query = _unitOfWork.ProductCustomRepository.ReadProducts();
 
-			if (products == null || !products.Any())
+			var totalCount = await query.CountAsync();
+			if (totalCount == 0)
 			{
 				var emptyResult = new PaginationDto<ProductDto>
 				{
@@ -252,29 +283,40 @@ namespace Foodo.Application.Implementation.Customer
 				_cacheService.Set(cacheKey, emptyResult);
 				return ApiResponse<PaginationDto<ProductDto>>.Success(emptyResult);
 			}
+			var totalPages = (int)Math.Ceiling(totalCount / (double)input.PageSize);
 
-			var productDtos = products.Select(product => new ProductDto
-			{
-				ProductId = product.ProductId,
-				ProductName = product.ProductsName,
-				ProductDescription = product.ProductDescription,
-				Price = product.TblProductDetails.FirstOrDefault()?.Price.ToString() ?? "0",
-				Attributes = product.TblProductDetails.FirstOrDefault()?.LkpProductDetailsAttributes.Select(pda => new AttributeDto
+			var productDtos = await query
+				.Select(e => new ProductDto
 				{
-					Name = pda.Attribute.Name,
-					Value = pda.Attribute.value,
-					MeasurementUnit = pda.UnitOfMeasure.UnitOfMeasureName
-				}).ToList() ?? new List<AttributeDto>(),
-				Urls = product.ProductPhotos
-		.Select(p => new ProductPhotosDto
-		{
-			url = p.Url,
-			isMain = p.isMain
-		})
-		.ToList()
-
-			}).ToList();
-
+					ProductId = e.ProductId,
+					ProductName = e.ProductsName,
+					ProductDescription = e.ProductDescription,
+					Price = e.TblProductDetails
+								//.OrderBy(pd => pd.ProductId) // لو في ترتيب معين
+								.Select(pd => pd.Price.ToString())
+								.FirstOrDefault() ?? "0",
+					Attributes = e.TblProductDetails
+								//.OrderBy(pd => pd.ProductId)
+								.SelectMany(pd => pd.LkpProductDetailsAttributes)
+								.Select(pda => new AttributeDto
+								{
+									Name = pda.Attribute.Name,
+									Value = pda.Attribute.value,
+									MeasurementUnit = pda.UnitOfMeasure.UnitOfMeasureName
+								}).ToList(),
+					Urls = e.ProductPhotos
+								.Select(p => new ProductPhotosDto
+								{
+									url = p.Url,
+									isMain = p.isMain
+								}).ToList(),
+					ProductCategories = e.ProductCategories
+						.Select(pc => pc.Category.CategoryName)
+						.ToList()
+				})
+				.Skip((input.Page - 1) * input.PageSize)
+				.Take(input.PageSize)
+				.ToListAsync();
 			var resultDto = new PaginationDto<ProductDto>
 			{
 				TotalItems = totalCount,
@@ -291,31 +333,41 @@ namespace Foodo.Application.Implementation.Customer
 			string cacheKey = $"customer_product:{input.ItemId}";
 			var cached = _cacheService.Get<ProductDto>(cacheKey);
 			if (cached != null) return ApiResponse<ProductDto>.Success(cached);
-
-			var product = await _unitOfWork.ProductRepository.ReadByIdAsync(Convert.ToInt32(input.ItemId));
-			if (product == null) return ApiResponse<ProductDto>.Failure("Product not found");
-
-			var productDto = new ProductDto
-			{
-				ProductId = product.ProductId,
-				ProductName = product.ProductsName,
-				ProductDescription = product.ProductDescription,
-				Price = product.TblProductDetails.FirstOrDefault()?.Price.ToString() ?? "0",
-				Attributes = product.TblProductDetails.FirstOrDefault()?.LkpProductDetailsAttributes.Select(pda => new AttributeDto
-				{
-					Name = pda.Attribute.Name,
-					Value = pda.Attribute.value,
-					MeasurementUnit = pda.UnitOfMeasure.UnitOfMeasureName
-				}).ToList() ?? new List<AttributeDto>(),
-				Urls = product.ProductPhotos
-		.Select(p => new ProductPhotosDto
+			var query = _unitOfWork.ProductCustomRepository.ReadProducts();
+			var productDto = await query
+		.Select(e => new ProductDto
 		{
-			url = p.Url,
-			isMain = p.isMain
+			ProductId = e.ProductId,
+			ProductName = e.ProductsName,
+			ProductDescription = e.ProductDescription,
+			Price = e.TblProductDetails
+						.OrderBy(pd => pd.ProductId)
+						.Select(pd => pd.Price.ToString())
+						.FirstOrDefault() ?? "0",
+			Attributes = e.TblProductDetails
+						.OrderBy(pd => pd.ProductId)
+						.SelectMany(pd => pd.LkpProductDetailsAttributes)
+						.Select(pda => new AttributeDto
+						{
+							Name = pda.Attribute.Name,
+							Value = pda.Attribute.value,
+							MeasurementUnit = pda.UnitOfMeasure.UnitOfMeasureName
+						}).ToList(),
+			Urls = e.ProductPhotos
+						.Select(p => new ProductPhotosDto
+						{
+							url = p.Url,
+							isMain = p.isMain
+						}).ToList(),
+			ProductCategories = e.ProductCategories
+						.Select(pc => pc.Category.CategoryName)
+						.ToList()
 		})
-		.ToList()
+		.FirstOrDefaultAsync(e => e.ProductId == Convert.ToInt32(input.ItemId));
 
-			};
+			if (productDto == null) return ApiResponse<ProductDto>.Failure("Product not found");
+
+
 
 			_cacheService.Set(cacheKey, productDto);
 			return ApiResponse<ProductDto>.Success(productDto);
@@ -327,29 +379,34 @@ namespace Foodo.Application.Implementation.Customer
 			var cached = _cacheService.Get<PaginationDto<ProductDto>>(cacheKey);
 			if (cached != null) return ApiResponse<PaginationDto<ProductDto>>.Success(cached);
 
-			var (products, totalCount, totalPages) = await _unitOfWork.ProductRepository.PaginationAsync(input.Page, input.PageSize, p => p.ProductCategories.Any(c => c.categoryid == (int)input.Category));
-
-			var productDtos = products.Select(product => new ProductDto
-			{
-				ProductId = product.ProductId,
-				ProductName = product.ProductsName,
-				ProductDescription = product.ProductDescription,
-				Price = product.TblProductDetails.FirstOrDefault()?.Price.ToString() ?? "0",
-				Attributes = product.TblProductDetails.FirstOrDefault()?.LkpProductDetailsAttributes.Select(pda => new AttributeDto
+			var query = _unitOfWork.ProductCustomRepository.ReadProducts();
+			var filteredQuery = query.Where(p => p.ProductCategories.Any(c => c.categoryid == (int)input.Category));
+			var totalCount = await filteredQuery.CountAsync();
+			var totalPages = (int)Math.Ceiling(totalCount / (decimal)input.PageSize);
+			var productDtos = await filteredQuery
+				.Select(e => new ProductDto
 				{
-					Name = pda.Attribute.Name,
-					Value = pda.Attribute.value,
-					MeasurementUnit = pda.UnitOfMeasure.UnitOfMeasureName
-				}).ToList() ?? new List<AttributeDto>(),
-				Urls = product.ProductPhotos
-		.Select(p => new ProductPhotosDto
-		{
-			url = p.Url,
-			isMain = p.isMain
-		})
-		.ToList()
+					ProductId = e.ProductId,
+					ProductName = e.ProductsName,
+					ProductDescription = e.ProductDescription,
+					Price = (e.TblProductDetails.Single().Price).ToString(),
+					Attributes = e.TblProductDetails.SelectMany(pd => pd.LkpProductDetailsAttributes).Select(pda => new AttributeDto
+					{
+						Name = pda.Attribute.Name,
+						Value = pda.Attribute.value,
+						MeasurementUnit = pda.UnitOfMeasure.UnitOfMeasureName
+					}).ToList(),
+					ProductCategories = e.ProductCategories.Select(c => c.Category.CategoryName).ToList(),
+					Urls = e.ProductPhotos.Select(pp => new ProductPhotosDto
+					{
+						url = pp.Url,
+						isMain = pp.isMain
+					}).ToList()
 
-			}).ToList();
+				})
+				.Skip((input.Page - 1) * input.PageSize)
+				.Take(input.PageSize)
+				.ToListAsync();
 
 			var resultDto = new PaginationDto<ProductDto>
 			{
@@ -365,47 +422,35 @@ namespace Foodo.Application.Implementation.Customer
 		public async Task<ApiResponse<PaginationDto<ProductDto>>> ReadProductsByShop(ProductPaginationByShopInput input)
 		{
 			string cacheKey = $"customer_product:list:shop:{input.MerchantId}:{input.Page}:{input.PageSize}";
-			var user =await _userService.GetByIdAsync(input.MerchantId);
-			var (products, totalCount, totalPages) = await _unitOfWork.ProductRepository.PaginationAsync(input.Page,input.PageSize,e=>e.UserId==input.MerchantId);
-			if (products == null || !products.Any())
-			{
-				var emptyResult = new PaginationDto<ProductDto>
+			var user = await _userService.GetByIdAsync(input.MerchantId);
+			var query = _unitOfWork.ProductCustomRepository.ReadProducts();
+			var filteredQuery = query.Where(e => e.UserId == input.MerchantId);
+			var totalCount = await filteredQuery.CountAsync();
+			var totalPages = (int)Math.Ceiling(totalCount / (decimal)input.PageSize);
+			var productDtos = await filteredQuery
+				.Select(e => new ProductDto
 				{
-					TotalItems = 0,
-					TotalPages = 0,
-					Items = new List<ProductDto>()
-				};
-				_cacheService.Set(cacheKey, emptyResult);
-				return ApiResponse<PaginationDto<ProductDto>>.Success(emptyResult);
-			}
+					ProductId = e.ProductId,
+					ProductName = e.ProductsName,
+					ProductDescription = e.ProductDescription,
+					Price = (e.TblProductDetails.Single().Price).ToString(),
+					Attributes = e.TblProductDetails.SelectMany(pd => pd.LkpProductDetailsAttributes).Select(pda => new AttributeDto
+					{
+						Name = pda.Attribute.Name,
+						Value = pda.Attribute.value,
+						MeasurementUnit = pda.UnitOfMeasure.UnitOfMeasureName
+					}).ToList(),
+					ProductCategories = e.ProductCategories.Select(c => c.Category.CategoryName).ToList(),
+					Urls = e.ProductPhotos.Select(pp => new ProductPhotosDto
+					{
+						url = pp.Url,
+						isMain = pp.isMain
+					}).ToList()
 
-			var productDtos = products.Select(product => new ProductDto
-			{
-				ProductId = product.ProductId,
-				ProductName = product.ProductsName,
-				ProductDescription = product.ProductDescription,
-				Price = product.TblProductDetails.FirstOrDefault()?.Price.ToString() ?? "0",
-
-				Attributes = product.TblProductDetails.FirstOrDefault()?.LkpProductDetailsAttributes.Select(pda => new AttributeDto
-				{
-					Name = pda.Attribute.Name,
-					Value = pda.Attribute.value,
-					MeasurementUnit = pda.UnitOfMeasure.UnitOfMeasureName
-				}).ToList() ?? new List<AttributeDto>(),
-
-				ProductCategories = product.ProductCategories
-	.Select(c => ((FoodCategory)c.categoryid).ToString())
-	.ToList(),
-				Urls = product.ProductPhotos
-		.Select(p => new ProductPhotosDto
-		{
-			url = p.Url,
-			isMain = p.isMain
-		})
-		.ToList()
-
-
-			}).ToList();
+				})
+				.Skip((input.Page - 1) * input.PageSize)
+				.Take(input.PageSize)
+				.ToListAsync();
 
 
 			var resultDto = new PaginationDto<ProductDto>
@@ -427,19 +472,34 @@ namespace Foodo.Application.Implementation.Customer
 			var cached = _cacheService.Get<PaginationDto<ShopDto>>(cacheKey);
 			if (cached != null) return ApiResponse<PaginationDto<ShopDto>>.Success(cached);
 
-			var (shops, totalCount, totalPages) = await _unitOfWork.MerchantRepository.PaginationAsync(input.Page, input.PageSize, null);
-
-			var shopDtos = shops.Select(shop => new ShopDto
+			var query = _unitOfWork.RestaurantCustomRepository.ReadRestaurants();
+			var totalCount = await query.CountAsync();
+			if (totalCount == 0)
 			{
-				ShopId = shop.UserId,
-				ShopName = shop.StoreName,
-				ShopDescription = shop.StoreDescription,
-				Categories = shop.TblRestaurantCategories
-	.Select(c => ((RestaurantCategory)c.categoryid).ToString())
-	.ToList(),
-				url=shop.User?.UserPhoto?.Url??null,
-
-			}).ToList();
+				var emptyResult = new PaginationDto<ShopDto>
+				{
+					TotalItems = 0,
+					TotalPages = 0,
+					Items = new List<ShopDto>()
+				};
+				_cacheService.Set(cacheKey, emptyResult);
+				return ApiResponse<PaginationDto<ShopDto>>.Success(emptyResult);
+			}
+			var totalPages = (int)Math.Ceiling(totalCount / (double)input.PageSize);
+			var shopDtos = await query
+				.Select(e => new ShopDto
+				{
+					ShopId = e.UserId,
+					ShopName = e.StoreName,
+					ShopDescription = e.StoreDescription,
+					Categories = e.TblRestaurantCategories
+					.Select(c => ((RestaurantCategory)c.categoryid).ToString())
+					.ToList(),
+					url=e.User.UserPhoto.Url ?? null
+				})
+				.Skip((input.Page - 1) * input.PageSize)
+				.Take(input.PageSize)
+				.ToListAsync();
 
 			var resultDto = new PaginationDto<ShopDto>
 			{
@@ -457,21 +517,20 @@ namespace Foodo.Application.Implementation.Customer
 			string cacheKey = $"customer_merchant:{input.ItemId}";
 			var cached = _cacheService.Get<ShopDto>(cacheKey);
 			if (cached != null) return ApiResponse<ShopDto>.Success(cached);
-
-			var user = await _userService.GetByIdAsync(input.ItemId);
-			var shop = user.TblMerchant;
-			if (shop == null) return ApiResponse<ShopDto>.Failure("Shop not found");
-
-			var shopDto = new ShopDto
+			var query = _unitOfWork.RestaurantCustomRepository.ReadRestaurants();
+			var filteredQuery = query.Where(e => e.UserId == input.ItemId);
+			var shopDto =await filteredQuery.Select(e => new ShopDto
 			{
-				ShopId = shop.UserId,
-				ShopName = shop.StoreName,
-				ShopDescription = shop.StoreDescription,
-						Categories = shop.TblRestaurantCategories
-.Select(c => ((RestaurantCategory)c.categoryid).ToString())
-.ToList(),
-				url = shop.User.UserPhoto.Url
-			};
+				ShopId = e.UserId,
+				ShopName = e.StoreName,
+				ShopDescription = e.StoreDescription,
+				Categories = e.TblRestaurantCategories
+					.Select(c => ((RestaurantCategory)c.categoryid).ToString())
+					.ToList(),
+				url = e.User.UserPhoto.Url ?? null
+			}).FirstOrDefaultAsync();
+
+			if (shopDto == null) return ApiResponse<ShopDto>.Failure("Shop not found");
 
 
 			_cacheService.Set(cacheKey, shopDto);
@@ -483,10 +542,10 @@ namespace Foodo.Application.Implementation.Customer
 			string cacheKey = $"customer_merchant:list:category:{input.Category}:{input.Page}:{input.PageSize}";
 			var cached = _cacheService.Get<PaginationDto<ShopDto>>(cacheKey);
 			if (cached != null) return ApiResponse<PaginationDto<ShopDto>>.Success(cached);
-
-			var (shops, totalCount, totalPages) = await _unitOfWork.MerchantRepository.PaginationAsync(input.Page, input.PageSize, m => m.TblRestaurantCategories.Any(c => c.categoryid == (int)input.Category));
-
-			if (shops == null || !shops.Any())
+			var query = _unitOfWork.RestaurantCustomRepository.ReadRestaurants();
+			var filteredQuery = query.Where(e=>e.TblRestaurantCategories.Any(c => c.categoryid == (int)input.Category));
+			var totalCount = await filteredQuery.CountAsync();
+			if (totalCount == 0)
 			{
 				var emptyResult = new PaginationDto<ShopDto>
 				{
@@ -497,18 +556,36 @@ namespace Foodo.Application.Implementation.Customer
 				_cacheService.Set(cacheKey, emptyResult);
 				return ApiResponse<PaginationDto<ShopDto>>.Success(emptyResult);
 			}
+			var totalPages = (int)Math.Ceiling(totalCount / (double)input.PageSize);
+			var shopDtos = await filteredQuery
+				.Select(e => new ShopDto
+				{
+					ShopId = e.UserId,
+					ShopName = e.StoreName,
+					ShopDescription = e.StoreDescription,
+					Categories = e.TblRestaurantCategories
+					.Select(c => ((RestaurantCategory)c.categoryid).ToString())
+					.ToList(),
+					url = e.User.UserPhoto.Url ?? null
+				})
+				.Skip((input.Page - 1) * input.PageSize)
+				.Take(input.PageSize)
+				.ToListAsync();
+			//var (shops, totalCount, totalPages) = await _unitOfWork.MerchantRepository.PaginationAsync(input.Page, input.PageSize, m => m.TblRestaurantCategories.Any(c => c.categoryid == (int)input.Category));
 
-			var shopDtos = shops.Select(shop => new ShopDto
-			{
-				ShopId = shop.UserId,
-				ShopName = shop.StoreName,
-				ShopDescription = shop.StoreDescription,
-				Categories = shop.TblRestaurantCategories
-	.Select(c => ((RestaurantCategory)c.categoryid).ToString())
-	.ToList(),
-				url = shop.User?.UserPhoto?.Url??null
 
-			}).ToList();
+
+			//		var shopDtos = shops.Select(shop => new ShopDto
+			//		{
+			//			ShopId = shop.UserId,
+			//			ShopName = shop.StoreName,
+			//			ShopDescription = shop.StoreDescription,
+			//			Categories = shop.TblRestaurantCategories
+			//.Select(c => ((RestaurantCategory)c.categoryid).ToString())
+			//.ToList(),
+			//			url = shop.User?.UserPhoto?.Url ?? null
+
+			//		}).ToList();
 
 			var resultDto = new PaginationDto<ShopDto>
 			{

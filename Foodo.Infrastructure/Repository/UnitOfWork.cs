@@ -20,6 +20,11 @@ namespace Foodo.Infrastructure.Repository
 		public IRepository<TblProductDetail> ProductDetailRepository { get; }
 		public IRepository<TblProductsOrder> ProductsOrderRepository { get; }
 		public IRepository<TblProductPhoto> ProductPhotoRepository { get; }
+		public IProductRepository ProductCustomRepository { get; }
+		public IRestaurantRepository RestaurantCustomRepository { get; }
+		public IUserRepository UserCustomRepository { get; }
+		public IOrderRepository OrderCustomRepository { get; }
+		public IProductPhotoCustomRepository productPhotoCustomRepository { get; }
 
 
 		public UnitOfWork(
@@ -34,7 +39,12 @@ namespace Foodo.Infrastructure.Repository
 			IRepository<TblProduct> ProductRepository,
 			IRepository<TblProductDetail> ProductDetailRepository,
 			IRepository<TblProductsOrder> ProductsOrderRepository,
-			IRepository<TblProductPhoto> ProductPhotoRepository
+			IRepository<TblProductPhoto> ProductPhotoRepository,
+			IProductRepository ProductCustomRepository,
+			IRestaurantRepository restaurantCustomRepository,
+			IUserRepository userCustomRepository,
+			IOrderRepository OrderCustomRepository,
+			IProductPhotoCustomRepository productPhotoCustomRepository
 		)
 		{
 			_context = context;
@@ -50,6 +60,11 @@ namespace Foodo.Infrastructure.Repository
 			this.ProductDetailRepository = ProductDetailRepository;
 			this.ProductsOrderRepository = ProductsOrderRepository;
 			this.ProductPhotoRepository= ProductPhotoRepository;
+			this.ProductCustomRepository = ProductCustomRepository;
+			this.RestaurantCustomRepository = restaurantCustomRepository;
+			this.UserCustomRepository = userCustomRepository;
+			this.OrderCustomRepository = OrderCustomRepository;
+			this.productPhotoCustomRepository = productPhotoCustomRepository;
 		}
 
 		public async Task<int> saveAsync()

@@ -4,6 +4,8 @@ using Foodo.Application.Models.Dto.Profile.Customer;
 using Foodo.Application.Models.Input.Profile.Customer;
 using Foodo.Application.Models.Response;
 using Foodo.Domain.Entities;
+using Foodo.Domain.Repository;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -13,14 +15,16 @@ namespace Foodo.Application.Implementation.Profile.CustomerProfile
 	public class CustomerProfileService : ICustomerProfileService
 	{
 		private readonly IUserService _service;
+		private readonly IUnitOfWork _unitOfWork;
 
-		public CustomerProfileService(IUserService service)
+		public CustomerProfileService(IUserService service,IUnitOfWork unitOfWork)
 		{
 			_service = service;
+			_unitOfWork = unitOfWork;
 		}
 		public async Task<ApiResponse> AddAdress(CustomerAddAdressInput input)
 		{
-			var user = await _service.GetByIdAsync(input.CustomerId);
+			var user = await _unitOfWork.UserCustomRepository.ReadCustomer().Where(e => e.Id == input.CustomerId).FirstOrDefaultAsync();
 			if (user == null)
 			{
 				return new ApiResponse { Message = "user not found", IsSuccess = false };
@@ -39,7 +43,7 @@ namespace Foodo.Application.Implementation.Profile.CustomerProfile
 
 		public async Task<ApiResponse<CustomerProfileDto>> GetCustomerProfile(CustomerGetCustomerProfileInput input)
 		{
-			var user = await _service.GetByIdAsync(input.UserId);
+			var user = await _unitOfWork.UserCustomRepository.ReadCustomer().Where(e => e.Id == input.UserId).FirstOrDefaultAsync();
 			if (user == null) { 
 			return new ApiResponse<CustomerProfileDto> { IsSuccess = false ,Message="user not found"};
 			}
@@ -57,7 +61,7 @@ namespace Foodo.Application.Implementation.Profile.CustomerProfile
 
 		public async Task<ApiResponse> MakeAdressDefault(CustomerMakeAdressDefaultInput input)
 		{
-			var user = await _service.GetByIdAsync(input.CustomerId);
+			var user = await _unitOfWork.UserCustomRepository.ReadCustomer().Where(e => e.Id == input.CustomerId).FirstOrDefaultAsync();
 			if (user == null)
 			{
 				return new ApiResponse { IsSuccess = false, Message = "user not found" };
@@ -85,7 +89,7 @@ namespace Foodo.Application.Implementation.Profile.CustomerProfile
 
 		public async Task<ApiResponse> RemoveAdress(CustomerRemoveAdressInput input)
 		{
-			var user = await _service.GetByIdAsync(input.CustomerId);
+			var user = await _unitOfWork.UserCustomRepository.ReadCustomer().Where(e => e.Id == input.CustomerId).FirstOrDefaultAsync();
 			if (user == null)
 			{
 				return new ApiResponse { IsSuccess = false, Message = "user not found" };

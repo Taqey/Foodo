@@ -107,55 +107,30 @@ public class MerchantService : IMerchantService
 		{
 			return ApiResponse<PaginationDto<MerchantProductDto>>.Success(cached);
 		}
-
-		var (products, totalCount, totalPages) = await _unitOfWork.ProductRepository.PaginationAsync(
-			input.Page,
-			input.PageSize,
-			p => p.UserId == input.UserId
-		);
-
-		var productDtos = new List<MerchantProductDto>();
-
-		foreach (var product in products)
+		var products = _unitOfWork.ProductCustomRepository.ReadProducts().Where(p => p.UserId == input.UserId).Skip((input.Page-1)*input.PageSize).Take(input.PageSize);
+		var totalCount=await products.CountAsync();
+		if (totalCount==0)
 		{
-			var detail = product.TblProductDetails.FirstOrDefault();
-
-			// list of attributes
-			var attributesList = detail?.LkpProductDetailsAttributes?.ToList()
-									 ?? new List<LkpProductDetailsAttribute>();
-
-			var productDto = new MerchantProductDto
-			{
-				ProductId = product.ProductId,
-				ProductName = product.ProductsName,
-				ProductDescription = product.ProductDescription,
-				Price = detail?.Price.ToString() ?? "0",
-
-				ProductCategories = product.ProductCategories
-						.Select(c => c.Category.CategoryName)
-						.ToList(),
-
-				// ⬅️ ProductDetailAttributes mapped here
-				ProductDetailAttributes = attributesList
-						.Select(a => new ProductDetailAttributeDto
-						{
-							Id = a.ProductDetailAttributeId,
-							AttributeName = a.Attribute.Name,
-							AttributeValue = a.Attribute.value,
-							MeasurementUnit = a.UnitOfMeasure.UnitOfMeasureName
-						})
-						.ToList(),
-				Urls = product.ProductPhotos
-		.Select(p => new ProductPhotosDto
-		{
-			url = p.Url,
-			isMain = p.isMain
-		})
-		.ToList()
-			};
-
-			productDtos.Add(productDto);
+			return new ApiResponse<PaginationDto<MerchantProductDto>> { IsSuccess = false, Message = "No products found" };
 		}
+		var totalPages = (int)Math.Ceiling((decimal)totalCount / input.PageSize);
+		var productDtos =await products.Select(e=>new MerchantProductDto
+		{
+			ProductId=e.ProductId,
+			ProductName=e.ProductsName,
+			ProductDescription=e.ProductDescription,
+			Price = e.TblProductDetails.Select(p => p.Price).FirstOrDefault().ToString(),
+			ProductCategories = e.ProductCategories.Select(p=>p.Category.CategoryName).ToList(),
+			ProductDetailAttributes=e.TblProductDetails.SelectMany(p=>p.LkpProductDetailsAttributes).Select(p=>new ProductDetailAttributeDto
+			{
+			Id=p.ProductDetailAttributeId,
+			AttributeName=p.Attribute.Name,
+			AttributeValue=p.Attribute.value,
+			MeasurementUnit=p.UnitOfMeasure.UnitOfMeasureName
+			}).ToList(),
+			Urls=e.ProductPhotos.Select(p=>new ProductPhotosDto { isMain=p.isMain,url=p.Url}).ToList()
+
+		}).ToListAsync();
 
 		var paginationDto = new PaginationDto<MerchantProductDto>
 		{
@@ -169,54 +144,36 @@ public class MerchantService : IMerchantService
 		return ApiResponse<PaginationDto<MerchantProductDto>>.Success(paginationDto);
 	}
 
-	public async Task<ApiResponse<ProductDto>> ReadProductByIdAsync(int productId)
+	public async Task<ApiResponse<MerchantProductDto>> ReadProductByIdAsync(int productId)
 	{
+		var product = _unitOfWork.ProductCustomRepository.ReadProducts().Where(p => p.ProductId == productId);
+		if (product.FirstOrDefault() == null) return ApiResponse<MerchantProductDto>.Failure("Product not found");
 
-		var product = await _unitOfWork.ProductRepository.ReadByIdAsync(productId);
-		if (product == null) return ApiResponse<ProductDto>.Failure("Product not found");
-
-		var productDetail = product.TblProductDetails.FirstOrDefault();
-
-		var productDto = new ProductDto
+		var productDto = await product.Select(e => new MerchantProductDto
 		{
-			ProductId = product.ProductId,
-			ProductName = product.ProductsName,
-			ProductDescription = product.ProductDescription,
-			Price = productDetail?.Price.ToString() ?? "0",
-			Attributes = new List<AttributeDto>(),
-			ProductCategories = product.ProductCategories
-					.Select(c => c.Category.CategoryName) // مباشرة string
-					.ToList(),
-			Urls = product.ProductPhotos
-		.Select(p => new ProductPhotosDto
-		{
-			url = p.Url,
-			isMain = p.isMain
-		})
-		.ToList()
-
-
-		};
-
-		if (productDetail != null)
-		{
-			foreach (var pda in productDetail.LkpProductDetailsAttributes)
+			ProductId = e.ProductId,
+			ProductName = e.ProductsName,
+			ProductDescription = e.ProductDescription,
+			Price = e.TblProductDetails.Select(p => p.Price).FirstOrDefault().ToString(),
+			ProductCategories = e.ProductCategories.Select(p => p.Category.CategoryName).ToList(),
+			ProductDetailAttributes = e.TblProductDetails.SelectMany(p => p.LkpProductDetailsAttributes).Select(p => new ProductDetailAttributeDto
 			{
-				productDto.Attributes.Add(new AttributeDto
-				{
-					Name = pda.Attribute.Name,
-					Value = pda.Attribute.value,
-					MeasurementUnit = pda.UnitOfMeasure.UnitOfMeasureName
-				});
-			}
-		}
+				Id = p.ProductDetailAttributeId,
+				AttributeName = p.Attribute.Name,
+				AttributeValue = p.Attribute.value,
+				MeasurementUnit = p.UnitOfMeasure.UnitOfMeasureName
+			}).ToList(),
+			Urls = e.ProductPhotos.Select(p => new ProductPhotosDto { isMain = p.isMain, url = p.Url }).ToList()
 
-		return ApiResponse<ProductDto>.Success(productDto);
+		}).FirstOrDefaultAsync();
+	
+
+		return ApiResponse<MerchantProductDto>.Success(productDto);
 	}
 
 	public async Task<ApiResponse> UpdateProductAsync(ProductUpdateInput input)
 	{
-		var product = await _unitOfWork.ProductRepository.ReadByIdAsync(input.productId);
+		var product =await _unitOfWork.ProductCustomRepository.ReadProductsInclude().Where(e => e.ProductId == input.productId).FirstOrDefaultAsync();
 		if (product == null)
 		{
 			return ApiResponse.Failure("Product not found");
@@ -225,12 +182,15 @@ public class MerchantService : IMerchantService
 		product.ProductsName = input.ProductName;
 		product.ProductDescription = input.ProductDescription;
 		var detail = product.TblProductDetails.FirstOrDefault();
-		if (detail != null)
-		{
-			detail.Price = Convert.ToDecimal(input.Price);
-		}
+		detail.Price = Convert.ToDecimal(input.Price);
+		_unitOfWork.ProductDetailRepository.Update(detail);
+		 _unitOfWork.ProductRepository.Update(product);
 
 		var a = await _unitOfWork.saveAsync();
+		if (a<=0)
+		{
+			return new ApiResponse { IsSuccess = false, Message = "Saving product after update failed" };
+		}
 
 		// Clear cache
 		_cacheService.Remove($"merchant_product:{input.productId}");
@@ -247,7 +207,7 @@ public class MerchantService : IMerchantService
 
 	public async Task<ApiResponse> DeleteProductAsync(int productId)
 	{
-		var product = await _unitOfWork.ProductRepository.ReadByIdAsync(productId);
+		var product =await _unitOfWork.ProductCustomRepository.ReadProducts().Where(e=>e.ProductId==productId).FirstOrDefaultAsync();
 		if (product == null)
 		{
 			return ApiResponse.Failure("Product not found");
@@ -270,7 +230,8 @@ public class MerchantService : IMerchantService
 
 	public async Task<ApiResponse> AddProductAttributeAsync(int productId, AttributeCreateInput attributes)
 	{
-		var product = await _unitOfWork.ProductRepository.ReadByIdAsync(productId);
+		//var product = await _unitOfWork.ProductRepository.ReadByIdAsync(productId);
+		var product =await _unitOfWork.ProductCustomRepository.ReadProductsInclude().Where(e => e.ProductId == productId).FirstOrDefaultAsync();
 		if (product == null)
 			return ApiResponse.Failure("Product not found");
 
@@ -296,7 +257,7 @@ public class MerchantService : IMerchantService
 			};
 			await _unitOfWork.ProductDetailsAttributeRepository.CreateAsync(productDetailAttribute);
 		}
-
+		_unitOfWork.ProductRepository.Update(product);
 		await _unitOfWork.saveAsync();
 		await transaction.CommitAsync();
 
@@ -314,7 +275,7 @@ public class MerchantService : IMerchantService
 
 	public async Task<ApiResponse> RemoveProductAttributeAsync(int productId, AttributeDeleteInput attributes)
 	{
-		var product = await _unitOfWork.ProductRepository.ReadByIdAsync(productId);
+		var product = await _unitOfWork.ProductCustomRepository.ReadProductsInclude().Where(e => e.ProductId == productId).FirstOrDefaultAsync();
 		var productDetail = product.TblProductDetails.FirstOrDefault();
 		foreach (var item in attributes.Attributes)
 		{
@@ -338,11 +299,9 @@ public class MerchantService : IMerchantService
 
 	public async Task<ApiResponse> AddProductCategoriesAsync(ProductCategoryInput categoryInput)
 	{
-		var product = await _unitOfWork.ProductRepository.ReadByIdAsync(categoryInput.ProductId);
+		var product =await  _unitOfWork.ProductCustomRepository.ReadProductsIncludeTracking().Where(e=>e.ProductId==categoryInput.ProductId).FirstOrDefaultAsync();
 		if (product == null)
-		{
 			return ApiResponse.Failure("Product not found");
-		}
 		foreach (var item in categoryInput.restaurantCategories)
 		{
 			if (product.ProductCategories.Where(c => c.categoryid == (int)item).Any())
@@ -368,7 +327,7 @@ public class MerchantService : IMerchantService
 
 	public async Task<ApiResponse> RemoveProductCategoriesAsync(ProductCategoryInput categoryInput)
 	{
-		var product = await _unitOfWork.ProductRepository.ReadByIdAsync(categoryInput.ProductId);
+		var product = await _unitOfWork.ProductCustomRepository.ReadProductsIncludeTracking().Where(e => e.ProductId == categoryInput.ProductId).FirstOrDefaultAsync();
 		if (product == null)
 			return ApiResponse.Failure("Product not found");
 
@@ -380,7 +339,6 @@ public class MerchantService : IMerchantService
 			if (category != null)
 				product.ProductCategories.Remove(category);
 		}
-
 		await _unitOfWork.saveAsync();
 
 		// Clear cache
@@ -406,50 +364,46 @@ public class MerchantService : IMerchantService
 		if (_cacheService.Get<PaginationDto<MerchantOrderDto>>(cacheKey) is PaginationDto<MerchantOrderDto> cachedOrders)
 			return ApiResponse<PaginationDto<MerchantOrderDto>>.Success(cachedOrders);
 
-		var (orders, totalCount, totalPages) = await _unitOfWork.OrderRepository.PaginationAsync(
-			input.Page,
-			input.PageSize,
-			o => o.MerchantId == input.UserId
-		);
-
-		if (orders == null || !orders.Any())
-			return ApiResponse<PaginationDto<MerchantOrderDto>>.Failure("No orders found");
-
-		var merchant = await _service.GetByIdAsync(input.UserId);
-		string merchantName = merchant?.TblMerchant?.StoreName ?? "Unknown";
-
-		var orderDtos = new List<MerchantOrderDto>();
-
-		foreach (var order in orders)
+		var OrderQuery = _unitOfWork.OrderCustomRepository.ReadOrdersInclude().Where(e => e.MerchantId == input.UserId);
+		var totalCount = await OrderQuery.CountAsync();
+		var totalPages = (int)Math.Ceiling(totalCount / (double)input.PageSize);
+		var FilterOrderQuery = OrderQuery.Skip((input.Page - 1) * input.PageSize).Take(input.PageSize);
+		if (totalCount == 0)
 		{
-			var customer = await _service.GetByIdAsync(order.CustomerId);
-			string customerName = customer?.TblCustomer?.FirstName ?? "Unknown";
-
-			var orderDto = new MerchantOrderDto
+			var emptyResult = new PaginationDto<MerchantOrderDto>
 			{
-				OrderId = order.OrderId,
-				CustomerId = order.CustomerId,
-				CustomerName = customerName,
-				OrderDate = order.OrderDate,
-				TotalAmount = order.TotalPrice,
-				Status = order.OrderStatus.ToString(),
-				OrderItems = order.TblProductsOrders.Select(item => new OrderItemDto
-				{
-					ItemId = item.ProductId,
-					ItemName = item.Product.ProductsName,
-					Quantity = item.Quantity,
-					Price = item.Price
-				}).ToList()
+				TotalItems = 0,
+				TotalPages = 0,
+				Items = new List<MerchantOrderDto>()
 			};
-
-			orderDtos.Add(orderDto);
+			_cacheService.Set(cacheKey, emptyResult);
+			return ApiResponse<PaginationDto<MerchantOrderDto>>.Success(emptyResult);
 		}
+
+		var orders = await FilterOrderQuery.Select(e => new MerchantOrderDto
+		{
+			OrderId = e.OrderId,
+			OrderDate = e.OrderDate,
+			TotalAmount = e.TotalPrice,
+			Status = e.OrderStatus.ToString(),
+			CustomerId=e.CustomerId,
+			CustomerName =
+			_unitOfWork.UserCustomRepository.ReadCustomer().Where(p => p.Id == e.CustomerId).Select(p => p.TblCustomer.FirstName + " " + p.TblCustomer.LastName).FirstOrDefault(),
+			OrderItems = e.TblProductsOrders.Select(p => new OrderItemDto
+			{
+				ItemId = p.ProductId,
+				ItemName = p.Product.ProductsName,
+				Quantity = p.Quantity,
+				Price = p.Price
+			}).ToList()
+		}).ToListAsync();
+
 
 		var paginationDto = new PaginationDto<MerchantOrderDto>
 		{
 			TotalItems = totalCount,
 			TotalPages = totalPages,
-			Items = orderDtos
+			Items = orders
 		};
 
 		_cacheService.Set(cacheKey, paginationDto);
@@ -463,35 +417,24 @@ public class MerchantService : IMerchantService
 		var cached = _cacheService.Get<MerchantOrderDto>(cacheKey);
 		if (cached != null) return ApiResponse<MerchantOrderDto>.Success(cached);
 
-		var order = await _unitOfWork.OrderRepository.ReadByIdAsync(orderId);
-		if (order == null)
-		{
-			return ApiResponse<MerchantOrderDto>.Failure("Order not found");
-		}
-		var MerchantName = (await _service.GetByIdAsync(order.MerchantId))?.TblMerchant.StoreName;
-		var CustomerId = (await _service.GetByIdAsync(order.CustomerId));
-		var CustomerName = CustomerId?.TblCustomer.FirstName;
-		var orderDto = new MerchantOrderDto
-		{
-			OrderId = order.OrderId,
-			CustomerId = order.CustomerId,
-			CustomerName = CustomerName,
-			OrderDate = order.OrderDate,
-			TotalAmount = order.TotalPrice,
-			Status = order.OrderStatus.ToString(),
-			OrderItems = new List<OrderItemDto>()
-		};
-		foreach (var item in order.TblProductsOrders)
-		{
-			var orderItemDto = new OrderItemDto
+		var order =  _unitOfWork.OrderCustomRepository.ReadOrders().Where(e=>e.OrderId==orderId);
+		var orderDto =await order.Select(e => new MerchantOrderDto {
+
+			OrderId = e.OrderId,
+			OrderDate = e.OrderDate,
+			TotalAmount = e.TotalPrice,
+			Status = e.OrderStatus.ToString(),
+			CustomerId = e.CustomerId,
+			CustomerName =
+			_unitOfWork.UserCustomRepository.ReadCustomer().Where(p => p.Id == e.CustomerId).Select(p => p.TblCustomer.FirstName + " " + p.TblCustomer.LastName).FirstOrDefault(),
+			OrderItems = e.TblProductsOrders.Select(p => new OrderItemDto
 			{
-				ItemId = item.ProductId,
-				ItemName = item.Product.ProductsName,
-				Quantity = item.Quantity,
-				Price = item.Price
-			};
-			orderDto.OrderItems.Add(orderItemDto);
-		}
+				ItemId = p.ProductId,
+				ItemName = p.Product.ProductsName,
+				Quantity = p.Quantity,
+				Price = p.Price
+			}).ToList()
+		}).FirstOrDefaultAsync();
 
 		_cacheService.Set(cacheKey, orderDto);
 		return ApiResponse<MerchantOrderDto>.Success(orderDto);
@@ -500,9 +443,10 @@ public class MerchantService : IMerchantService
 
 	public async Task<ApiResponse> UpdateOrderStatusAsync(int orderId, OrderStatusUpdateInput input)
 	{
-		var order = await _unitOfWork.OrderRepository.ReadByIdAsync(orderId);
+		var order =await _unitOfWork.OrderCustomRepository.ReadOrders().Where(e => e.OrderId == orderId).FirstOrDefaultAsync();
 		var status = Enum.Parse<OrderState>(input.Status);
 		order.OrderStatus = status;
+		_unitOfWork.OrderRepository.Update(order);
 		await _unitOfWork.saveAsync();
 
 		// Clear cache
@@ -526,46 +470,81 @@ public class MerchantService : IMerchantService
 	{
 		var cacheKey = $"merchant_customer:list:{input.UserId}:{input.Page}:{input.PageSize}";
 
+		// جلب من الكاش أولاً
 		if (_cacheService.Get<PaginationDto<CustomerDto>>(cacheKey) is PaginationDto<CustomerDto> cachedResult)
 			return ApiResponse<PaginationDto<CustomerDto>>.Success(cachedResult);
 
-		var (orders, totalCount, totalPages) = await _unitOfWork.OrderRepository.PaginationAsync(
-			input.Page, input.PageSize,
-			o => o.MerchantId == input.UserId
-		);
+		var ordersQuery = _unitOfWork.OrderCustomRepository
+			.ReadOrdersInclude()
+			.Where(e => e.MerchantId == input.UserId);
 
-		if (orders == null || !orders.Any())
-			return ApiResponse<PaginationDto<CustomerDto>>.Failure("No customers found");
+		// لو مفيش أوردرز
+		var totalCount = await ordersQuery.CountAsync();
+		if (totalCount == 0)
+		{
+			var emptyResult = new PaginationDto<CustomerDto>
+			{
+				TotalItems = 0,
+				TotalPages = 0,
+				Items = new List<CustomerDto>()
+			};
+			_cacheService.Set(cacheKey, emptyResult);
+			return ApiResponse<PaginationDto<CustomerDto>>.Success(emptyResult);
+		}
 
-		var customerIds = orders.Select(o => o.CustomerId).Distinct().ToList();
+		var totalPages = (int)Math.Ceiling(totalCount / (double)input.PageSize);
 
-		var customers = await _unitOfWork.CustomerRepository
-				.FindAllByContidtionAsync(c => customerIds.Contains(c.UserId));
+		// pagination للأوردرز
+		var customerIds = await ordersQuery
+			.Select(o => o.CustomerId)
+			.Distinct()
+			.Skip((input.Page - 1) * input.PageSize)
+			.Take(input.PageSize)
+			.ToListAsync();
 
-		var groupedOrders = orders
-				.GroupBy(o => o.CustomerId)
-				.ToDictionary(g => g.Key, g => g.ToList());
+		// جلب العملاء، لو مفيش يوزر مطابق، نرجع فاضي
+		var customers = await _unitOfWork.UserCustomRepository
+			.ReadCustomer()
+			.Where(c => customerIds.Contains(c.Id))
+			.ToListAsync();
+
+		if (!customers.Any())
+		{
+			var emptyResult = new PaginationDto<CustomerDto>
+			{
+				TotalItems = 0,
+				TotalPages = 0,
+				Items = new List<CustomerDto>()
+			};
+			_cacheService.Set(cacheKey, emptyResult);
+			return ApiResponse<PaginationDto<CustomerDto>>.Success(emptyResult);
+		}
+
+		// تجميع الأوردرز حسب العميل
+		var groupedOrders = ordersQuery
+			.Where(o => customerIds.Contains(o.CustomerId))
+			.ToList()
+			.GroupBy(o => o.CustomerId)
+			.ToDictionary(g => g.Key, g => g.ToList());
 
 		var customerDtos = new List<CustomerDto>();
-
 		foreach (var c in customers)
 		{
-			if (!groupedOrders.TryGetValue(c.UserId, out var custOrders))
+			// لو مفيش أوردرز لهذا العميل، نعديه
+			if (!groupedOrders.TryGetValue(c.Id, out var custOrders) || custOrders == null || !custOrders.Any())
 				continue;
 
 			var completedOrders = custOrders.Where(o => o.OrderStatus == OrderState.Completed).ToList();
 
-			var dto = new CustomerDto
+			customerDtos.Add(new CustomerDto
 			{
-				FullName = $"{c.FirstName} {c.LastName}",
-				Email = c.User?.Email,
-				PhoneNumber = c.User?.PhoneNumber,
+				FullName = $"{c.TblCustomer?.FirstName ?? "Unknown"} {c.TblCustomer?.LastName ?? ""}",
+				Email = c.Email ?? "N/A",
+				PhoneNumber = c.PhoneNumber ?? "N/A",
 				LastPurchased = completedOrders.Any() ? completedOrders.Max(o => o.OrderDate) : (DateTime?)null,
-				TotalOrders = custOrders.Count, // كل الأوردرز
-				TotalSpent = completedOrders.Sum(o => Convert.ToDecimal(o.TotalPrice)) // بس المكتملة
-			};
-
-			customerDtos.Add(dto);
+				TotalOrders = custOrders.Count,
+				TotalSpent = completedOrders.Sum(o => Convert.ToDecimal(o.TotalPrice))
+			});
 		}
 
 		var paginationDto = new PaginationDto<CustomerDto>
@@ -579,7 +558,6 @@ public class MerchantService : IMerchantService
 
 		return ApiResponse<PaginationDto<CustomerDto>>.Success(paginationDto);
 	}
-
 
 
 	#endregion

@@ -1,5 +1,4 @@
-﻿using Foodo.API.Controllers;
-using Foodo.Application.Abstraction.Authentication;
+﻿using Foodo.Application.Abstraction.Authentication;
 using Foodo.Application.Abstraction.Customer;
 using Foodo.Application.Abstraction.InfraRelated;
 using Foodo.Application.Abstraction.InfrastructureRelatedServices;
@@ -40,7 +39,7 @@ namespace Foodo.API
 			// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 			builder.Services.AddOpenApi();
 			builder.Services.AddDbContext<AppDbContext>(options =>
-				options.UseLazyLoadingProxies().UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+				options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 			builder.Services.AddSwaggerGen(options =>
 			{
 
@@ -118,9 +117,14 @@ namespace Foodo.API
 			builder.Services.AddScoped<ICustomerProfileService, CustomerProfileService>();
 			builder.Services.AddScoped<IPhotoAccessorService, PhotoAccessorService>();
 			builder.Services.AddScoped<IPhotoService, PhotoService>();
+			builder.Services.AddScoped<IProductRepository, ProductRepository>();
+			builder.Services.AddScoped<IRestaurantRepository, RestaurantRepository>();
+			builder.Services.AddScoped<IUserRepository, UserRepository>();
+			builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+			builder.Services.AddScoped<IProductPhotoCustomRepository, ProductPhotoCustomRepository>();
 			builder.Services.AddHttpContextAccessor();
 			builder.Services.AddMemoryCache();
-			builder.Services.AddScoped<ICacheService, CacheService>();
+			builder.Services.AddSingleton<ICacheService, CacheService>();
 			builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
 			builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("Smtp"));
 			builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("Cloudinary"));
