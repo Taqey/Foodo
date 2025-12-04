@@ -5,8 +5,11 @@ namespace Foodo.API.Models.Request.Authentication
 {
 	public class CustomerRegisterRequest
 	{
-		[DataType(DataType.EmailAddress)]
-		[Required]
+		[Required(ErrorMessage = "Email is required")]
+		[RegularExpression(
+			@"^((?!\.)[\w-_.]*[^.])(@\w+)(\.\w+(\.\w+)?[^.\W])$",
+			ErrorMessage = "Invalid email format"
+		)]
 		public string Email { get; set; }
 		[DataType(DataType.Password)] 
 		[Required]
