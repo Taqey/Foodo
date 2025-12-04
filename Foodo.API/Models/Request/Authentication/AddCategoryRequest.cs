@@ -7,6 +7,7 @@ namespace Foodo.API.Models.Request.Authentication
 	{
 		[Required]
 		public string restaurantCategories { get; set; }
+		[Required]
 		public string UserId { get; set; }
 	}
 }

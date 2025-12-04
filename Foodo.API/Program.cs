@@ -23,6 +23,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using Serilog;
 using System.Reflection;
 using System.Text;
 namespace Foodo.API
@@ -34,7 +35,15 @@ namespace Foodo.API
 			var builder = WebApplication.CreateBuilder(args);
 
 			// Add services to the container.
-
+			Log.Logger=new LoggerConfiguration()
+				.MinimumLevel.Information()
+				.Enrich.FromLogContext()
+				.Enrich.WithMachineName()
+				.Enrich.WithThreadName()
+				.WriteTo.Console()
+				.WriteTo.File("logs/foodo_log.txt", rollingInterval: RollingInterval.Day)
+				.CreateLogger();
+			builder.Host.UseSerilog();
 			builder.Services.AddControllers();
 			// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 			builder.Services.AddOpenApi();
@@ -156,14 +165,14 @@ namespace Foodo.API
 
 
 			var app = builder.Build();
-
+			app.UseSerilogRequestLogging();
 			// Configure the HTTP request pipeline.
 			if (app.Environment.IsDevelopment())
 			{
 				app.MapOpenApi();
 			}
-				app.UseSwagger();
-				app.UseSwaggerUI();
+			app.UseSwagger();
+			app.UseSwaggerUI();
 
 			app.UseHttpsRedirection();
 			app.UseCors("AllowFrontend");
