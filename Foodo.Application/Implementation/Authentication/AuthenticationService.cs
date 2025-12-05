@@ -32,6 +32,8 @@ namespace Foodo.Application.Implementation.Authentication
 			_unitOfWork = unitOfWork;
 			_cacheService = cacheService;
 		}
+
+		#region Register
 		public async Task<ApiResponse<UserIdDto>> Register(RegisterInput input)
 		{
 			// Start a transaction
@@ -129,6 +131,25 @@ namespace Foodo.Application.Implementation.Authentication
 				return ApiResponse<UserIdDto>.Failure("User registration failed.");
 			}
 		}
+		public async Task<ApiResponse> AddCategory(CategoryInput input)
+		{
+			var user = _unitOfWork.UserCustomRepository.ReadMerchants().Where(e => e.Id == input.UserId).FirstOrDefault();
+			//var user=await _userService.GetByIdAsync(input.UserId);
+			foreach (var category in input.restaurantCategories)
+			{
+				user.TblMerchant.TblRestaurantCategories.Add(new TblRestaurantCategory
+				{
+					categoryid = (int)category
+				});
+
+			}
+			await _userService.UpdateAsync(user);
+			return ApiResponse.Success("Categories added successfully.");
+		}
+
+		#endregion
+		
+		#region Login
 
 		public async Task<ApiResponse<JwtDto>> Login(LoginInput input)
 		{
@@ -156,45 +177,6 @@ namespace Foodo.Application.Implementation.Authentication
 
 			return ApiResponse<JwtDto>.Success(result, "Login successful.");
 		}
-
-		public async Task<ApiResponse> ChangePassword(ChangePasswordInput input)
-		{
-			var user= await _userService.GetByIdAsync(input.UserId);
-			var result= await _userService.ChangePasswordAsync(user,input.CurrentPassword, input.NewPassword);
-			if(!result.Succeeded)
-			{
-				return ApiResponse.Failure("Password change failed: " + string.Join(", ", result.Errors.Select(e => e.Description)));
-			}
-			return ApiResponse.Success("Password changed successfully.");
-		}
-
-		public async Task<ApiResponse> ForgetPassword(ForgetPasswordInput input)
-		{
-
-			var user=await _userService.GetUserByResetCode(input.Code);
-			if(user==null)
-			{
-				return  new ApiResponse {  Message = "Invalid or expired reset code." };
-			}
-			var code= user.LkpCodes.FirstOrDefault(e=>e.Key==input.Code);
-			if (code.ExpiresAt < DateTime.UtcNow)
-			{
-				return new ApiResponse { Message = "Invalid or expired reset code." };
-			}
-			if ((bool)code.IsUsed)
-			{
-				return ApiResponse.Failure("Reset Code Already used");
-			}
-			var result=	await _userService.ForgetPasswordAsync(user, input.Password);
-			if(result.Succeeded)
-			{
-				code.IsUsed= true;
-				return ApiResponse.Success("Password has been reset successfully.");
-			} 
-				return ApiResponse.Failure("Password reset failed: " + string.Join(", ", result.Errors.Select(e => e.Description)));
-			
-		}
-
 		public async Task<ApiResponse<JwtDto>> RefreshToken(string Token)
 		{
 			var user = await _userService.GetUserByRefreshToken(Token);
@@ -235,6 +217,47 @@ namespace Foodo.Application.Implementation.Authentication
 			return new JwtDto { Token = token.Token, CreatedOn = token.CreatedOn, ExpiresOn = token.ExpiresOn };
 
 		}
+		#endregion
+
+		#region PasswordManagment
+
+		public async Task<ApiResponse> ChangePassword(ChangePasswordInput input)
+		{
+			var user= await _userService.GetByIdAsync(input.UserId);
+			var result= await _userService.ChangePasswordAsync(user,input.CurrentPassword, input.NewPassword);
+			if(!result.Succeeded)
+			{
+				return ApiResponse.Failure("Password change failed: " + string.Join(", ", result.Errors.Select(e => e.Description)));
+			}
+			return ApiResponse.Success("Password changed successfully.");
+		}
+
+		public async Task<ApiResponse> ForgetPassword(ForgetPasswordInput input)
+		{
+
+			var user=await _userService.GetUserByResetCode(input.Code);
+			if(user==null)
+			{
+				return  new ApiResponse {  Message = "Invalid or expired reset code." };
+			}
+			var code= user.LkpCodes.FirstOrDefault(e=>e.Key==input.Code);
+			if (code.ExpiresAt < DateTime.UtcNow)
+			{
+				return new ApiResponse { Message = "Invalid or expired reset code." };
+			}
+			if ((bool)code.IsUsed)
+			{
+				return ApiResponse.Failure("Reset Code Already used");
+			}
+			var result=	await _userService.ForgetPasswordAsync(user, input.Password);
+			if(result.Succeeded)
+			{
+				code.IsUsed= true;
+				return ApiResponse.Success("Password has been reset successfully.");
+			} 
+				return ApiResponse.Failure("Password reset failed: " + string.Join(", ", result.Errors.Select(e => e.Description)));
+			
+		}
 
 		public async Task<ApiResponse> SubmitForgetPasswordRequest(SubmitForgetPasswordRequestInput input)
 		{
@@ -259,6 +282,9 @@ namespace Foodo.Application.Implementation.Authentication
 			var result=await _senderService.SendEmailAsync(input.Email, Name, "Password Reset", $"Your Reset Password code is {code}");
 			return result;
 		}
+		#endregion
+
+		#region EmailVerification
 
 		public async Task<ApiResponse> VerifyEmailRequest(VerifyEmailRequestInput input)
 		{
@@ -285,7 +311,6 @@ namespace Foodo.Application.Implementation.Authentication
 			return ApiResponse.Success("Verification email sent.");
 		}
 
-		
 		public async Task<ApiResponse> VerifyEmail(VerifyEmailInput input)
 		{
 			var user = await _userService.GetUserByVerificationToken(input.Code);
@@ -309,21 +334,7 @@ namespace Foodo.Application.Implementation.Authentication
 				return ApiResponse.Success("Email has been verified successfully.");
 			
 		}
+		#endregion
 
-		public async Task<ApiResponse> AddCategory(CategoryInput input)
-		{
-			var user=_unitOfWork.UserCustomRepository.ReadMerchants().Where(e=>e.Id==input.UserId).FirstOrDefault();
-			//var user=await _userService.GetByIdAsync(input.UserId);
-			foreach (var category in input.restaurantCategories)
-			{
-				user.TblMerchant.TblRestaurantCategories.Add(new TblRestaurantCategory
-				{
-					categoryid = (int)category
-				});
-
-			}
-			await _userService.UpdateAsync(user);
-			return ApiResponse.Success("Categories added successfully.");
-		}
 	}
 }

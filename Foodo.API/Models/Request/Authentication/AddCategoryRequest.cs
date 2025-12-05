@@ -6,8 +6,11 @@ namespace Foodo.API.Models.Request.Authentication
 	public class AddCategoryRequest
 	{
 		[Required]
-		public string restaurantCategories { get; set; }
-		[Required]
 		public string UserId { get; set; }
+
+		[Required]
+		[MinLength(1, ErrorMessage = "At least one category is required")]
+		public List<RestaurantCategory> RestaurantCategories { get; set; }
 	}
+
 }
