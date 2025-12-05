@@ -41,6 +41,7 @@ namespace Foodo.API
 				.Enrich.WithMachineName()
 				.Enrich.WithThreadName()
 				.WriteTo.Console()
+				.WriteTo.Seq("http://localhost:5341")
 				.WriteTo.File("logs/foodo_log.txt", rollingInterval: RollingInterval.Day)
 				.CreateLogger();
 			builder.Host.UseSerilog();
