@@ -69,16 +69,28 @@ namespace Foodo.API.Controllers
 		[HttpPost("login")]
 		public async Task<IActionResult> Login([FromForm] LoginRequest request)
 		{
+			_logger.LogInformation("Login attempt started | Email={Email} | TraceId={TraceId}", request.Email, HttpContext.TraceIdentifier);
 			if (!ModelState.IsValid)
 			{
+				var errors = string.Join(" | ",
+					ModelState.Values
+						.SelectMany(v => v.Errors)
+						.Select(e => e.ErrorMessage));
+
+				_logger.LogWarning(
+					"Validation failed | Errors={Errors} | TraceId={TraceId}",
+					errors,
+					HttpContext.TraceIdentifier
+				);
+
 				return BadRequest(new
 				{
-					message = "Validation failed",
-					errors=ModelState.Values.SelectMany(e=>e.Errors).Select(e=>e.ErrorMessage),
+					message = "Invalid request data",
+					errors,
 					traceId = HttpContext.TraceIdentifier
 				});
 			}
-			_logger.LogInformation("Login attempt started | Email={Email} | TraceId={TraceId}", request.Email, HttpContext.TraceIdentifier);
+
 
 			var result = await _service.Login(new LoginInput
 			{
@@ -118,21 +130,32 @@ namespace Foodo.API.Controllers
 		/// </summary>
 		/// <returns>A success message if registration is completed.</returns>
 		/// <response code="201">Customer registered successfully.</response>
-		/// <response code="409">Email or username already exists.</response>
 		/// <response code="400">Invalid registration data.</response>
+		/// <response code="409">Email or username already exists.</response>
 		[HttpPost("register-customer")]
 		public async Task<IActionResult> RegisterCustomer([FromForm] CustomerRegisterRequest request)
 		{
+			_logger.LogInformation("Customer registration attempt started | Email={Email} | TraceId={TraceId}", request.Email, HttpContext.TraceIdentifier);
 			if (!ModelState.IsValid)
 			{
+				var errors = string.Join(" | ",
+					ModelState.Values
+						.SelectMany(v => v.Errors)
+						.Select(e => e.ErrorMessage));
+
+				_logger.LogWarning(
+					"Validation failed | Errors={Errors} | TraceId={TraceId}",
+					errors,
+					HttpContext.TraceIdentifier
+				);
+
 				return BadRequest(new
 				{
-					message = "Validation failed",
-					errors = ModelState.Values.SelectMany(e => e.Errors).Select(e => e.ErrorMessage),
+					message = "Invalid request data",
+					errors,
 					traceId = HttpContext.TraceIdentifier
 				});
 			}
-			_logger.LogInformation("Customer registration attempt started | Email={Email} | TraceId={TraceId}", request.Email, HttpContext.TraceIdentifier);
 
 			var input = new RegisterInput
 			{
@@ -182,25 +205,37 @@ namespace Foodo.API.Controllers
 		/// </summary>
 		/// <returns>Merchant info if registration is successful.</returns>
 		/// <response code="201">Merchant registered successfully.</response>
-		/// <response code="409">Email or username already exists.</response>
 		/// <response code="400">Invalid registration data.</response>
+		/// <response code="409">Email or username already exists.</response>
 		[HttpPost("register-merchant")]
 		public async Task<IActionResult> RegisterMerchant([FromForm] MerchantRegisterRequest request)
 		{
-			if (!ModelState.IsValid)
-			{
-				return BadRequest(new
-				{
-					message = "Validation failed",
-					errors = ModelState.Values.SelectMany(e => e.Errors).Select(e => e.ErrorMessage),
-					traceId = HttpContext.TraceIdentifier
-				});
-			}
+
 			_logger.LogInformation(
 				"Merchant registration attempt started | Email={Email} | TraceId={TraceId}",
 				request.Email,
 				HttpContext.TraceIdentifier
 			);
+			if (!ModelState.IsValid)
+			{
+				var errors = string.Join(" | ",
+					ModelState.Values
+						.SelectMany(v => v.Errors)
+						.Select(e => e.ErrorMessage));
+
+				_logger.LogWarning(
+					"Validation failed | Errors={Errors} | TraceId={TraceId}",
+					errors,
+					HttpContext.TraceIdentifier
+				);
+
+				return BadRequest(new
+				{
+					message = "Invalid request data",
+					errors,
+					traceId = HttpContext.TraceIdentifier
+				});
+			}
 
 			var input = new RegisterInput
 			{
@@ -238,7 +273,7 @@ namespace Foodo.API.Controllers
 
 			return StatusCode(StatusCodes.Status201Created, new
 			{
-				message = "Customer registered successfully",
+				message = "Merchant registered successfully",
 				traceId = HttpContext.TraceIdentifier,
 				data = result.Data
 			});
@@ -255,30 +290,37 @@ namespace Foodo.API.Controllers
 		[HttpPost("add-category")]
 		public async Task<IActionResult> AddCategory([FromBody] AddCategoryRequest request)
 		{
-			if (!ModelState.IsValid)
-			{
-				return BadRequest(new
-				{
-					message = "Validation failed",
-					errors = ModelState.Values.SelectMany(e => e.Errors).Select(e => e.ErrorMessage),
-					traceId = HttpContext.TraceIdentifier
-				});
-			}
 			_logger.LogInformation(
 				"Add category attempt started | UserId={UserId} | TraceId={TraceId}",
 				request.UserId,
 				HttpContext.TraceIdentifier
 			);
 
-			var categories = request.restaurantCategories
-				.Split(',')
-				.Select(c => Enum.Parse<RestaurantCategory>(c.Trim()))
-				.ToList();
+			if (!ModelState.IsValid)
+			{
+				var errors = string.Join(" | ",
+					ModelState.Values
+						.SelectMany(v => v.Errors)
+						.Select(e => e.ErrorMessage));
+
+				_logger.LogWarning(
+					"Validation failed | Errors={Errors} | TraceId={TraceId}",
+					errors,
+					HttpContext.TraceIdentifier
+				);
+
+				return BadRequest(new
+				{
+					message = "Invalid request data",
+					errors,
+					traceId = HttpContext.TraceIdentifier
+				});
+			}
 
 			var result = await _service.AddCategory(new CategoryInput
 			{
 				UserId = request.UserId,
-				restaurantCategories = categories
+				restaurantCategories = request.RestaurantCategories
 			});
 
 			if (!result.IsSuccess)
@@ -326,15 +368,7 @@ namespace Foodo.API.Controllers
 		[HttpPost("change-password")]
 		public async Task<IActionResult> ChangePassword([FromForm] ChangePasswordRequest request)
 		{
-			if (!ModelState.IsValid)
-			{
-				return BadRequest(new
-				{
-					message = "Validation failed",
-					errors = ModelState.Values.SelectMany(e => e.Errors).Select(e => e.ErrorMessage),
-					traceId = HttpContext.TraceIdentifier
-				});
-			}
+
 			var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
 			_logger.LogInformation(
@@ -342,6 +376,26 @@ namespace Foodo.API.Controllers
 				userId,
 				HttpContext.TraceIdentifier
 			);
+			if (!ModelState.IsValid)
+			{
+				var errors = string.Join(" | ",
+					ModelState.Values
+						.SelectMany(v => v.Errors)
+						.Select(e => e.ErrorMessage));
+
+				_logger.LogWarning(
+					"Validation failed | Errors={Errors} | TraceId={TraceId}",
+					errors,
+					HttpContext.TraceIdentifier
+				);
+
+				return BadRequest(new
+				{
+					message = "Invalid request data",
+					errors,
+					traceId = HttpContext.TraceIdentifier
+				});
+			}
 
 			var result = await _service.ChangePassword(new ChangePasswordInput
 			{
@@ -386,20 +440,32 @@ namespace Foodo.API.Controllers
 		[HttpPost("submit-forget-password-request")]
 		public async Task<IActionResult> SubmitForgetPasswordRequest([FromForm] ForgetPasswordRequest request)
 		{
-			if (!ModelState.IsValid)
-			{
-				return BadRequest(new
-				{
-					message = "Validation failed",
-					errors = ModelState.Values.SelectMany(e => e.Errors).Select(e => e.ErrorMessage),
-					traceId = HttpContext.TraceIdentifier
-				});
-			}
+
 			_logger.LogInformation(
 				"Forget password request attempt started | Email={Email} | TraceId={TraceId}",
 				request.Email,
 				HttpContext.TraceIdentifier
 			);
+			if (!ModelState.IsValid)
+			{
+				var errors = string.Join(" | ",
+					ModelState.Values
+						.SelectMany(v => v.Errors)
+						.Select(e => e.ErrorMessage));
+
+				_logger.LogWarning(
+					"Validation failed | Errors={Errors} | TraceId={TraceId}",
+					errors,
+					HttpContext.TraceIdentifier
+				);
+
+				return BadRequest(new
+				{
+					message = "Invalid request data",
+					errors,
+					traceId = HttpContext.TraceIdentifier
+				});
+			}
 
 			var result = await _service.SubmitForgetPasswordRequest(
 				new SubmitForgetPasswordRequestInput { Email = request.Email }
@@ -456,6 +522,26 @@ namespace Foodo.API.Controllers
 				request.Code,
 				HttpContext.TraceIdentifier
 			);
+			if (!ModelState.IsValid)
+			{
+				var errors = string.Join(" | ",
+					ModelState.Values
+						.SelectMany(v => v.Errors)
+						.Select(e => e.ErrorMessage));
+
+				_logger.LogWarning(
+					"Validation failed | Errors={Errors} | TraceId={TraceId}",
+					errors,
+					HttpContext.TraceIdentifier
+				);
+
+				return BadRequest(new
+				{
+					message = "Invalid request data",
+					errors,
+					traceId = HttpContext.TraceIdentifier
+				});
+			}
 
 			var result = await _service.ForgetPassword(new ForgetPasswordInput
 			{
@@ -497,9 +583,7 @@ namespace Foodo.API.Controllers
 
 		#region TOKEN MANAGEMENT
 
-		/// <summary>
-		/// Refreshes the access token using the stored refresh token.
-		/// </summary>
+		/// <summary> Refreshes the access token using the stored refresh token.</summary>
 		/// <returns>The new access token if refresh is successful.</returns>
 		/// <response code="200">Token refreshed successfully.</response>
 		/// <response code="400">Failed to refresh token.</response>
@@ -638,15 +722,7 @@ namespace Foodo.API.Controllers
 		[HttpPost("verify-email")]
 		public async Task<IActionResult> VerifyEmail([FromForm] VerifyEmailRequest request)
 		{
-			if (!ModelState.IsValid)
-			{
-				return BadRequest(new
-				{
-					message = "Validation failed",
-					errors = ModelState.Values.SelectMany(e => e.Errors).Select(e => e.ErrorMessage),
-					traceId = HttpContext.TraceIdentifier
-				});
-			}
+
 			var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
 			_logger.LogInformation(
@@ -655,6 +731,26 @@ namespace Foodo.API.Controllers
 				request.Code,
 				HttpContext.TraceIdentifier
 			);
+			if (!ModelState.IsValid)
+			{
+				var errors = string.Join(" | ",
+					ModelState.Values
+						.SelectMany(v => v.Errors)
+						.Select(e => e.ErrorMessage));
+
+				_logger.LogWarning(
+					"Validation failed | Errors={Errors} | TraceId={TraceId}",
+					errors,
+					HttpContext.TraceIdentifier
+				);
+
+				return BadRequest(new
+				{
+					message = "Invalid request data",
+					errors,
+					traceId = HttpContext.TraceIdentifier
+				});
+			}
 
 			var result = await _service.VerifyEmail(new VerifyEmailInput
 			{

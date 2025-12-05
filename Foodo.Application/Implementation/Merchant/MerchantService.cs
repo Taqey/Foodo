@@ -111,7 +111,7 @@ public class MerchantService : IMerchantService
 		var totalCount=await products.CountAsync();
 		if (totalCount==0)
 		{
-			return new ApiResponse<PaginationDto<MerchantProductDto>> { IsSuccess = false, Message = "No products found" };
+			return new ApiResponse<PaginationDto<MerchantProductDto>> { IsSuccess = true, Message = "No products found" };
 		}
 		var totalPages = (int)Math.Ceiling((decimal)totalCount / input.PageSize);
 		var productDtos =await products.Select(e=>new MerchantProductDto
@@ -435,7 +435,10 @@ public class MerchantService : IMerchantService
 				Price = p.Price
 			}).ToList()
 		}).FirstOrDefaultAsync();
-
+		if (orderDto==null)
+		{
+			return ApiResponse<MerchantOrderDto>.Failure("Order not found");
+		}
 		_cacheService.Set(cacheKey, orderDto);
 		return ApiResponse<MerchantOrderDto>.Success(orderDto);
 

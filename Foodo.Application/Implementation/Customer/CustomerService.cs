@@ -71,15 +71,14 @@ namespace Foodo.Application.Implementation.Customer
 			try
 			{
 				var firstItem = input.Items.First();
-				//var product = await _unitOfWork.ProductRepository.FindByContidtionAsync(p => p.ProductId == firstItem.ItemId);
-				var product = await _unitOfWork.ProductCustomRepository.ReadProducts().Where(p => p.ProductId == firstItem.ItemId).Select(e =>new { e.Merchant.UserId}).FirstOrDefaultAsync(); 
+				var product = await _unitOfWork.ProductCustomRepository.ReadProducts().Where(p => p.ProductId == firstItem.ItemId).Select(e => new { e.Merchant.UserId }).FirstOrDefaultAsync();
 				if (product == null)
 					return ApiResponse.Failure("Product not found");
 
 				var merchantId = product.UserId;
-				var customerAdress =await _unitOfWork.UserCustomRepository.ReadCustomer().Where(e=>e.Id==input.CustomerId).SelectMany(e=>e.TblAdresses).Where(e=>e.IsDefault==true).Select(e=>e.AddressId).FirstOrDefaultAsync();
+				var customerAdress = await _unitOfWork.UserCustomRepository.ReadCustomer().Where(e => e.Id == input.CustomerId).SelectMany(e => e.TblAdresses).Where(e => e.IsDefault == true).Select(e => e.AddressId).FirstOrDefaultAsync();
 				if (customerAdress == 0)
-    return ApiResponse.Failure("Customer has no default address");
+					return ApiResponse.Failure("Customer has no default address");
 
 				var order = new TblOrder
 				{
@@ -147,7 +146,7 @@ namespace Foodo.Application.Implementation.Customer
 			var OrderQuery = _unitOfWork.OrderCustomRepository.ReadOrdersInclude().Where(e => e.CustomerId == input.UserId);
 			var totalCount = await OrderQuery.CountAsync();
 			var totalPages = (int)Math.Ceiling(totalCount / (double)input.PageSize);
-			var FilterOrderQuery = OrderQuery.Skip((input.Page-1)*input.PageSize).Take(input.PageSize);
+			var FilterOrderQuery = OrderQuery.Skip((input.Page - 1) * input.PageSize).Take(input.PageSize);
 			if (totalCount == 0)
 			{
 				var emptyResult = new PaginationDto<CustomerOrderDto>
@@ -163,7 +162,7 @@ namespace Foodo.Application.Implementation.Customer
 											.Where(c => c.Id == input.UserId)
 											.SelectMany(c => c.TblAdresses)
 											.ToListAsync();
-			var orders =await FilterOrderQuery.AsAsyncEnumerable().Select(e => new CustomerOrderDto
+			var orders = await FilterOrderQuery.AsAsyncEnumerable().Select(e => new CustomerOrderDto
 			{
 				OrderId = e.OrderId,
 				MerchantId = e.MerchantId,
@@ -239,7 +238,7 @@ namespace Foodo.Application.Implementation.Customer
 			// --------- Retrieve Customer Addresses ----------
 
 
-			string billingAddress =(await _unitOfWork.AdressRepository.ReadByIdAsync(orderId)).StreetAddress;
+			string billingAddress = (await _unitOfWork.AdressRepository.ReadByIdAsync(orderId)).StreetAddress;
 
 			// --------- Build Final DTO ----------
 			var orderDto = new CustomerOrderDto
@@ -382,6 +381,17 @@ namespace Foodo.Application.Implementation.Customer
 			var query = _unitOfWork.ProductCustomRepository.ReadProducts();
 			var filteredQuery = query.Where(p => p.ProductCategories.Any(c => c.categoryid == (int)input.Category));
 			var totalCount = await filteredQuery.CountAsync();
+			if (totalCount == 0)
+			{
+				var emptyResult = new PaginationDto<ProductDto>
+				{
+					TotalItems = 0,
+					TotalPages = 0,
+					Items = new List<ProductDto>()
+				};
+				_cacheService.Set(cacheKey, emptyResult);
+				return ApiResponse<PaginationDto<ProductDto>>.Success(emptyResult);
+			}
 			var totalPages = (int)Math.Ceiling(totalCount / (decimal)input.PageSize);
 			var productDtos = await filteredQuery
 				.Select(e => new ProductDto
@@ -423,9 +433,22 @@ namespace Foodo.Application.Implementation.Customer
 		{
 			string cacheKey = $"customer_product:list:shop:{input.MerchantId}:{input.Page}:{input.PageSize}";
 			var user = await _userService.GetByIdAsync(input.MerchantId);
+			if (user == null) return ApiResponse<PaginationDto<ProductDto>>.Failure("Merchant not found");
 			var query = _unitOfWork.ProductCustomRepository.ReadProducts();
 			var filteredQuery = query.Where(e => e.UserId == input.MerchantId);
 			var totalCount = await filteredQuery.CountAsync();
+			if (totalCount == 0)
+			{
+				var emptyResult = new PaginationDto<ProductDto>
+				{
+					TotalItems = 0,
+					TotalPages = 0,
+					Items = new List<ProductDto>()
+				};
+				_cacheService.Set(cacheKey, emptyResult);
+				return ApiResponse<PaginationDto<ProductDto>>.Success(emptyResult);
+			}
+
 			var totalPages = (int)Math.Ceiling(totalCount / (decimal)input.PageSize);
 			var productDtos = await filteredQuery
 				.Select(e => new ProductDto
@@ -483,7 +506,7 @@ namespace Foodo.Application.Implementation.Customer
 					Items = new List<ShopDto>()
 				};
 				_cacheService.Set(cacheKey, emptyResult);
-				return ApiResponse<PaginationDto<ShopDto>>.Success(emptyResult);
+				return ApiResponse<PaginationDto<ShopDto>>.Success(emptyResult, "Restaurants not found");
 			}
 			var totalPages = (int)Math.Ceiling(totalCount / (double)input.PageSize);
 			var shopDtos = await query
@@ -495,7 +518,7 @@ namespace Foodo.Application.Implementation.Customer
 					Categories = e.TblRestaurantCategories
 					.Select(c => ((RestaurantCategory)c.categoryid).ToString())
 					.ToList(),
-					url=e.User.UserPhoto.Url ?? null
+					url = e.User.UserPhoto.Url ?? null
 				})
 				.Skip((input.Page - 1) * input.PageSize)
 				.Take(input.PageSize)
@@ -519,7 +542,7 @@ namespace Foodo.Application.Implementation.Customer
 			if (cached != null) return ApiResponse<ShopDto>.Success(cached);
 			var query = _unitOfWork.RestaurantCustomRepository.ReadRestaurants();
 			var filteredQuery = query.Where(e => e.UserId == input.ItemId);
-			var shopDto =await filteredQuery.Select(e => new ShopDto
+			var shopDto = await filteredQuery.Select(e => new ShopDto
 			{
 				ShopId = e.UserId,
 				ShopName = e.StoreName,
@@ -534,7 +557,7 @@ namespace Foodo.Application.Implementation.Customer
 
 
 			_cacheService.Set(cacheKey, shopDto);
-			return ApiResponse<ShopDto>.Success(shopDto);
+			return ApiResponse<ShopDto>.Success(shopDto,"Shop retrieved successfuly");
 		}
 
 		public async Task<ApiResponse<PaginationDto<ShopDto>>> ReadShopsByCategory(ShopsPaginationByCategoryInput input)
@@ -543,7 +566,7 @@ namespace Foodo.Application.Implementation.Customer
 			var cached = _cacheService.Get<PaginationDto<ShopDto>>(cacheKey);
 			if (cached != null) return ApiResponse<PaginationDto<ShopDto>>.Success(cached);
 			var query = _unitOfWork.RestaurantCustomRepository.ReadRestaurants();
-			var filteredQuery = query.Where(e=>e.TblRestaurantCategories.Any(c => c.categoryid == (int)input.Category));
+			var filteredQuery = query.Where(e => e.TblRestaurantCategories.Any(c => c.categoryid == (int)input.Category));
 			var totalCount = await filteredQuery.CountAsync();
 			if (totalCount == 0)
 			{

@@ -22,92 +22,88 @@ namespace Foodo.API.Controllers
 	public class MerchantProfileController : ControllerBase
 	{
 		private readonly IMerchantProfileService _service;
+		private readonly ILogger<MerchantProfileController> _logger;
 
-		public MerchantProfileController(IMerchantProfileService service)
+		public MerchantProfileController(IMerchantProfileService service, ILogger<MerchantProfileController> logger)
 		{
 			_service = service;
+			_logger = logger;
 		}
 
 		#region Get Profile
-
-		/// <summary>
-		/// Retrieves the profile information of the authenticated merchant.
-		/// </summary>
-		/// <returns>Merchant profile data.</returns>
-		/// <response code="200">Profile retrieved successfully.</response>
-		/// <response code="400">Failed to retrieve profile.</response>
 		[HttpGet("get-merchant-profile")]
 		public async Task<IActionResult> GetProfile()
 		{
-			var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+			_logger.LogInformation("Get merchant profile attempt started | MerchantId={MerchantId} | TraceId={TraceId}", userId, HttpContext.TraceIdentifier);
 
-			var result = await _service.GetMerchantProfile(new MerchantProfileInput
-			{
-				MerchantId = userId
-			});
+			var result = await _service.GetMerchantProfile(new MerchantProfileInput { MerchantId = userId });
 
 			if (!result.IsSuccess)
-				return BadRequest(result.Message);
+			{
+				_logger.LogWarning("Get merchant profile failed | Reason={Reason} | TraceId={TraceId}", result.Message, HttpContext.TraceIdentifier);
+				return BadRequest(new
+				{
+					message = result.Message,
+					traceId = HttpContext.TraceIdentifier
+				});
+			}
 
-			return Ok(result.Data);
+			_logger.LogInformation("Get merchant profile succeeded | MerchantId={MerchantId} | TraceId={TraceId}", userId, HttpContext.TraceIdentifier);
+			return Ok(new
+			{
+				message = "Profile retrieved successfully",
+				traceId = HttpContext.TraceIdentifier,
+				data = result.Data
+			});
 		}
-
 		#endregion
 
 		#region Add Address
-
-		/// <summary>
-		/// Adds a new address to the merchant's profile.
-		/// </summary>
-		/// <param name="request">Address details to add.</param>
-		/// <returns>Status message.</returns>
-		/// <response code="200">Address added successfully.</response>
-		/// <response code="400">Failed to add address.</response>
 		[HttpPost("add-adress")]
-		public async Task<IActionResult> Post([FromBody] MerchantAddAdressRequest request)
+		public async Task<IActionResult> AddAddress([FromBody] MerchantAddAdressRequest request)
 		{
-			var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+			_logger.LogInformation("Add merchant address attempt started | MerchantId={MerchantId} | TraceId={TraceId}", userId, HttpContext.TraceIdentifier);
 
-			var result = await _service.AddAdress(new MerchantAddAdressInput
+			if (!ModelState.IsValid)
 			{
-				MerchantId = userId,
-				Adresses = request.Adresses
-			});
+				var errors = string.Join(" | ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+				_logger.LogWarning("Add merchant address failed: Invalid model | Errors={Errors} | TraceId={TraceId}", errors, HttpContext.TraceIdentifier);
+				return BadRequest(new { message = "Invalid request data", errors, traceId = HttpContext.TraceIdentifier });
+			}
+
+			var result = await _service.AddAdress(new MerchantAddAdressInput { MerchantId = userId, Adresses = request.Adresses });
 
 			if (!result.IsSuccess)
-				return BadRequest(result.Message);
+			{
+				_logger.LogWarning("Add merchant address failed | Reason={Reason} | TraceId={TraceId}", result.Message, HttpContext.TraceIdentifier);
+				return BadRequest(new { message = result.Message, traceId = HttpContext.TraceIdentifier });
+			}
 
-			return Ok(result.Message);
+			_logger.LogInformation("Add merchant address succeeded | MerchantId={MerchantId} | TraceId={TraceId}", userId, HttpContext.TraceIdentifier);
+			return Ok(new { message = "Address added successfully", traceId = HttpContext.TraceIdentifier });
 		}
-
 		#endregion
 
 		#region Delete Address
-
-		/// <summary>
-		/// Deletes a specific address from the merchant's profile.
-		/// </summary>
-		/// <param name="id">ID of the address to delete.</param>
-		/// <returns>Status message.</returns>
-		/// <response code="200">Address deleted successfully.</response>
-		/// <response code="400">Failed to delete address.</response>
 		[HttpDelete("delete-adress/{id}")]
-		public async Task<IActionResult> Delete(int id)
+		public async Task<IActionResult> DeleteAddress(int id)
 		{
-			var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+			_logger.LogInformation("Delete merchant address attempt started | MerchantId={MerchantId} | AddressId={AddressId} | TraceId={TraceId}", userId, id, HttpContext.TraceIdentifier);
 
-			var result = await _service.RemoveAdress(new MerchantRemoveAdressInput
-			{
-				MerchantId = userId,
-				AdressId = id
-			});
+			var result = await _service.RemoveAdress(new MerchantRemoveAdressInput { MerchantId = userId, AdressId = id });
 
 			if (!result.IsSuccess)
-				return BadRequest(result.Message);
+			{
+				_logger.LogWarning("Delete merchant address failed | Reason={Reason} | MerchantId={MerchantId} | AddressId={AddressId} | TraceId={TraceId}", result.Message, userId, id, HttpContext.TraceIdentifier);
+				return BadRequest(new { message = result.Message, traceId = HttpContext.TraceIdentifier });
+			}
 
-			return Ok(result.Message);
+			_logger.LogInformation("Delete merchant address succeeded | MerchantId={MerchantId} | AddressId={AddressId} | TraceId={TraceId}", userId, id, HttpContext.TraceIdentifier);
+			return Ok(new { message = "Address deleted successfully", traceId = HttpContext.TraceIdentifier });
 		}
-
 		#endregion
 	}
 }
