@@ -1,4 +1,5 @@
-﻿using Foodo.Application.Abstraction.Authentication;
+﻿using Foodo.API.Middlewares;
+using Foodo.Application.Abstraction.Authentication;
 using Foodo.Application.Abstraction.Customer;
 using Foodo.Application.Abstraction.InfraRelated;
 using Foodo.Application.Abstraction.InfrastructureRelatedServices;
@@ -20,12 +21,14 @@ using Foodo.Infrastructure.Repository;
 using Foodo.Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Serilog;
 using System.Reflection;
 using System.Text;
+using System.Threading.RateLimiting;
 namespace Foodo.API
 {
 	public class Program
@@ -125,7 +128,7 @@ namespace Foodo.API
 			builder.Services.AddScoped<ICustomerService, CustomerService>();
 			builder.Services.AddScoped<IMerchantProfileService, MerchantProfileService>();
 			builder.Services.AddScoped<ICustomerProfileService, CustomerProfileService>();
-			builder.Services.AddScoped<IPhotoAccessorService, PhotoAccessorService>();
+			builder.Services.AddSingleton<IPhotoAccessorService, PhotoAccessorService>();
 			builder.Services.AddScoped<IPhotoService, PhotoService>();
 			builder.Services.AddScoped<IProductRepository, ProductRepository>();
 			builder.Services.AddScoped<IRestaurantRepository, RestaurantRepository>();
@@ -133,7 +136,19 @@ namespace Foodo.API
 			builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 			builder.Services.AddScoped<IProductPhotoCustomRepository, ProductPhotoCustomRepository>();
 			builder.Services.AddHttpContextAccessor();
+			builder.Services.AddProblemDetails();
 			builder.Services.AddMemoryCache();
+			builder.Services.AddRateLimiter(options =>
+			{
+				options.AddFixedWindowLimiter("FixedPolicy", opt =>
+				{
+					opt.Window = TimeSpan.FromMinutes(1);
+					opt.PermitLimit = 100;
+					opt.QueueLimit = 2;
+					opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+
+				});
+			});
 			builder.Services.AddSingleton<ICacheService, CacheService>();
 			builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
 			builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("Smtp"));
@@ -166,7 +181,9 @@ namespace Foodo.API
 
 
 			var app = builder.Build();
+			app.UseRateLimiter();
 			app.UseSerilogRequestLogging();
+			app.UseGlobalExceptionHandlerMiddleware();
 			// Configure the HTTP request pipeline.
 			if (app.Environment.IsDevelopment())
 			{
@@ -174,9 +191,9 @@ namespace Foodo.API
 			}
 			app.UseSwagger();
 			app.UseSwaggerUI();
-
 			app.UseHttpsRedirection();
 			app.UseCors("AllowFrontend");
+			app.UseMiddleware<PayloadSizeCheckMiddleware>(1024*50);
 			app.UseRouting();
 			app.UseAuthentication();
 			app.UseAuthorization();
