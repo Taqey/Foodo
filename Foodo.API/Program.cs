@@ -140,12 +140,35 @@ namespace Foodo.API
 			builder.Services.AddMemoryCache();
 			builder.Services.AddRateLimiter(options =>
 			{
-				options.AddFixedWindowLimiter("FixedPolicy", opt =>
+				options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+				options.AddFixedWindowLimiter("FixedWindowPolicy", opt =>
 				{
 					opt.Window = TimeSpan.FromMinutes(1);
 					opt.PermitLimit = 100;
 					opt.QueueLimit = 2;
 					opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+
+				});
+				options.AddSlidingWindowLimiter("SlidingWindowPolicy", opt =>
+				{
+					opt.Window= TimeSpan.FromMinutes(15);
+					opt.PermitLimit = 5;
+					opt.QueueLimit = 0;
+
+				});
+				options.AddTokenBucketLimiter("TokenBucketPolicy", opt =>
+				{
+					opt.TokenLimit = 30;               
+					opt.TokensPerPeriod = 10;         
+					opt.ReplenishmentPeriod = TimeSpan.FromMinutes(1);
+					opt.QueueLimit = 0;
+				});
+
+				options.AddConcurrencyLimiter("LeakyBucketPolicy", opt =>
+				{
+					opt.PermitLimit = 1;
+					opt.QueueLimit = 5;
+					opt.QueueProcessingOrder= QueueProcessingOrder.OldestFirst;
 
 				});
 			});
@@ -181,7 +204,6 @@ namespace Foodo.API
 
 
 			var app = builder.Build();
-			app.UseRateLimiter();
 			app.UseSerilogRequestLogging();
 			app.UseGlobalExceptionHandlerMiddleware();
 			// Configure the HTTP request pipeline.
@@ -197,6 +219,7 @@ namespace Foodo.API
 			app.UseRouting();
 			app.UseAuthentication();
 			app.UseAuthorization();
+			app.UseRateLimiter();
 			app.MapControllers();
 			app.Run();
 		}

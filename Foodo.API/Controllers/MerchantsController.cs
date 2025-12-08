@@ -6,6 +6,7 @@ using Foodo.Application.Models.Input.Merchant;
 using Foodo.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 
 namespace Foodo.API.Controllers
@@ -52,6 +53,7 @@ namespace Foodo.API.Controllers
 		/// <response code="200">Products retrieved successfully.</response>
 		/// <response code="400">Failed to retrieve products.</response>
 		[HttpPost("get-all-products")]
+		[EnableRateLimiting("TokenBucketPolicy")]
 		public async Task<IActionResult> GetAllProducts([FromBody] PaginationRequest request)
 		{
 			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -151,6 +153,7 @@ namespace Foodo.API.Controllers
 		/// <response code="200">Product retrieved successfully.</response>
 		/// <response code="400">Failed to retrieve product.</response>
 		[HttpGet("get-product-by-id/{id}")]
+		[EnableRateLimiting("TokenBucketPolicy")]
 		public async Task<IActionResult> GetProductById(int id)
 		{
 			_logger.LogInformation(
@@ -236,6 +239,7 @@ namespace Foodo.API.Controllers
 		/// <response code="200">Product created successfully.</response>
 		/// <response code="400">Failed to create product.</response>
 		[HttpPost("create-product")]
+		[EnableRateLimiting("FixedWindowPolicy")]
 		public async Task<IActionResult> CreateProduct([FromBody] ProductRequest request)
 		{
 			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -325,6 +329,7 @@ namespace Foodo.API.Controllers
 		/// <response code="200">Product updated successfully.</response>
 		/// <response code="400">Failed to update product.</response>
 		[HttpPut("update-product/{id}")]
+		[EnableRateLimiting("SlidingWindowPolicy")]
 		public async Task<IActionResult> UpdateProduct(int id, [FromBody] ProductUpdateRequest request)
 		{
 			_logger.LogInformation(
@@ -424,6 +429,7 @@ namespace Foodo.API.Controllers
 		/// <response code="200">Product deleted successfully.</response>
 		/// <response code="400">Failed to delete product.</response>
 		[HttpDelete("delete-product/{id}")]
+		[EnableRateLimiting("FixedWindowPolicy")]
 		public async Task<IActionResult> DeleteProduct(int id)
 		{
 			_logger.LogInformation(
@@ -498,6 +504,8 @@ namespace Foodo.API.Controllers
 		/// <response code="200">Attributes added successfully.</response>
 		/// <response code="400">Failed to add attributes.</response>
 		[HttpPut("add-attribute")]
+		[EnableRateLimiting("SlidingWindowPolicy")]
+
 		public async Task<IActionResult> AddAttribute(int id, [FromBody] AttributeCreateRequest request)
 		{
 			_logger.LogInformation(
@@ -596,6 +604,8 @@ namespace Foodo.API.Controllers
 		/// <response code="200">Attributes removed successfully.</response>
 		/// <response code="400">Failed to remove attributes.</response>
 		[HttpPut("remove-attribute")]
+		[EnableRateLimiting("SlidingWindowPolicy")]
+
 		public async Task<IActionResult> RemoveAttribute(int id, [FromBody] AttributeDeleteRequest request)
 		{
 			_logger.LogInformation(
@@ -697,6 +707,7 @@ namespace Foodo.API.Controllers
 		/// <response code="200">Orders retrieved successfully.</response>
 		/// <response code="400">Failed to retrieve orders.</response>
 		[HttpPost("get-all-orders")]
+		[EnableRateLimiting("TokenBucketPolicy")]
 		public async Task<IActionResult> GetAllOrders([FromBody] PaginationRequest request)
 		{
 			_logger.LogInformation(
@@ -794,6 +805,8 @@ namespace Foodo.API.Controllers
 		/// <response code="200">Order retrieved successfully.</response>
 		/// <response code="400">Failed to retrieve order.</response>
 		[HttpGet("get-order-by-id/{id}")]
+		[EnableRateLimiting("TokenBucketPolicy")]
+
 		public async Task<IActionResult> GetOrderById(int id)
 		{
 			_logger.LogInformation(
@@ -872,6 +885,8 @@ namespace Foodo.API.Controllers
 		/// <response code="200">Order status updated successfully.</response>
 		/// <response code="400">Failed to update order status.</response>
 		[HttpPut("update-order-status/{id}")]
+		[EnableRateLimiting("SlidingWindowPolicy")]
+
 		public async Task<IActionResult> UpdateOrderStatus(int id, [FromBody] OrderStatusUpdateRequest request)
 		{
 			_logger.LogInformation(
@@ -974,6 +989,7 @@ namespace Foodo.API.Controllers
 		/// <response code="200">Categories added successfully.</response>
 		/// <response code="400">Failed to add categories.</response>
 		[HttpPut("add-categories/{productId}")]
+		[EnableRateLimiting("SlidingWindowPolicy")]
 		public async Task<IActionResult> AddCategories(int productId, [FromBody] CategoryRequest request)
 		{
 			_logger.LogInformation(
@@ -1073,6 +1089,7 @@ namespace Foodo.API.Controllers
 		/// <response code="200">Categories removed successfully.</response>
 		/// <response code="400">Failed to remove categories.</response>
 		[HttpPut("remove-categories/{productId}")]
+		[EnableRateLimiting("SlidingWindowPolicy")]
 		public async Task<IActionResult> RemoveCategories(int productId, [FromBody] CategoryRequest request)
 		{
 			_logger.LogInformation(
@@ -1175,6 +1192,8 @@ namespace Foodo.API.Controllers
 		/// <response code="200">Customers retrieved successfully.</response>
 		/// <response code="400">Failed to retrieve customers.</response>
 		[HttpPost("get-purchased-customers")]
+		[EnableRateLimiting("TokenBucketPolicy")]
+
 		public async Task<IActionResult> GetPurchasedCustomers([FromBody] PaginationRequest request)
 		{
 			var shopId = User.FindFirstValue(ClaimTypes.NameIdentifier);

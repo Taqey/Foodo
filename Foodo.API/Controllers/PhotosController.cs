@@ -3,6 +3,7 @@ using Foodo.Application.Abstraction.Photo;
 using Foodo.Application.Models.Input.Photo;
 using Foodo.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -11,6 +12,8 @@ namespace Foodo.API.Controllers
 {
 	[Route("api/[controller]")]
 	[ApiController]
+	[EnableRateLimiting("LeakyBucketPolicy")]
+
 	public class PhotosController : ControllerBase
 	{
 		private readonly IPhotoService _service;

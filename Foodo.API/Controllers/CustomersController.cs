@@ -6,6 +6,7 @@ using Foodo.Application.Models.Input.Customer;
 using Foodo.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 
 namespace Foodo.API.Controllers
@@ -51,6 +52,7 @@ namespace Foodo.API.Controllers
 		/// <response code="200">Products retrieved successfully.</response>
 		/// <response code="400">Failed to retrieve products.</response>
 		[HttpPost("get-all-products")]
+		[EnableRateLimiting("TokenBucketPolicy")]
 		public async Task<IActionResult> GetAllProducts([FromBody] PaginationRequest request)
 		{
 			_logger.LogInformation("Get all products attempt started | Page={Page} | PageSize={PageSize} | TraceId={TraceId}", request.PageNumber, request.PageSize, HttpContext.TraceIdentifier);
@@ -115,6 +117,7 @@ namespace Foodo.API.Controllers
 		/// <response code="400">Failed to retrieve product.</response>
 		/// <response code="404">Product not found.</response>
 		[HttpGet("get-product-by-id/{id}")]
+		[EnableRateLimiting("TokenBucketPolicy")]
 		public async Task<IActionResult> GetProductbyId(int id)
 		{
 			_logger.LogInformation(
@@ -176,6 +179,7 @@ namespace Foodo.API.Controllers
 		/// <response code="200">Products retrieved successfully.</response>
 		/// <response code="400">Failed to retrieve products.</response>
 		[HttpPost("get-all-products-by-category")]
+		[EnableRateLimiting("TokenBucketPolicy")]
 		public async Task<IActionResult> GetAllproductsByCategory(ProductCategoryPaginationRequest request)
 		{
 			_logger.LogInformation(
@@ -256,6 +260,7 @@ namespace Foodo.API.Controllers
 		/// <response code="200">Products retrieved successfully.</response>
 		/// <response code="400">Failed to retrieve products.</response>
 		[HttpPost("get-all-products-by-restaurant")]
+		[EnableRateLimiting("TokenBucketPolicy")]
 		public async Task<IActionResult> GetAllProductsByRestaurant([FromBody] ProductPaginationByShopRequest request)
 		{
 			_logger.LogInformation(
@@ -349,6 +354,7 @@ namespace Foodo.API.Controllers
 		/// <response code="200">Shops retrieved successfully.</response>
 		/// <response code="400">Failed to retrieve shops.</response>
 		[HttpPost("get-all-shops")]
+		[EnableRateLimiting("TokenBucketPolicy")]
 		public async Task<IActionResult> GetAllShops([FromBody] PaginationRequest request)
 		{
 			_logger.LogInformation(
@@ -439,6 +445,7 @@ namespace Foodo.API.Controllers
 		/// <response code="400">Invalid shop id.</response>
 		/// <response code="404">Shop not found.</response>
 		[HttpGet("get-shop-by-id/{id}")]
+		[EnableRateLimiting("TokenBucketPolicy")]
 		public async Task<IActionResult> GetShopById(string id)
 		{
 			_logger.LogInformation(
@@ -506,6 +513,8 @@ namespace Foodo.API.Controllers
 		/// <response code="200">Shops retrieved successfully.</response>
 		/// <response code="400">Failed to retrieve shops.</response>
 		[HttpPost("get-all-shops-by-category")]
+		[EnableRateLimiting("TokenBucketPolicy")]
+
 		public async Task<IActionResult> GetAllShopsByCategory([FromBody] ShopCategoryPaginationRequest request)
 		{
 			_logger.LogInformation(
@@ -610,6 +619,7 @@ namespace Foodo.API.Controllers
 		/// <response code="401">User not authenticated.</response>
 		[Authorize(Roles = nameof(UserType.Customer))]
 		[HttpPost("get-all-orders")]
+		[EnableRateLimiting("TokenBucketPolicy")]
 		public async Task<IActionResult> GetAllOrders([FromBody] PaginationRequest request)
 		{
 			_logger.LogInformation(
@@ -724,6 +734,7 @@ namespace Foodo.API.Controllers
 		/// <response code="401">User not authenticated.</response>
 		[Authorize(Roles = nameof(UserType.Customer))]
 		[HttpGet("get-order-by-id/{id}")]
+		[EnableRateLimiting("TokenBucketPolicy")]
 		public async Task<IActionResult> GetOrdersById(string id)
 		{
 			_logger.LogInformation(
@@ -799,6 +810,7 @@ namespace Foodo.API.Controllers
 		/// <response code="401">User not authenticated.</response>
 		[Authorize(Roles = nameof(UserType.Customer))]
 		[HttpPost("place-order")]
+		[EnableRateLimiting("SlidingWindowPolicy")]
 		public async Task<IActionResult> Post([FromBody] CreateOrderRequest request)
 		{
 			var customerId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -903,6 +915,8 @@ namespace Foodo.API.Controllers
 
 		[Authorize(Roles = nameof(UserType.Customer))]
 		[HttpPut("edit-order/{id}")]
+		[EnableRateLimiting("SlidingWindowPolicy")]
+
 		public async Task<IActionResult> Put(int id, [FromBody] string value)
 		{
 			return StatusCode(StatusCodes.Status501NotImplemented);
@@ -918,6 +932,7 @@ namespace Foodo.API.Controllers
 		/// <response code="401">User not authenticated.</response>
 		[Authorize(Roles = nameof(UserType.Customer))]
 		[HttpDelete("cancel-order/{id}")]
+		[EnableRateLimiting("SlidingWindowPolicy")]
 		public async Task<IActionResult> Delete(int id)
 		{
 			_logger.LogInformation(
