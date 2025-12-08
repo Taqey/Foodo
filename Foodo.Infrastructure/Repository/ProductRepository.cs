@@ -2,9 +2,6 @@
 using Foodo.Domain.Repository;
 using Foodo.Infrastructure.Perisistence;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Foodo.Infrastructure.Repository
 {
@@ -17,9 +14,9 @@ namespace Foodo.Infrastructure.Repository
 			_context = context;
 		}
 
-		public  IQueryable<TblProduct> ReadProducts()
+		public IQueryable<TblProduct> ReadProducts()
 		{
-			var query =  _context.TblProducts
+			var query = _context.TblProducts
 				.AsNoTracking();
 			return query;
 		}

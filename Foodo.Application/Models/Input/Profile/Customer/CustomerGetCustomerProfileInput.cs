@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Foodo.Application.Models.Input.Profile.Customer
+﻿namespace Foodo.Application.Models.Input.Profile.Customer
 {
 	public class CustomerGetCustomerProfileInput
 	{

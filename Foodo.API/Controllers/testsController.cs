@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 
 namespace Foodo.API.Controllers
 {
@@ -10,7 +9,7 @@ namespace Foodo.API.Controllers
 		[HttpGet("test-error")]
 		public IActionResult TestError()
 		{
-			throw new ("Test server error!");
+			throw new("Test server error!");
 		}
 
 	}

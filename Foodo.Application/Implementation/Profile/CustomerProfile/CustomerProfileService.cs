@@ -6,9 +6,6 @@ using Foodo.Application.Models.Response;
 using Foodo.Domain.Entities;
 using Foodo.Domain.Repository;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Foodo.Application.Implementation.Profile.CustomerProfile
 {
@@ -17,7 +14,7 @@ namespace Foodo.Application.Implementation.Profile.CustomerProfile
 		private readonly IUserService _service;
 		private readonly IUnitOfWork _unitOfWork;
 
-		public CustomerProfileService(IUserService service,IUnitOfWork unitOfWork)
+		public CustomerProfileService(IUserService service, IUnitOfWork unitOfWork)
 		{
 			_service = service;
 			_unitOfWork = unitOfWork;
@@ -44,19 +41,21 @@ namespace Foodo.Application.Implementation.Profile.CustomerProfile
 		public async Task<ApiResponse<CustomerProfileDto>> GetCustomerProfile(CustomerGetCustomerProfileInput input)
 		{
 			var user = await _unitOfWork.UserCustomRepository.ReadCustomer().Where(e => e.Id == input.UserId).FirstOrDefaultAsync();
-			if (user == null) { 
-			return new ApiResponse<CustomerProfileDto> { IsSuccess = false ,Message="user not found"};
+			if (user == null)
+			{
+				return new ApiResponse<CustomerProfileDto> { IsSuccess = false, Message = "user not found" };
 			}
 			var Customer = user.TblCustomer;
 			var CustomerDto = new CustomerProfileDto { FirstName = Customer.FirstName, LastName = Customer.LastName, BirthDate = Customer.BirthDate, Email = user.Email, IsEmailConfirmed = user.EmailConfirmed, Gender = Customer.Gender, PhoneNumber = user.PhoneNumber };
 			var adresses = user.TblAdresses;
-			if (adresses != null && adresses.Any()) {
+			if (adresses != null && adresses.Any())
+			{
 				foreach (var adress in adresses)
 				{
-					CustomerDto.Adresses.Add(new CustomerAdressDto { City= adress.City, Country= adress.Country,PostalCode=adress.PostalCode,IsDefault=adress.IsDefault,Id=adress.AddressId,State=adress.State,StreetAddress=adress.StreetAddress});
+					CustomerDto.Adresses.Add(new CustomerAdressDto { City = adress.City, Country = adress.Country, PostalCode = adress.PostalCode, IsDefault = adress.IsDefault, Id = adress.AddressId, State = adress.State, StreetAddress = adress.StreetAddress });
 				}
 			}
-			return new ApiResponse<CustomerProfileDto> { Data = CustomerDto ,Message="Data retrieved successfully", IsSuccess=true };
+			return new ApiResponse<CustomerProfileDto> { Data = CustomerDto, Message = "Data retrieved successfully", IsSuccess = true };
 		}
 
 		public async Task<ApiResponse> MakeAdressDefault(CustomerMakeAdressDefaultInput input)
@@ -67,17 +66,17 @@ namespace Foodo.Application.Implementation.Profile.CustomerProfile
 				return new ApiResponse { IsSuccess = false, Message = "user not found" };
 			}
 			var adresses = user.TblAdresses;
-			if (adresses!=null&&adresses.Any())
+			if (adresses != null && adresses.Any())
 			{
-			var defaultadress=adresses.FirstOrDefault(e => e.IsDefault == true);
-				if (defaultadress!=null)
+				var defaultadress = adresses.FirstOrDefault(e => e.IsDefault == true);
+				if (defaultadress != null)
 				{
-				defaultadress.IsDefault = false;
-					
+					defaultadress.IsDefault = false;
+
 				}
-				
+
 			}
-			var newdefaultadress=adresses.FirstOrDefault(e=>e.AddressId==input.AdressId);
+			var newdefaultadress = adresses.FirstOrDefault(e => e.AddressId == input.AdressId);
 			newdefaultadress.IsDefault = true;
 			var result = await _service.UpdateAsync(user);
 			if (result.Succeeded)

@@ -1,14 +1,12 @@
 ﻿using Foodo.API.Models.Request;
 using Foodo.API.Models.Request.Customer;
 using Foodo.Application.Abstraction.Customer;
-using Foodo.Application.Models.Dto;
 using Foodo.Application.Models.Input;
 using Foodo.Application.Models.Input.Customer;
 using Foodo.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using System.Threading.Tasks;
 
 namespace Foodo.API.Controllers
 {
@@ -55,12 +53,12 @@ namespace Foodo.API.Controllers
 		[HttpPost("get-all-products")]
 		public async Task<IActionResult> GetAllProducts([FromBody] PaginationRequest request)
 		{
-			_logger.LogInformation("Get all products attempt started | Page={Page} | PageSize={PageSize} | TraceId={TraceId}",request.PageNumber,request.PageSize,HttpContext.TraceIdentifier);
+			_logger.LogInformation("Get all products attempt started | Page={Page} | PageSize={PageSize} | TraceId={TraceId}", request.PageNumber, request.PageSize, HttpContext.TraceIdentifier);
 			if (!ModelState.IsValid)
 			{
-				var errors = string.Join(" | ",ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+				var errors = string.Join(" | ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
 
-				_logger.LogWarning("Validation failed | Errors={Errors} | TraceId={TraceId}",errors,HttpContext.TraceIdentifier);
+				_logger.LogWarning("Validation failed | Errors={Errors} | TraceId={TraceId}", errors, HttpContext.TraceIdentifier);
 
 				return BadRequest(new
 				{
@@ -77,7 +75,7 @@ namespace Foodo.API.Controllers
 
 			if (!result.IsSuccess)
 			{
-				_logger.LogWarning("Get all products failed | Reason={Reason} | TraceId={TraceId}",result.Message,HttpContext.TraceIdentifier);
+				_logger.LogWarning("Get all products failed | Reason={Reason} | TraceId={TraceId}", result.Message, HttpContext.TraceIdentifier);
 
 				return BadRequest(new
 				{
@@ -97,7 +95,7 @@ namespace Foodo.API.Controllers
 					data = result.Data
 				});
 			}
-			_logger.LogInformation("Get all products succeeded | Count={Count} | TraceId={TraceId}",result.Data?.Items?.Count ?? 0,HttpContext.TraceIdentifier);
+			_logger.LogInformation("Get all products succeeded | Count={Count} | TraceId={TraceId}", result.Data?.Items?.Count ?? 0, HttpContext.TraceIdentifier);
 
 			return Ok(new
 			{
@@ -314,7 +312,7 @@ namespace Foodo.API.Controllers
 			}
 			if (result.Data == null || result.Data.Items.Count == 0)
 			{
-				_logger.LogWarning("Get all products By Restaurant returned empty | TraceId={TraceId}",  HttpContext.TraceIdentifier);
+				_logger.LogWarning("Get all products By Restaurant returned empty | TraceId={TraceId}", HttpContext.TraceIdentifier);
 
 				return Ok(new
 				{
@@ -490,7 +488,9 @@ namespace Foodo.API.Controllers
 				HttpContext.TraceIdentifier
 			);
 
-			return Ok(new {data= result.Data,
+			return Ok(new
+			{
+				data = result.Data,
 				message = result.Message,
 				traceId = HttpContext.TraceIdentifier
 			});

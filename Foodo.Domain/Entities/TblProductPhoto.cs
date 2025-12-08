@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Foodo.Domain.Entities
+﻿namespace Foodo.Domain.Entities
 {
 	public class TblProductPhoto
 	{

@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Foodo.Domain.Repository
 {
-	public interface IUnitOfWork:IDisposable
+	public interface IUnitOfWork : IDisposable
 	{
 		public IRepository<LkpAttribute> AttributeRepository { get; }
 		public IRepository<LkpMeasureUnit> MeasureUnitRepository { get; }
@@ -11,11 +11,11 @@ namespace Foodo.Domain.Repository
 		public IRepository<TblAdress> AdressRepository { get; }
 		public IRepository<TblCustomer> CustomerRepository { get; }
 		public IRepository<TblMerchant> MerchantRepository { get; }
-		public IRepository<TblOrder > OrderRepository { get; }
-		public IRepository<TblProduct > ProductRepository { get; }
+		public IRepository<TblOrder> OrderRepository { get; }
+		public IRepository<TblProduct> ProductRepository { get; }
 		public IRepository<TblProductDetail> ProductDetailRepository { get; }
 		public IRepository<TblProductsOrder> ProductsOrderRepository { get; }
-		public IRepository <TblProductPhoto> ProductPhotoRepository { get; }
+		public IRepository<TblProductPhoto> ProductPhotoRepository { get; }
 		public IProductRepository ProductCustomRepository { get; }
 		public IRestaurantRepository RestaurantCustomRepository { get; }
 		public IUserRepository UserCustomRepository { get; }

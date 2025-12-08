@@ -4,9 +4,6 @@ using Foodo.Application.Models.Dto.Merchant;
 using Foodo.Application.Models.Input;
 using Foodo.Application.Models.Input.Merchant;
 using Foodo.Application.Models.Response;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Foodo.Application.Abstraction.Merchant;
 
@@ -20,8 +17,8 @@ public interface IMerchantService
 	Task<ApiResponse> AddProductAttributeAsync(int productDetailId, AttributeCreateInput attributes);
 	Task<ApiResponse> RemoveProductAttributeAsync(int productDetailId, AttributeDeleteInput attributes);
 	Task<ApiResponse<PaginationDto<MerchantOrderDto>>> ReadAllOrdersAsync(ProductPaginationInput input);
-	Task <ApiResponse<MerchantOrderDto>> ReadOrderByIdAsync(int orderId);
-	Task <ApiResponse> UpdateOrderStatusAsync(int orderId, OrderStatusUpdateInput input);
+	Task<ApiResponse<MerchantOrderDto>> ReadOrderByIdAsync(int orderId);
+	Task<ApiResponse> UpdateOrderStatusAsync(int orderId, OrderStatusUpdateInput input);
 	Task<ApiResponse<PaginationDto<CustomerDto>>> ReadAllPurchasedCustomersAsync(ProductPaginationInput input);
 	Task<ApiResponse> AddProductCategoriesAsync(ProductCategoryInput categoryInput);
 	Task<ApiResponse> RemoveProductCategoriesAsync(ProductCategoryInput categoryInput);

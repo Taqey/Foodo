@@ -1,10 +1,5 @@
 ﻿using Foodo.Application.Models.Dto.Photo;
 using Foodo.Application.Models.Input.Photo;
-using Microsoft.AspNetCore.Http;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Foodo.Application.Abstraction.InfrastructureRelatedServices
 {

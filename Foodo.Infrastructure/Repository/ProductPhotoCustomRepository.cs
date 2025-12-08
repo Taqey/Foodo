@@ -2,9 +2,6 @@
 using Foodo.Domain.Repository;
 using Foodo.Infrastructure.Perisistence;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Foodo.Infrastructure.Repository
 {
@@ -17,7 +14,7 @@ namespace Foodo.Infrastructure.Repository
 			_context = context;
 		}
 
-		public  IQueryable<TblProductPhoto> ReadPhotos()
+		public IQueryable<TblProductPhoto> ReadPhotos()
 		{
 			var query = _context.TblProductPhotos.Include(e => e.TblProduct).ThenInclude(e => e.Merchant).ThenInclude(e => e.User);
 			return query;

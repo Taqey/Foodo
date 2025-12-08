@@ -1,10 +1,8 @@
 ﻿using Foodo.API.Models.Request;
 using Foodo.API.Models.Request.Merchant;
 using Foodo.Application.Abstraction.Merchant;
-using Foodo.Application.Models.Dto;
 using Foodo.Application.Models.Input;
 using Foodo.Application.Models.Input.Merchant;
-using Foodo.Application.Models.Response;
 using Foodo.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -38,7 +36,7 @@ namespace Foodo.API.Controllers
 		private readonly IMerchantService _productService;
 		private readonly ILogger<MerchantsController> _logger;
 
-		public MerchantsController(IMerchantService productService,ILogger<MerchantsController> logger)
+		public MerchantsController(IMerchantService productService, ILogger<MerchantsController> logger)
 		{
 			_productService = productService;
 			_logger = logger;
@@ -124,7 +122,7 @@ namespace Foodo.API.Controllers
 				{
 					message = "No products found",
 					traceId = HttpContext.TraceIdentifier,
-					data=result.Data
+					data = result.Data
 
 				});
 			}
@@ -1246,7 +1244,7 @@ namespace Foodo.API.Controllers
 				result.Data?.Items?.Count ?? 0,
 				HttpContext.TraceIdentifier
 			);
-			if (result.Data==null||result.Data.Items.Count==0)
+			if (result.Data == null || result.Data.Items.Count == 0)
 			{
 
 				return Ok(new

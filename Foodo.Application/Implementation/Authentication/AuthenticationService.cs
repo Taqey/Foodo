@@ -8,7 +8,6 @@ using Foodo.Domain.Entities;
 using Foodo.Domain.Enums;
 using Foodo.Domain.Repository;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
 using System.Data;
 using System.Security.Cryptography;
 
@@ -23,7 +22,7 @@ namespace Foodo.Application.Implementation.Authentication
 		private readonly IUnitOfWork _unitOfWork;
 		private readonly ICacheService _cacheService;
 
-		public AuthenticationService(IUserService userService, ICreateToken createToken, IHttpContextAccessor http,IEmailSenderService senderService,IUnitOfWork unitOfWork,ICacheService cacheService)
+		public AuthenticationService(IUserService userService, ICreateToken createToken, IHttpContextAccessor http, IEmailSenderService senderService, IUnitOfWork unitOfWork, ICacheService cacheService)
 		{
 			_userService = userService;
 			_createToken = createToken;
@@ -148,7 +147,7 @@ namespace Foodo.Application.Implementation.Authentication
 		}
 
 		#endregion
-		
+
 		#region Login
 
 		public async Task<ApiResponse<JwtDto>> Login(LoginInput input)
@@ -223,9 +222,9 @@ namespace Foodo.Application.Implementation.Authentication
 
 		public async Task<ApiResponse> ChangePassword(ChangePasswordInput input)
 		{
-			var user= await _userService.GetByIdAsync(input.UserId);
-			var result= await _userService.ChangePasswordAsync(user,input.CurrentPassword, input.NewPassword);
-			if(!result.Succeeded)
+			var user = await _userService.GetByIdAsync(input.UserId);
+			var result = await _userService.ChangePasswordAsync(user, input.CurrentPassword, input.NewPassword);
+			if (!result.Succeeded)
 			{
 				return ApiResponse.Failure("Password change failed: " + string.Join(", ", result.Errors.Select(e => e.Description)));
 			}
@@ -235,12 +234,12 @@ namespace Foodo.Application.Implementation.Authentication
 		public async Task<ApiResponse> ForgetPassword(ForgetPasswordInput input)
 		{
 
-			var user=await _userService.GetUserByResetCode(input.Code);
-			if(user==null)
+			var user = await _userService.GetUserByResetCode(input.Code);
+			if (user == null)
 			{
-				return  new ApiResponse {  Message = "Invalid or expired reset code." };
+				return new ApiResponse { Message = "Invalid or expired reset code." };
 			}
-			var code= user.LkpCodes.FirstOrDefault(e=>e.Key==input.Code);
+			var code = user.LkpCodes.FirstOrDefault(e => e.Key == input.Code);
 			if (code.ExpiresAt < DateTime.UtcNow)
 			{
 				return new ApiResponse { Message = "Invalid or expired reset code." };
@@ -249,24 +248,24 @@ namespace Foodo.Application.Implementation.Authentication
 			{
 				return ApiResponse.Failure("Reset Code Already used");
 			}
-			var result=	await _userService.ForgetPasswordAsync(user, input.Password);
-			if(result.Succeeded)
+			var result = await _userService.ForgetPasswordAsync(user, input.Password);
+			if (result.Succeeded)
 			{
-				code.IsUsed= true;
+				code.IsUsed = true;
 				return ApiResponse.Success("Password has been reset successfully.");
-			} 
-				return ApiResponse.Failure("Password reset failed: " + string.Join(", ", result.Errors.Select(e => e.Description)));
-			
+			}
+			return ApiResponse.Failure("Password reset failed: " + string.Join(", ", result.Errors.Select(e => e.Description)));
+
 		}
 
 		public async Task<ApiResponse> SubmitForgetPasswordRequest(SubmitForgetPasswordRequestInput input)
 		{
-			var user=await _userService.GetInclude(input.Email,e=>e.TblCustomer,e=>e.TblMerchant);
-			if(user==null)
+			var user = await _userService.GetInclude(input.Email, e => e.TblCustomer, e => e.TblMerchant);
+			if (user == null)
 			{
 				return ApiResponse.Failure("Email not found");
 			}
-			var role=(await _userService.GetRolesForUser(user)).FirstOrDefault();
+			var role = (await _userService.GetRolesForUser(user)).FirstOrDefault();
 			string Name;
 			if (role == (UserType.Merchant).ToString())
 			{
@@ -279,7 +278,7 @@ namespace Foodo.Application.Implementation.Authentication
 			var code = RandomNumberGenerator.GetInt32(100000, 999999).ToString();
 			user.LkpCodes.Add(new LkpCode { Key = code, CreatedAt = DateTime.UtcNow, ExpiresAt = DateTime.UtcNow.AddMinutes(10), CodeType = CodeType.PasswordReset });
 			await _userService.UpdateAsync(user);
-			var result=await _senderService.SendEmailAsync(input.Email, Name, "Password Reset", $"Your Reset Password code is {code}");
+			var result = await _senderService.SendEmailAsync(input.Email, Name, "Password Reset", $"Your Reset Password code is {code}");
 			return result;
 		}
 		#endregion
@@ -307,7 +306,7 @@ namespace Foodo.Application.Implementation.Authentication
 			user.LkpCodes.Add(new LkpCode { Key = code, CreatedAt = DateTime.UtcNow, ExpiresAt = DateTime.UtcNow.AddMinutes(10), CodeType = CodeType.EmailVerification });
 			await _userService.UpdateAsync(user);
 
-			var result =_senderService.SendEmailAsync(input.Email, "User", "Verify your email", $"Your Email Verification code is {code}");
+			var result = _senderService.SendEmailAsync(input.Email, "User", "Verify your email", $"Your Email Verification code is {code}");
 			return ApiResponse.Success("Verification email sent.");
 		}
 
@@ -331,8 +330,8 @@ namespace Foodo.Application.Implementation.Authentication
 			user.EmailConfirmed = true;
 			await _userService.UpdateAsync(user);
 
-				return ApiResponse.Success("Email has been verified successfully.");
-			
+			return ApiResponse.Success("Email has been verified successfully.");
+
 		}
 		#endregion
 

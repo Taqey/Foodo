@@ -1,5 +1,4 @@
-﻿using Foodo.Domain.Enums;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Foodo.API.Models.Request.Authentication
 {

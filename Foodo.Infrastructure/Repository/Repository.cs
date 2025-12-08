@@ -83,7 +83,7 @@ namespace Foodo.Infrastructure.Repository
 			return entity;
 		}
 
-		public async Task<(IEnumerable<T> Items, int TotalCount, int TotalPages)>PaginationAsync(int page = 1, int pageSize = 10, params Expression<Func<T, bool>>[] filters)
+		public async Task<(IEnumerable<T> Items, int TotalCount, int TotalPages)> PaginationAsync(int page = 1, int pageSize = 10, params Expression<Func<T, bool>>[] filters)
 		{
 			IQueryable<T> query = _dbSet.AsQueryable();
 

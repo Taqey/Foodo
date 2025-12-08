@@ -1,8 +1,4 @@
-﻿using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Org.BouncyCastle.Crypto.IO;
-using System.IO.Compression;
-using System.Threading.Tasks;
+﻿using System.IO.Compression;
 
 namespace Foodo.API.Middlewares
 {
@@ -19,15 +15,15 @@ namespace Foodo.API.Middlewares
 
 		public async Task Invoke(HttpContext httpContext)
 		{
-			var OriginalBody=httpContext.Response.Body;
-			using var memory=new MemoryStream();
+			var OriginalBody = httpContext.Response.Body;
+			using var memory = new MemoryStream();
 			httpContext.Response.Body = memory;
 			await _next(httpContext);
 			memory.Seek(0, SeekOrigin.Begin);
-			if (memory.Length>=_size)
+			if (memory.Length >= _size)
 			{
 				httpContext.Response.Headers.Add("Content-Encoding", "gzip");
-				using var gzip=new GZipStream(OriginalBody, CompressionMode.Compress,leaveOpen:true);
+				using var gzip = new GZipStream(OriginalBody, CompressionMode.Compress, leaveOpen: true);
 				await memory.CopyToAsync(gzip);
 			}
 			else

@@ -31,7 +31,7 @@ namespace Foodo.API.Controllers
 		public async Task<IActionResult> GetUserPhoto()
 		{
 			var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-			var result = await _service.ReadUserPhoto(new GetUserPhotoInput {  Id = userId, });
+			var result = await _service.ReadUserPhoto(new GetUserPhotoInput { Id = userId, });
 			if (!result.IsSuccess)
 			{
 				return BadRequest(result.Message);
@@ -44,9 +44,9 @@ namespace Foodo.API.Controllers
 		[HttpPost("add-user-photo")]
 		public async Task<IActionResult> AddUserPhoto([FromForm] AddPhotoRequest request)
 		{
-			var userId=User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-			var userRole=User.FindFirst(ClaimTypes.Role)?.Value;
-			var Enumvalue=(UserType)Enum.Parse(typeof(UserType), userRole);
+			var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+			var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+			var Enumvalue = (UserType)Enum.Parse(typeof(UserType), userRole);
 			var result = await _service.AddUserPhoto(new AddPhotoInput { file = request.file, Id = userId, UserType = Enumvalue });
 			if (!result.IsSuccess)
 			{
@@ -85,7 +85,7 @@ namespace Foodo.API.Controllers
 		public async Task<IActionResult> AddProductPhotos([FromForm] AddProductPhotosRequest request)
 		{
 
-			var result = await _service.AddProuctPhotos(new AddProductPhotosInput { Files=request.Files,ProductId=request.ProductId });
+			var result = await _service.AddProuctPhotos(new AddProductPhotosInput { Files = request.Files, ProductId = request.ProductId });
 			if (!result.IsSuccess)
 			{
 				return BadRequest(result.Message);
@@ -98,8 +98,8 @@ namespace Foodo.API.Controllers
 		[HttpPut("set-photo-main/{id}")]
 		public async Task<IActionResult> Put(int id)
 		{
-			var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;	
-			var result = await _service.SetProductPhotoMain(new SetPhotoMainInput { id=id});
+			var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+			var result = await _service.SetProductPhotoMain(new SetPhotoMainInput { id = id });
 			if (!result.IsSuccess)
 			{
 				return BadRequest(result.Message);

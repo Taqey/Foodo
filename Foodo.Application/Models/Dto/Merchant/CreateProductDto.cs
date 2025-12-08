@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Foodo.Application.Models.Dto.Merchant
+﻿namespace Foodo.Application.Models.Dto.Merchant
 {
 	public class CreateProductDto
 	{

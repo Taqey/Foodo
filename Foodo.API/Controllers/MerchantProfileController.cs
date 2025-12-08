@@ -5,7 +5,6 @@ using Foodo.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using System.Threading.Tasks;
 
 namespace Foodo.API.Controllers
 {
