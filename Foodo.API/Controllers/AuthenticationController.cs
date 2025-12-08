@@ -5,6 +5,7 @@ using Foodo.Application.Models.Input.Merchant;
 using Foodo.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 
 namespace Foodo.API.Controllers
@@ -46,6 +47,8 @@ namespace Foodo.API.Controllers
 
 	[Route("api/[controller]")]
 	[ApiController]
+	[EnableRateLimiting("SlidingWindowPolicy")]
+
 	public class AuthenticationController : ControllerBase
 	{
 		private readonly IAuthenticationService _service;

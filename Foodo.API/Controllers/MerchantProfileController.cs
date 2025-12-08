@@ -4,6 +4,7 @@ using Foodo.Application.Models.Input.Profile.Merchant;
 using Foodo.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 
 namespace Foodo.API.Controllers
@@ -18,6 +19,8 @@ namespace Foodo.API.Controllers
 	[Route("api/[controller]")]
 	[ApiController]
 	[Authorize(Roles = nameof(UserType.Merchant))]
+	[EnableRateLimiting("FixedWindowPolicy")]
+
 	public class MerchantProfileController : ControllerBase
 	{
 		private readonly IMerchantProfileService _service;
