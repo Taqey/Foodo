@@ -13,7 +13,7 @@ namespace Foodo.Application.Models.Dto.Merchant
 
 		public string Price { get; set; }
 		public ICollection<string> ProductCategories { get; set; } = new List<string>();
-		public ICollection<ProductPhotosDto> Urls {  get; set; } = new List<ProductPhotosDto>();
+		public ICollection<ProductPhotosDto> Urls { get; set; } = new List<ProductPhotosDto>();
 	}
 
 }

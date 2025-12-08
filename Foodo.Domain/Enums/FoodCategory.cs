@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Foodo.Domain.Enums
+﻿namespace Foodo.Domain.Enums
 {
 	public enum FoodCategory
 	{
-		Burger=1,
+		Burger = 1,
 		Pizza,
 		Pasta,
 		Sandwich,

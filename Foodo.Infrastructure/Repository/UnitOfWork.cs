@@ -59,7 +59,7 @@ namespace Foodo.Infrastructure.Repository
 			this.ProductRepository = ProductRepository;
 			this.ProductDetailRepository = ProductDetailRepository;
 			this.ProductsOrderRepository = ProductsOrderRepository;
-			this.ProductPhotoRepository= ProductPhotoRepository;
+			this.ProductPhotoRepository = ProductPhotoRepository;
 			this.ProductCustomRepository = ProductCustomRepository;
 			this.RestaurantCustomRepository = restaurantCustomRepository;
 			this.UserCustomRepository = userCustomRepository;
@@ -84,7 +84,7 @@ namespace Foodo.Infrastructure.Repository
 
 		public async Task CommitTransactionAsync(IDbContextTransaction transaction)
 		{
-			 await transaction.CommitAsync();
+			await transaction.CommitAsync();
 		}
 
 		public async Task RollbackTransactionAsync(IDbContextTransaction transaction)
@@ -92,6 +92,6 @@ namespace Foodo.Infrastructure.Repository
 			await transaction.RollbackAsync();
 		}
 
-		}
 	}
+}
 

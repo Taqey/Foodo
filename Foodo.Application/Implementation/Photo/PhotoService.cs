@@ -7,9 +7,6 @@ using Foodo.Application.Models.Response;
 using Foodo.Domain.Entities;
 using Foodo.Domain.Repository;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Foodo.Application.Implementation.Photo
 {
@@ -20,7 +17,7 @@ namespace Foodo.Application.Implementation.Photo
 		private readonly IUnitOfWork _unitOfWork;
 		private readonly ICacheService _cacheService;
 
-		public PhotoService(IPhotoAccessorService photoAccessor,IUserService userService,IUnitOfWork unitOfWork,ICacheService cacheService)
+		public PhotoService(IPhotoAccessorService photoAccessor, IUserService userService, IUnitOfWork unitOfWork, ICacheService cacheService)
 		{
 			_photoAccessor = photoAccessor;
 			_userService = userService;
@@ -32,7 +29,7 @@ namespace Foodo.Application.Implementation.Photo
 		public async Task<ApiResponse> AddUserPhoto(AddPhotoInput input)
 		{
 			var user = await _unitOfWork.UserCustomRepository.ReadMerchants().Where(e => e.Id == input.Id).FirstOrDefaultAsync();
-			var result=await _photoAccessor.AddPhoto(input);
+			var result = await _photoAccessor.AddPhoto(input);
 			if (!result.IsSuccess)
 			{
 				return new ApiResponse { IsSuccess = result.IsSuccess, Message = result.Message };
@@ -40,7 +37,7 @@ namespace Foodo.Application.Implementation.Photo
 			if (user.UserPhoto == null)
 				user.UserPhoto = new LkpUserPhoto();
 			user.UserPhoto.Url = result.Url;
-			var UpdateResult=await _userService.UpdateAsync(user);
+			var UpdateResult = await _userService.UpdateAsync(user);
 			if (!UpdateResult.Succeeded)
 			{
 				return new ApiResponse { IsSuccess = false, Message = "Adding Image to DB failed" };
@@ -76,7 +73,7 @@ namespace Foodo.Application.Implementation.Photo
 				product.ProductPhotos = new List<TblProductPhoto>();
 
 			// 1️⃣ أضف الصور بدون إنشاء DTO الآن
-				_unitOfWork.ProductRepository.Attach(product);
+			_unitOfWork.ProductRepository.Attach(product);
 			foreach (var photo in result.Where(p => p.IsSuccess))
 			{
 				product.ProductPhotos.Add(new TblProductPhoto
@@ -114,7 +111,7 @@ namespace Foodo.Application.Implementation.Photo
 		public async Task<ApiResponse> SetProductPhotoMain(SetPhotoMainInput input)
 		{
 			// 1) هات الصورة المطلوبة (Tracked)
-			var photo = await _unitOfWork.productPhotoCustomRepository.ReadPhotos().Where(e=>e.Id == input.id).FirstOrDefaultAsync();
+			var photo = await _unitOfWork.productPhotoCustomRepository.ReadPhotos().Where(e => e.Id == input.id).FirstOrDefaultAsync();
 			if (photo == null)
 			{
 				return new ApiResponse

@@ -6,6 +6,6 @@ namespace Foodo.Application.Models.Input.Customer
 	{
 		public int Page { get; set; } = 1;
 		public int PageSize { get; set; } = 10;
-		public FoodCategory Category { get; set; } 
+		public FoodCategory Category { get; set; }
 	}
 }

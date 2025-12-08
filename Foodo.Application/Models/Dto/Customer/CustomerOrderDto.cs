@@ -1,9 +1,4 @@
-﻿using Foodo.Domain.Enums;
-using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Foodo.Application.Models.Dto.Customer
+﻿namespace Foodo.Application.Models.Dto.Customer
 {
 	public class CustomerOrderDto
 	{

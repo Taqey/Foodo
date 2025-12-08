@@ -5,14 +5,11 @@ using Foodo.Application.Models.Dto.Customer;
 using Foodo.Application.Models.Dto.Photo;
 using Foodo.Application.Models.Input;
 using Foodo.Application.Models.Input.Customer;
-using Foodo.Application.Models.Input.Merchant;
 using Foodo.Application.Models.Response;
 using Foodo.Domain.Entities;
 using Foodo.Domain.Enums;
 using Foodo.Domain.Repository;
 using Microsoft.EntityFrameworkCore;
-using System.Net;
-using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace Foodo.Application.Implementation.Customer
 {
@@ -557,7 +554,7 @@ namespace Foodo.Application.Implementation.Customer
 
 
 			_cacheService.Set(cacheKey, shopDto);
-			return ApiResponse<ShopDto>.Success(shopDto,"Shop retrieved successfuly");
+			return ApiResponse<ShopDto>.Success(shopDto, "Shop retrieved successfuly");
 		}
 
 		public async Task<ApiResponse<PaginationDto<ShopDto>>> ReadShopsByCategory(ShopsPaginationByCategoryInput input)

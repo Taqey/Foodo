@@ -38,7 +38,7 @@ namespace Foodo.API
 			var builder = WebApplication.CreateBuilder(args);
 
 			// Add services to the container.
-			Log.Logger=new LoggerConfiguration()
+			Log.Logger = new LoggerConfiguration()
 				.MinimumLevel.Information()
 				.Enrich.FromLogContext()
 				.Enrich.WithMachineName()
@@ -193,7 +193,7 @@ namespace Foodo.API
 			app.UseSwaggerUI();
 			app.UseHttpsRedirection();
 			app.UseCors("AllowFrontend");
-			app.UseMiddleware<PayloadSizeCheckMiddleware>(1024*50);
+			app.UseMiddleware<PayloadSizeCheckMiddleware>(1024 * 50);
 			app.UseRouting();
 			app.UseAuthentication();
 			app.UseAuthorization();

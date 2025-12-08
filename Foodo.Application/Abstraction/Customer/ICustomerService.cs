@@ -2,7 +2,6 @@
 using Foodo.Application.Models.Dto.Customer;
 using Foodo.Application.Models.Input;
 using Foodo.Application.Models.Input.Customer;
-using Foodo.Application.Models.Input.Merchant;
 using Foodo.Application.Models.Response;
 
 namespace Foodo.Application.Abstraction.Customer

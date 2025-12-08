@@ -60,8 +60,8 @@ namespace Foodo.Infrastructure.Services
 		}
 		public async Task<string> DeletePhoto(string publicId)
 		{
-			var deleteParams=new DeletionParams(publicId);
-			var result= await _cloudinary.DestroyAsync(deleteParams);
+			var deleteParams = new DeletionParams(publicId);
+			var result = await _cloudinary.DestroyAsync(deleteParams);
 			return result.Result.ToString();
 		}
 		public async Task<List<PhotoResultDto>> AddProductPhotos(AddProductPhotosInput input)

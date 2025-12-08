@@ -16,7 +16,7 @@ namespace Foodo.Infrastructure.Services
 		{
 			_options = options;
 		}
-		public async Task<ApiResponse> SendEmailAsync( string ReceiverEmail, string ReceiverName, string subject, string body,bool isHtml=false)
+		public async Task<ApiResponse> SendEmailAsync(string ReceiverEmail, string ReceiverName, string subject, string body, bool isHtml = false)
 		{
 			string SenderEmail = _options.Value.Login;
 			string SenderName = "FoodoSupport";
@@ -26,11 +26,11 @@ namespace Foodo.Infrastructure.Services
 			message.Subject = subject;
 
 			message.Body = new TextPart(isHtml ? "html" : "plain")
-			{ 
-				Text = body 
+			{
+				Text = body
 			};
 
-			using var client = new SmtpClient() ;
+			using var client = new SmtpClient();
 
 			try
 			{

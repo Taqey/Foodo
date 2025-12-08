@@ -2,7 +2,7 @@
 {
 	public enum CodeType
 	{
-		PasswordReset ,
-		EmailVerification 
+		PasswordReset,
+		EmailVerification
 	}
 }

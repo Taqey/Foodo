@@ -1,9 +1,4 @@
-﻿using Foodo.Application.Models.Dto.Profile.Merchant;
-using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Foodo.Application.Models.Dto.Profile.Customer
+﻿namespace Foodo.Application.Models.Dto.Profile.Customer
 {
 	public class CustomerProfileDto
 	{

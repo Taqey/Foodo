@@ -11,9 +11,6 @@ using Foodo.Domain.Entities;
 using Foodo.Domain.Enums;
 using Foodo.Domain.Repository;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Foodo.Application.Implementation.Merchant;
 
@@ -107,28 +104,28 @@ public class MerchantService : IMerchantService
 		{
 			return ApiResponse<PaginationDto<MerchantProductDto>>.Success(cached);
 		}
-		var products = _unitOfWork.ProductCustomRepository.ReadProducts().Where(p => p.UserId == input.UserId).Skip((input.Page-1)*input.PageSize).Take(input.PageSize);
-		var totalCount=await products.CountAsync();
-		if (totalCount==0)
+		var products = _unitOfWork.ProductCustomRepository.ReadProducts().Where(p => p.UserId == input.UserId).Skip((input.Page - 1) * input.PageSize).Take(input.PageSize);
+		var totalCount = await products.CountAsync();
+		if (totalCount == 0)
 		{
 			return new ApiResponse<PaginationDto<MerchantProductDto>> { IsSuccess = true, Message = "No products found" };
 		}
 		var totalPages = (int)Math.Ceiling((decimal)totalCount / input.PageSize);
-		var productDtos =await products.Select(e=>new MerchantProductDto
+		var productDtos = await products.Select(e => new MerchantProductDto
 		{
-			ProductId=e.ProductId,
-			ProductName=e.ProductsName,
-			ProductDescription=e.ProductDescription,
+			ProductId = e.ProductId,
+			ProductName = e.ProductsName,
+			ProductDescription = e.ProductDescription,
 			Price = e.TblProductDetails.Select(p => p.Price).FirstOrDefault().ToString(),
-			ProductCategories = e.ProductCategories.Select(p=>p.Category.CategoryName).ToList(),
-			ProductDetailAttributes=e.TblProductDetails.SelectMany(p=>p.LkpProductDetailsAttributes).Select(p=>new ProductDetailAttributeDto
+			ProductCategories = e.ProductCategories.Select(p => p.Category.CategoryName).ToList(),
+			ProductDetailAttributes = e.TblProductDetails.SelectMany(p => p.LkpProductDetailsAttributes).Select(p => new ProductDetailAttributeDto
 			{
-			Id=p.ProductDetailAttributeId,
-			AttributeName=p.Attribute.Name,
-			AttributeValue=p.Attribute.value,
-			MeasurementUnit=p.UnitOfMeasure.UnitOfMeasureName
+				Id = p.ProductDetailAttributeId,
+				AttributeName = p.Attribute.Name,
+				AttributeValue = p.Attribute.value,
+				MeasurementUnit = p.UnitOfMeasure.UnitOfMeasureName
 			}).ToList(),
-			Urls=e.ProductPhotos.Select(p=>new ProductPhotosDto { isMain=p.isMain,url=p.Url}).ToList()
+			Urls = e.ProductPhotos.Select(p => new ProductPhotosDto { isMain = p.isMain, url = p.Url }).ToList()
 
 		}).ToListAsync();
 
@@ -166,14 +163,14 @@ public class MerchantService : IMerchantService
 			Urls = e.ProductPhotos.Select(p => new ProductPhotosDto { isMain = p.isMain, url = p.Url }).ToList()
 
 		}).FirstOrDefaultAsync();
-	
+
 
 		return ApiResponse<MerchantProductDto>.Success(productDto);
 	}
 
 	public async Task<ApiResponse> UpdateProductAsync(ProductUpdateInput input)
 	{
-		var product =await _unitOfWork.ProductCustomRepository.ReadProductsInclude().Where(e => e.ProductId == input.productId).FirstOrDefaultAsync();
+		var product = await _unitOfWork.ProductCustomRepository.ReadProductsInclude().Where(e => e.ProductId == input.productId).FirstOrDefaultAsync();
 		if (product == null)
 		{
 			return ApiResponse.Failure("Product not found");
@@ -184,10 +181,10 @@ public class MerchantService : IMerchantService
 		var detail = product.TblProductDetails.FirstOrDefault();
 		detail.Price = Convert.ToDecimal(input.Price);
 		_unitOfWork.ProductDetailRepository.Update(detail);
-		 _unitOfWork.ProductRepository.Update(product);
+		_unitOfWork.ProductRepository.Update(product);
 
 		var a = await _unitOfWork.saveAsync();
-		if (a<=0)
+		if (a <= 0)
 		{
 			return new ApiResponse { IsSuccess = false, Message = "Saving product after update failed" };
 		}
@@ -207,7 +204,7 @@ public class MerchantService : IMerchantService
 
 	public async Task<ApiResponse> DeleteProductAsync(int productId)
 	{
-		var product =await _unitOfWork.ProductCustomRepository.ReadProducts().Where(e=>e.ProductId==productId).FirstOrDefaultAsync();
+		var product = await _unitOfWork.ProductCustomRepository.ReadProducts().Where(e => e.ProductId == productId).FirstOrDefaultAsync();
 		if (product == null)
 		{
 			return ApiResponse.Failure("Product not found");
@@ -231,7 +228,7 @@ public class MerchantService : IMerchantService
 	public async Task<ApiResponse> AddProductAttributeAsync(int productId, AttributeCreateInput attributes)
 	{
 		//var product = await _unitOfWork.ProductRepository.ReadByIdAsync(productId);
-		var product =await _unitOfWork.ProductCustomRepository.ReadProductsInclude().Where(e => e.ProductId == productId).FirstOrDefaultAsync();
+		var product = await _unitOfWork.ProductCustomRepository.ReadProductsInclude().Where(e => e.ProductId == productId).FirstOrDefaultAsync();
 		if (product == null)
 			return ApiResponse.Failure("Product not found");
 
@@ -299,7 +296,7 @@ public class MerchantService : IMerchantService
 
 	public async Task<ApiResponse> AddProductCategoriesAsync(ProductCategoryInput categoryInput)
 	{
-		var product =await  _unitOfWork.ProductCustomRepository.ReadProductsIncludeTracking().Where(e=>e.ProductId==categoryInput.ProductId).FirstOrDefaultAsync();
+		var product = await _unitOfWork.ProductCustomRepository.ReadProductsIncludeTracking().Where(e => e.ProductId == categoryInput.ProductId).FirstOrDefaultAsync();
 		if (product == null)
 			return ApiResponse.Failure("Product not found");
 		foreach (var item in categoryInput.restaurantCategories)
@@ -386,7 +383,7 @@ public class MerchantService : IMerchantService
 			OrderDate = e.OrderDate,
 			TotalAmount = e.TotalPrice,
 			Status = e.OrderStatus.ToString(),
-			CustomerId=e.CustomerId,
+			CustomerId = e.CustomerId,
 			CustomerName =
 			_unitOfWork.UserCustomRepository.ReadCustomer().Where(p => p.Id == e.CustomerId).Select(p => p.TblCustomer.FirstName + " " + p.TblCustomer.LastName).FirstOrDefault(),
 			OrderItems = e.TblProductsOrders.Select(p => new OrderItemDto
@@ -417,8 +414,9 @@ public class MerchantService : IMerchantService
 		var cached = _cacheService.Get<MerchantOrderDto>(cacheKey);
 		if (cached != null) return ApiResponse<MerchantOrderDto>.Success(cached);
 
-		var order =  _unitOfWork.OrderCustomRepository.ReadOrders().Where(e=>e.OrderId==orderId);
-		var orderDto =await order.Select(e => new MerchantOrderDto {
+		var order = _unitOfWork.OrderCustomRepository.ReadOrders().Where(e => e.OrderId == orderId);
+		var orderDto = await order.Select(e => new MerchantOrderDto
+		{
 
 			OrderId = e.OrderId,
 			OrderDate = e.OrderDate,
@@ -435,7 +433,7 @@ public class MerchantService : IMerchantService
 				Price = p.Price
 			}).ToList()
 		}).FirstOrDefaultAsync();
-		if (orderDto==null)
+		if (orderDto == null)
 		{
 			return ApiResponse<MerchantOrderDto>.Failure("Order not found");
 		}
@@ -446,7 +444,7 @@ public class MerchantService : IMerchantService
 
 	public async Task<ApiResponse> UpdateOrderStatusAsync(int orderId, OrderStatusUpdateInput input)
 	{
-		var order =await _unitOfWork.OrderCustomRepository.ReadOrders().Where(e => e.OrderId == orderId).FirstOrDefaultAsync();
+		var order = await _unitOfWork.OrderCustomRepository.ReadOrders().Where(e => e.OrderId == orderId).FirstOrDefaultAsync();
 		var status = Enum.Parse<OrderState>(input.Status);
 		order.OrderStatus = status;
 		_unitOfWork.OrderRepository.Update(order);

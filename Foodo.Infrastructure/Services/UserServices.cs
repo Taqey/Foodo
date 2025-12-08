@@ -37,7 +37,7 @@ namespace Foodo.Infrastructure.Services
 		public async Task<IdentityResult> CreateUserAsync(ApplicationUser applicationUser, string password)
 		{
 			var result = await _manager.CreateAsync(applicationUser, password);
-			
+
 			return result;
 
 		}
@@ -67,8 +67,8 @@ namespace Foodo.Infrastructure.Services
 		}
 		public async Task<IdentityResult> AddRolesToUser(ApplicationUser user, string Role)
 		{
-			
-			var result=await _manager.AddToRoleAsync(user, Role);
+
+			var result = await _manager.AddToRoleAsync(user, Role);
 			return result;
 		}
 		public async Task<IList<string>> GetRolesForUser(ApplicationUser user)
@@ -83,7 +83,7 @@ namespace Foodo.Infrastructure.Services
 		}
 		public async Task<ApplicationUser> GetUserByRefreshToken(string token)
 		{
-			return await _manager.Users.Include(e=>e.lkpRefreshTokens)
+			return await _manager.Users.Include(e => e.lkpRefreshTokens)
 				.SingleOrDefaultAsync(x => x.lkpRefreshTokens != null && x.lkpRefreshTokens.Any(rt => rt.Token == token));
 		}
 		public async Task<ApplicationUser> GetUserByVerificationToken(string token)
@@ -93,18 +93,18 @@ namespace Foodo.Infrastructure.Services
 		}
 		public async Task<ApplicationUser> GetUserByResetCode(string Code)
 		{
-			var user = await _manager.Users.Include(e=>e.LkpCodes).SingleOrDefaultAsync(e=>e.LkpCodes.Any(t=>t.Key== Code));
+			var user = await _manager.Users.Include(e => e.LkpCodes).SingleOrDefaultAsync(e => e.LkpCodes.Any(t => t.Key == Code));
 			return user;
 
 		}
-		public async Task<ApplicationUser> GetInclude(string email,params Expression<Func<ApplicationUser, object>>[] includeProperties)
+		public async Task<ApplicationUser> GetInclude(string email, params Expression<Func<ApplicationUser, object>>[] includeProperties)
 		{
 			var query = _manager.Users.AsQueryable();
 			foreach (var includeProperty in includeProperties)
 			{
 				query = query.Include(includeProperty);
 			}
-			return await query.SingleOrDefaultAsync(e=>e.Email==email);
+			return await query.SingleOrDefaultAsync(e => e.Email == email);
 		}
 
 

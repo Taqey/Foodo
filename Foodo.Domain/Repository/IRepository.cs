@@ -13,7 +13,7 @@ namespace Foodo.Domain.Repository
 		void Attach(T entity);
 		void Delete(T entity);
 		void DeleteAll();
-		Task <T> FindByContidtionAsync(Expression<Func<T, bool>> expression);
+		Task<T> FindByContidtionAsync(Expression<Func<T, bool>> expression);
 		Task<IEnumerable<T>> FindAllByContidtionAsync(Expression<Func<T, bool>> expression);
 		//Task<IEnumerable<T>> FindAllByContidtionIncludingAsync(Expression<Func<T, bool>> expression,Func<IQueryable<T>, IQueryable<T>> include);
 		Task<(IEnumerable<T> Items, int TotalCount, int TotalPages)> PaginationAsync(int page = 1, int pageSize = 10, params Expression<Func<T, bool>>[] filters);

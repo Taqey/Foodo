@@ -17,32 +17,32 @@ namespace Foodo.Infrastructure.Services
 		private readonly IUserService _userService;
 		private readonly IOptions<JwtSettings> _options;
 
-		public CreateToken(IUserService userService,IOptions <JwtSettings> options)
+		public CreateToken(IUserService userService, IOptions<JwtSettings> options)
 		{
 			_userService = userService;
 			_options = options;
 		}
-		public JwtDto CreateJwtToken(ApplicationUser user,string role)
+		public JwtDto CreateJwtToken(ApplicationUser user, string role)
 		{
-			
-			var claims=new List<Claim>();
+
+			var claims = new List<Claim>();
 			claims.Add(new Claim(JwtRegisteredClaimNames.Email, user.Email));
 			claims.Add(new Claim(ClaimTypes.NameIdentifier, user.Id));
 			claims.Add(new Claim(ClaimTypes.Role, role));
-			var Key=new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.Value.Key));
+			var Key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.Value.Key));
 			var Credentials = new SigningCredentials(Key, SecurityAlgorithms.HmacSha256);
 			var expires = DateTime.UtcNow.AddMinutes(15);
 			var notBefore = DateTime.UtcNow;
 			var JwtToken = new JwtSecurityToken(
-				issuer:_options.Value.Issuer,
-				audience:_options.Value.Audience,
-				signingCredentials:Credentials,
+				issuer: _options.Value.Issuer,
+				audience: _options.Value.Audience,
+				signingCredentials: Credentials,
 				expires: expires,
 				notBefore: notBefore,
-				claims:claims
+				claims: claims
 				);
-			var Token=new JwtSecurityTokenHandler().WriteToken(JwtToken);
-			return new JwtDto { Token=Token,CreatedOn=notBefore,ExpiresOn=expires};
+			var Token = new JwtSecurityTokenHandler().WriteToken(JwtToken);
+			return new JwtDto { Token = Token, CreatedOn = notBefore, ExpiresOn = expires };
 
 		}
 

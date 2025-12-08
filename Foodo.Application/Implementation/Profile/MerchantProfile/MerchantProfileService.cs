@@ -7,9 +7,6 @@ using Foodo.Domain.Entities;
 using Foodo.Domain.Enums;
 using Foodo.Domain.Repository;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Foodo.Application.Implementation.Profile.MerchantProfile
 {
@@ -18,40 +15,42 @@ namespace Foodo.Application.Implementation.Profile.MerchantProfile
 		private readonly IUserService _userService;
 		private readonly IUnitOfWork _unitOfWork;
 
-		public MerchantProfileService(IUserService userService,IUnitOfWork unitOfWork)
+		public MerchantProfileService(IUserService userService, IUnitOfWork unitOfWork)
 		{
 			_userService = userService;
 			_unitOfWork = unitOfWork;
 		}
 		public async Task<ApiResponse> AddAdress(MerchantAddAdressInput input)
 		{
-			var user =await _unitOfWork.UserCustomRepository.ReadMerchants().Where(e=>e.Id==input.MerchantId).FirstOrDefaultAsync();
-			if (user == null) {
-			return new ApiResponse { Message="user not found",IsSuccess=false};
+			var user = await _unitOfWork.UserCustomRepository.ReadMerchants().Where(e => e.Id == input.MerchantId).FirstOrDefaultAsync();
+			if (user == null)
+			{
+				return new ApiResponse { Message = "user not found", IsSuccess = false };
 			}
 			foreach (var adress in input.Adresses)
 			{
-			user.TblAdresses.Add(new TblAdress { City=adress.City,PostalCode=adress.PostalCode,Country=adress.Country,State=adress.State,StreetAddress=adress.StreetAddress});
+				user.TblAdresses.Add(new TblAdress { City = adress.City, PostalCode = adress.PostalCode, Country = adress.Country, State = adress.State, StreetAddress = adress.StreetAddress });
 			}
-			var result=await _userService.UpdateAsync(user);
+			var result = await _userService.UpdateAsync(user);
 			if (result.Succeeded)
 			{
-				return new ApiResponse { IsSuccess = true,Message= "Adress added successfully" };
+				return new ApiResponse { IsSuccess = true, Message = "Adress added successfully" };
 			}
-			return new ApiResponse { Message="Adress adding failed",IsSuccess= false }	;
+			return new ApiResponse { Message = "Adress adding failed", IsSuccess = false };
 		}
 
 		public async Task<ApiResponse<MerchantProfileDto>> GetMerchantProfile(MerchantProfileInput input)
 		{
 			var user = await _unitOfWork.UserCustomRepository.ReadMerchants().Where(e => e.Id == input.MerchantId).FirstOrDefaultAsync();
-			if (user == null) {
+			if (user == null)
+			{
 				return new ApiResponse<MerchantProfileDto> { IsSuccess = false, Message = "use not found" };
 			}
 			var MerchantProfile = new MerchantProfileDto { Email = user.Email, IsEmailConfirmed = user.EmailConfirmed, StoreName = user.TblMerchant.StoreName, StoreDescription = user.TblMerchant.StoreDescription };
 			var addresses = user.TblAdresses.ToList();
 			if (addresses != null && addresses.Any())
 			{
-			var AdressDto = new List<MerchantAdressDto>();
+				var AdressDto = new List<MerchantAdressDto>();
 				foreach (var address in addresses)
 				{
 					AdressDto.Add(new MerchantAdressDto
@@ -73,11 +72,11 @@ namespace Foodo.Application.Implementation.Profile.MerchantProfile
 			{
 				foreach (var category in categories)
 				{
-					
-						var enumValue = (RestaurantCategory)category.categoryid;
 
-						MerchantProfile.categories.Add(enumValue.ToString());
-					
+					var enumValue = (RestaurantCategory)category.categoryid;
+
+					MerchantProfile.categories.Add(enumValue.ToString());
+
 				}
 			}
 
@@ -91,17 +90,17 @@ namespace Foodo.Application.Implementation.Profile.MerchantProfile
 			{
 				return new ApiResponse { IsSuccess = false, Message = "user not found" };
 			}
-			var result=user.TblAdresses.Remove(user.TblAdresses.FirstOrDefault(e => e.AddressId == input.AdressId));
-			
+			var result = user.TblAdresses.Remove(user.TblAdresses.FirstOrDefault(e => e.AddressId == input.AdressId));
+
 			if (!result)
 			{
 				return new ApiResponse { IsSuccess = false, Message = "adress not found" };
 			}
-			var updateresult=await _userService.UpdateAsync(user);
+			var updateresult = await _userService.UpdateAsync(user);
 			if (updateresult.Succeeded)
 			{
-				
-			return new ApiResponse { IsSuccess = true, Message = "Adress deleted successfully" };
+
+				return new ApiResponse { IsSuccess = true, Message = "Adress deleted successfully" };
 			}
 			return new ApiResponse { IsSuccess = false, Message = "Adress deletion Failed" };
 

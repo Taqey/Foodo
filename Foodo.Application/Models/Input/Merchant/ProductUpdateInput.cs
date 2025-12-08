@@ -1,6 +1,6 @@
 ﻿namespace Foodo.Application.Models.Input.Merchant
 {
-	public class ProductUpdateInput 
+	public class ProductUpdateInput
 	{
 		public int productId { get; set; }
 		public string ProductName { get; set; }

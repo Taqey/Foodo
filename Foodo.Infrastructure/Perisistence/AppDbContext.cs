@@ -355,16 +355,16 @@ namespace Foodo.Infrastructure.Perisistence
 				entity.Property(e => e.FirstName).HasMaxLength(50).IsRequired();
 				entity.Property(e => e.LastName).HasMaxLength(50).IsRequired();
 				entity.HasKey(e => e.UserId);
-				entity.HasOne(e => e.User).WithOne(e => e.TblDriver).HasForeignKey<TblDriver>(e=>e.UserId);
+				entity.HasOne(e => e.User).WithOne(e => e.TblDriver).HasForeignKey<TblDriver>(e => e.UserId);
 			});
 			modelBuilder.Entity<LkpUserPhoto>(entity =>
 			{
 				entity.ToTable("LkpUserPhotos");
-				entity.HasKey(e=>e.UserId);
+				entity.HasKey(e => e.UserId);
 				entity.Property(e => e.UserId).HasMaxLength(450);
-				entity.Property(e=>e.Url).HasMaxLength(450).IsRequired();
-				entity.HasOne(e=>e.user).WithOne(e=>e.UserPhoto).HasForeignKey<LkpUserPhoto>(e=>e.UserId);
-				
+				entity.Property(e => e.Url).HasMaxLength(450).IsRequired();
+				entity.HasOne(e => e.user).WithOne(e => e.UserPhoto).HasForeignKey<LkpUserPhoto>(e => e.UserId);
+
 
 			});
 			modelBuilder.Entity<TblProductPhoto>(entity =>
@@ -376,7 +376,7 @@ namespace Foodo.Infrastructure.Perisistence
 	.HasForeignKey(p => p.ProductId)
 	.OnDelete(DeleteBehavior.Cascade);
 
-				entity.HasKey(e=>e.Id);
+				entity.HasKey(e => e.Id);
 				entity.Property(e => e.Url).HasMaxLength(450).IsRequired();
 
 

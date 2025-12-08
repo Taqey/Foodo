@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Foodo.Domain.Entities
+﻿namespace Foodo.Domain.Entities
 {
 	public class TblDriver
 	{
@@ -15,7 +11,7 @@ namespace Foodo.Domain.Entities
 
 		public string Gender { get; set; }
 		public DateOnly BirthDate { get; set; }
-		public string NationalId {  get; set; }
+		public string NationalId { get; set; }
 
 	}
 }

@@ -1,10 +1,6 @@
 ﻿using Foodo.Application.Models.Dto.Profile.Merchant;
-using Foodo.Application.Models.Input.Profile.Customer;
 using Foodo.Application.Models.Input.Profile.Merchant;
 using Foodo.Application.Models.Response;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Foodo.Application.Abstraction.Profile.MerchantProfile
 {
