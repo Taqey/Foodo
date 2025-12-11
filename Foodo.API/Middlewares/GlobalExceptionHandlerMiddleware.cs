@@ -31,7 +31,7 @@ namespace Foodo.API.Middlewares
 					throw;
 				}
 
-				httpContext.Response.Clear();
+				//httpContext.Response.Clear();
 
 				int statusCode;
 				ProblemDetails problem;
