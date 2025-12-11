@@ -23,12 +23,17 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Serilog;
+using StackExchange.Redis;
 using System.Reflection;
 using System.Text;
 using System.Threading.RateLimiting;
+using ZiggyCreatures.Caching.Fusion;
+using ZiggyCreatures.Caching.Fusion.Backplane.StackExchangeRedis;
+using ZiggyCreatures.Caching.Fusion.Serialization.SystemTextJson;
 namespace Foodo.API
 {
 	public class Program
@@ -138,6 +143,19 @@ namespace Foodo.API
 			builder.Services.AddHttpContextAccessor();
 			builder.Services.AddProblemDetails();
 			builder.Services.AddMemoryCache();
+			builder.Services.AddFusionCache().
+			WithDefaultEntryOptions(options =>
+			{
+				options.DistributedCacheDuration = TimeSpan.FromDays(7);
+				options.Duration = TimeSpan.FromHours(2);
+				options.FailSafeMaxDuration= TimeSpan.FromMinutes(10);
+				options.FailSafeThrottleDuration= TimeSpan.FromSeconds(30);
+				options.EagerRefreshThreshold= 0.9f;
+				options.AllowBackgroundBackplaneOperations= true;
+				options.LockTimeout = TimeSpan.FromSeconds(3);
+
+			}).WithDistributedCache(new RedisCache(new RedisCacheOptions { Configuration= builder.Configuration["Redis:ConnectionString"] }))
+			.WithSerializer(new FusionCacheSystemTextJsonSerializer());
 			builder.Services.AddRateLimiter(options =>
 			{
 				options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
