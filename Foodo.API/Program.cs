@@ -142,7 +142,6 @@ namespace Foodo.API
 			builder.Services.AddScoped<IProductPhotoCustomRepository, ProductPhotoCustomRepository>();
 			builder.Services.AddHttpContextAccessor();
 			builder.Services.AddProblemDetails();
-			builder.Services.AddMemoryCache();
 			builder.Services.AddFusionCache().
 			WithDefaultEntryOptions(options =>
 			{
@@ -172,6 +171,8 @@ namespace Foodo.API
 					opt.Window= TimeSpan.FromMinutes(15);
 					opt.PermitLimit = 5;
 					opt.QueueLimit = 0;
+					opt.SegmentsPerWindow = 3;
+
 
 				});
 				options.AddTokenBucketLimiter("TokenBucketPolicy", opt =>
@@ -222,24 +223,29 @@ namespace Foodo.API
 
 
 			var app = builder.Build();
+
 			app.UseSerilogRequestLogging();
-			app.UseGlobalExceptionHandlerMiddleware();
-			// Configure the HTTP request pipeline.
-			if (app.Environment.IsDevelopment())
-			{
-				app.MapOpenApi();
-			}
+
+			// ❗❗ لازم يكون بعد UseRouting وقبل كل حاجة بترمي Exceptions
+			app.UseRouting();
+
+			// هنا 
+			app.UseGlobalExceptionHandlerMiddleware();  // ✔ المكان الصحيح
+
+			app.UseCors("AllowFrontend");
+			app.UseAuthentication();
+			app.UseAuthorization();
+
+			app.UseRateLimiter();
 			app.UseSwagger();
 			app.UseSwaggerUI();
 			app.UseHttpsRedirection();
-			app.UseCors("AllowFrontend");
 			app.UseMiddleware<PayloadSizeCheckMiddleware>(1024 * 50);
-			app.UseRouting();
-			app.UseAuthentication();
-			app.UseAuthorization();
-			app.UseRateLimiter();
+
 			app.MapControllers();
+
 			app.Run();
+
 		}
 	}
 }
