@@ -224,26 +224,18 @@ namespace Foodo.API
 
 			var app = builder.Build();
 
-			app.UseSerilogRequestLogging();
-
-			// ❗❗ لازم يكون بعد UseRouting وقبل كل حاجة بترمي Exceptions
 			app.UseRouting();
-
-			// هنا 
-			app.UseGlobalExceptionHandlerMiddleware();  // ✔ المكان الصحيح
-
+			app.UseGlobalExceptionHandlerMiddleware(); 
+			app.UseSerilogRequestLogging();
 			app.UseCors("AllowFrontend");
 			app.UseAuthentication();
 			app.UseAuthorization();
-
 			app.UseRateLimiter();
 			app.UseSwagger();
 			app.UseSwaggerUI();
 			app.UseHttpsRedirection();
 			app.UseMiddleware<PayloadSizeCheckMiddleware>(1024 * 50);
-
 			app.MapControllers();
-
 			app.Run();
 
 		}
