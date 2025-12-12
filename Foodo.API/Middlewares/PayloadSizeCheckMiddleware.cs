@@ -15,23 +15,36 @@ namespace Foodo.API.Middlewares
 
 		public async Task Invoke(HttpContext httpContext)
 		{
-			var OriginalBody = httpContext.Response.Body;
-			using var memory = new MemoryStream();
+			var originalBody = httpContext.Response.Body;
+
+			await using var memory = new MemoryStream();
 			httpContext.Response.Body = memory;
-			await _next(httpContext);
-			memory.Seek(0, SeekOrigin.Begin);
-			if (memory.Length >= _size)
+
+			try
 			{
-				httpContext.Response.Headers.Add("Content-Encoding", "gzip");
-				using var gzip = new GZipStream(OriginalBody, CompressionMode.Compress, leaveOpen: true);
-				await memory.CopyToAsync(gzip);
-			}
-			else
-			{
+				await _next(httpContext);
+
 				memory.Seek(0, SeekOrigin.Begin);
-				await memory.CopyToAsync(OriginalBody);
+
+				if (memory.Length >= _size)
+				{
+					httpContext.Response.Headers.Add("Content-Encoding", "gzip");
+
+					await using var gzip = new GZipStream(originalBody, CompressionMode.Compress, leaveOpen: true);
+					await memory.CopyToAsync(gzip);
+				}
+				else
+				{
+					memory.Seek(0, SeekOrigin.Begin);
+					await memory.CopyToAsync(originalBody);
+				}
+			}
+			finally
+			{
+				httpContext.Response.Body = originalBody; // ✔ important
 			}
 		}
+
 	}
 
 	// Extension method used to add the middleware to the HTTP request pipeline.
