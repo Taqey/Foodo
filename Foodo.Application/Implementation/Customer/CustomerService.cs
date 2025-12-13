@@ -2,6 +2,7 @@
 using Foodo.Application.Abstraction.InfraRelated;
 using Foodo.Application.Models.Dto;
 using Foodo.Application.Models.Dto.Customer;
+using Foodo.Application.Models.Dto.Merchant;
 using Foodo.Application.Models.Dto.Photo;
 using Foodo.Application.Models.Input;
 using Foodo.Application.Models.Input.Customer;
@@ -288,18 +289,15 @@ namespace Foodo.Application.Implementation.Customer
 					ProductName = e.ProductsName,
 					ProductDescription = e.ProductDescription,
 					Price = e.TblProductDetails
-								//.OrderBy(pd => pd.ProductId) // لو في ترتيب معين
 								.Select(pd => pd.Price.ToString())
 								.FirstOrDefault() ?? "0",
-					Attributes = e.TblProductDetails
-								//.OrderBy(pd => pd.ProductId)
-								.SelectMany(pd => pd.LkpProductDetailsAttributes)
-								.Select(pda => new AttributeDto
-								{
-									Name = pda.Attribute.Name,
-									Value = pda.Attribute.value,
-									MeasurementUnit = pda.UnitOfMeasure.UnitOfMeasureName
-								}).ToList(),
+					ProductDetailAttributes = e.TblProductDetails.SelectMany(p => p.LkpProductDetailsAttributes).Select(p => new ProductDetailAttributeDto
+					{
+						Id = p.ProductDetailAttributeId,
+						AttributeName = p.Attribute.Name,
+						AttributeValue = p.Attribute.value,
+						MeasurementUnit = p.UnitOfMeasure.UnitOfMeasureName
+					}).ToList(),
 					Urls = e.ProductPhotos
 								.Select(p => new ProductPhotosDto
 								{
@@ -326,10 +324,7 @@ namespace Foodo.Application.Implementation.Customer
 
 		public async Task<ApiResponse<ProductDto>> ReadProductById(ItemByIdInput input)
 		{
-			string cacheKey = $"customer_product:{input.ItemId}";
-			var cached = _cacheService.Get<ProductDto>(cacheKey);
-			if (cached != null) return ApiResponse<ProductDto>.Success(cached);
-			var query = _unitOfWork.ProductCustomRepository.ReadProducts();
+			var query = _unitOfWork.ProductCustomRepository.ReadProductsInclude();
 			var productDto = await query
 		.Select(e => new ProductDto
 		{
@@ -340,15 +335,13 @@ namespace Foodo.Application.Implementation.Customer
 						.OrderBy(pd => pd.ProductId)
 						.Select(pd => pd.Price.ToString())
 						.FirstOrDefault() ?? "0",
-			Attributes = e.TblProductDetails
-						.OrderBy(pd => pd.ProductId)
-						.SelectMany(pd => pd.LkpProductDetailsAttributes)
-						.Select(pda => new AttributeDto
-						{
-							Name = pda.Attribute.Name,
-							Value = pda.Attribute.value,
-							MeasurementUnit = pda.UnitOfMeasure.UnitOfMeasureName
-						}).ToList(),
+			ProductDetailAttributes = e.TblProductDetails.SelectMany(p => p.LkpProductDetailsAttributes).Select(p => new ProductDetailAttributeDto
+			{
+				Id = p.ProductDetailAttributeId,
+				AttributeName = p.Attribute.Name,
+				AttributeValue = p.Attribute.value,
+				MeasurementUnit = p.UnitOfMeasure.UnitOfMeasureName
+			}).ToList(),
 			Urls = e.ProductPhotos
 						.Select(p => new ProductPhotosDto
 						{
@@ -365,7 +358,6 @@ namespace Foodo.Application.Implementation.Customer
 
 
 
-			_cacheService.Set(cacheKey, productDto);
 			return ApiResponse<ProductDto>.Success(productDto);
 		}
 
@@ -375,7 +367,7 @@ namespace Foodo.Application.Implementation.Customer
 			var cached = _cacheService.Get<PaginationDto<ProductDto>>(cacheKey);
 			if (cached != null) return ApiResponse<PaginationDto<ProductDto>>.Success(cached);
 
-			var query = _unitOfWork.ProductCustomRepository.ReadProducts();
+			var query = _unitOfWork.ProductCustomRepository.ReadProductsInclude();
 			var filteredQuery = query.Where(p => p.ProductCategories.Any(c => c.categoryid == (int)input.Category));
 			var totalCount = await filteredQuery.CountAsync();
 			if (totalCount == 0)
@@ -397,11 +389,12 @@ namespace Foodo.Application.Implementation.Customer
 					ProductName = e.ProductsName,
 					ProductDescription = e.ProductDescription,
 					Price = (e.TblProductDetails.Single().Price).ToString(),
-					Attributes = e.TblProductDetails.SelectMany(pd => pd.LkpProductDetailsAttributes).Select(pda => new AttributeDto
+					ProductDetailAttributes = e.TblProductDetails.SelectMany(p => p.LkpProductDetailsAttributes).Select(p => new ProductDetailAttributeDto
 					{
-						Name = pda.Attribute.Name,
-						Value = pda.Attribute.value,
-						MeasurementUnit = pda.UnitOfMeasure.UnitOfMeasureName
+						Id = p.ProductDetailAttributeId,
+						AttributeName = p.Attribute.Name,
+						AttributeValue = p.Attribute.value,
+						MeasurementUnit = p.UnitOfMeasure.UnitOfMeasureName
 					}).ToList(),
 					ProductCategories = e.ProductCategories.Select(c => c.Category.CategoryName).ToList(),
 					Urls = e.ProductPhotos.Select(pp => new ProductPhotosDto
@@ -454,11 +447,12 @@ namespace Foodo.Application.Implementation.Customer
 					ProductName = e.ProductsName,
 					ProductDescription = e.ProductDescription,
 					Price = (e.TblProductDetails.Single().Price).ToString(),
-					Attributes = e.TblProductDetails.SelectMany(pd => pd.LkpProductDetailsAttributes).Select(pda => new AttributeDto
+					ProductDetailAttributes = e.TblProductDetails.SelectMany(p => p.LkpProductDetailsAttributes).Select(p => new ProductDetailAttributeDto
 					{
-						Name = pda.Attribute.Name,
-						Value = pda.Attribute.value,
-						MeasurementUnit = pda.UnitOfMeasure.UnitOfMeasureName
+						Id = p.ProductDetailAttributeId,
+						AttributeName = p.Attribute.Name,
+						AttributeValue = p.Attribute.value,
+						MeasurementUnit = p.UnitOfMeasure.UnitOfMeasureName
 					}).ToList(),
 					ProductCategories = e.ProductCategories.Select(c => c.Category.CategoryName).ToList(),
 					Urls = e.ProductPhotos.Select(pp => new ProductPhotosDto
@@ -534,9 +528,7 @@ namespace Foodo.Application.Implementation.Customer
 
 		public async Task<ApiResponse<ShopDto>> ReadShopById(ItemByIdInput input)
 		{
-			string cacheKey = $"customer_merchant:{input.ItemId}";
-			var cached = _cacheService.Get<ShopDto>(cacheKey);
-			if (cached != null) return ApiResponse<ShopDto>.Success(cached);
+
 			var query = _unitOfWork.RestaurantCustomRepository.ReadRestaurants();
 			var filteredQuery = query.Where(e => e.UserId == input.ItemId);
 			var shopDto = await filteredQuery.Select(e => new ShopDto
@@ -553,7 +545,6 @@ namespace Foodo.Application.Implementation.Customer
 			if (shopDto == null) return ApiResponse<ShopDto>.Failure("Shop not found");
 
 
-			_cacheService.Set(cacheKey, shopDto);
 			return ApiResponse<ShopDto>.Success(shopDto, "Shop retrieved successfuly");
 		}
 

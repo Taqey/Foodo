@@ -4,7 +4,7 @@ using Foodo.Application.Models.Response;
 
 namespace Foodo.Application.Abstraction.Profile.MerchantProfile
 {
-	public interface IMerchantProfileService
+	public interface IMerchantAdressService
 	{
 		Task<ApiResponse<MerchantProfileDto>> GetMerchantProfile(MerchantProfileInput input);
 		Task<ApiResponse> AddAdress(MerchantAddAdressInput input);

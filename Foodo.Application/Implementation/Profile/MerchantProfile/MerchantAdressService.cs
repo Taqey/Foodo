@@ -10,12 +10,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Foodo.Application.Implementation.Profile.MerchantProfile
 {
-	public class MerchantProfileService : IMerchantProfileService
+	public class MerchantAdressService : IMerchantAdressService
 	{
 		private readonly IUserService _userService;
 		private readonly IUnitOfWork _unitOfWork;
 
-		public MerchantProfileService(IUserService userService, IUnitOfWork unitOfWork)
+		public MerchantAdressService(IUserService userService, IUnitOfWork unitOfWork)
 		{
 			_userService = userService;
 			_unitOfWork = unitOfWork;

@@ -13,8 +13,8 @@ namespace Foodo.API.Models.Request.Customer
 		[Range(1, 100, ErrorMessage = "PageSize must be between 1 and 100.")]
 		public int PageSize { get; set; } = 10;
 
-		[Required(ErrorMessage = "Category is required.")]
-		[EnumDataType(typeof(FoodCategory), ErrorMessage = "Invalid category value.")]
-		public FoodCategory Category { get; set; }
+		//[Required(ErrorMessage = "Category is required.")]
+		//[EnumDataType(typeof(FoodCategory), ErrorMessage = "Invalid category value.")]
+		//public FoodCategory Category { get; set; }
 	}
 }
