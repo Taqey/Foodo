@@ -1,4 +1,5 @@
-﻿using Foodo.API.Middlewares;
+﻿using Foodo.API.Extensions;
+using Foodo.API.Middlewares;
 using Foodo.Application.Abstraction.Authentication;
 using Foodo.Application.Abstraction.Customer;
 using Foodo.Application.Abstraction.InfraRelated;
@@ -43,159 +44,24 @@ namespace Foodo.API
 			var builder = WebApplication.CreateBuilder(args);
 
 			// Add services to the container.
-			Log.Logger = new LoggerConfiguration()
-				.MinimumLevel.Information()
-				.Enrich.FromLogContext()
-				.Enrich.WithMachineName()
-				.Enrich.WithThreadName()
-				.WriteTo.Console()
-				.WriteTo.Seq("http://localhost:5341")
-				.WriteTo.File("logs/foodo_log.txt", rollingInterval: RollingInterval.Day)
-				.CreateLogger();
+			 Log.Logger = new LoggerConfiguration()
+			.MinimumLevel.Information()
+			.Enrich.FromLogContext()
+			.Enrich.WithMachineName()
+			.Enrich.WithThreadName()
+			.WriteTo.Console()
+			.WriteTo.Seq("http://localhost:5341")
+			.WriteTo.File("logs/foodo_log.txt", rollingInterval: RollingInterval.Day)
+			.CreateLogger();
+
 			builder.Host.UseSerilog();
-			builder.Services.AddControllers();
-			// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+			builder.Services.AddApplicationServices();
+			builder.Services.AddInfrastructureServices();
+			builder.Services.AddApplicationConfigurations(builder.Configuration);
+			builder.Services.AddCachingAndRateLimiter(builder.Configuration);
 			builder.Services.AddOpenApi();
 			builder.Services.AddDbContext<AppDbContext>(options =>
 				options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-			builder.Services.AddSwaggerGen(options =>
-			{
-
-
-				options.SwaggerDoc("v1", new OpenApiInfo
-				{
-					Version = "v1",
-					Title = "Foodo API",
-					Description = "Foodo API provides authentication, user management, merchant onboarding, and food ordering functionalities.",
-					TermsOfService = new Uri("https://foodo.com/terms"),
-					Contact = new OpenApiContact
-					{
-						Name = "Taqeyy Eldeen",
-						Email = "atakieeldeen@gmail.com",
-						Url = new Uri("https://bucolic-cobbler-83dcdd.netlify.app/")
-					},
-					License = new OpenApiLicense
-					{
-						Name = "Foodo API License",
-						Url = new Uri("https://foodo.com/license")
-					}
-				});
-
-				var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-				var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-				options.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
-				options.AddSecurityDefinition("bearer", new OpenApiSecurityScheme
-				{
-					Type = SecuritySchemeType.Http,
-					Scheme = "bearer",
-					BearerFormat = "JWT",
-					Description = "JWT Authorization header using the Bearer scheme."
-				});
-				options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
-				{
-					[new OpenApiSecuritySchemeReference("bearer", document)] = []
-				});
-
-
-			});
-			builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
-			{
-				options.TokenValidationParameters = new TokenValidationParameters
-				{
-					ValidateIssuer = true,
-					ValidateAudience = true,
-					ValidateLifetime = true,
-					ValidateIssuerSigningKey = true,
-					ClockSkew = TimeSpan.Zero,
-					ValidAudience = builder.Configuration["Jwt:Audience"],
-					ValidIssuer = builder.Configuration["Jwt:Issuer"],
-					IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
-
-
-				};
-			});
-			builder.Services.AddIdentityCore<ApplicationUser>(options =>
-			{
-				options.Password.RequireDigit = true;
-				options.Password.RequireLowercase = true;
-				options.Password.RequireUppercase = true;
-				options.Password.RequireNonAlphanumeric = true;
-				options.Password.RequiredLength = 8;
-
-			}).AddRoles<IdentityRole>().AddEntityFrameworkStores<AppDbContext>().AddDefaultTokenProviders();
-			builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
-			builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-			builder.Services.AddScoped<IUserService, UserService>();
-			builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
-			builder.Services.AddScoped<ICreateToken, CreateToken>();
-			builder.Services.AddScoped<IEmailSenderService, EmailSenderService>();
-			builder.Services.AddScoped<IMerchantService, MerchantService>();
-			builder.Services.AddScoped<ICustomerService, CustomerService>();
-			builder.Services.AddScoped<IMerchantProfileService, MerchantProfileService>();
-			builder.Services.AddScoped<ICustomerProfileService, CustomerProfileService>();
-			builder.Services.AddSingleton<IPhotoAccessorService, PhotoAccessorService>();
-			builder.Services.AddScoped<IPhotoService, PhotoService>();
-			builder.Services.AddScoped<IProductRepository, ProductRepository>();
-			builder.Services.AddScoped<IRestaurantRepository, RestaurantRepository>();
-			builder.Services.AddScoped<IUserRepository, UserRepository>();
-			builder.Services.AddScoped<IOrderRepository, OrderRepository>();
-			builder.Services.AddScoped<IProductPhotoCustomRepository, ProductPhotoCustomRepository>();
-			builder.Services.AddHttpContextAccessor();
-			builder.Services.AddProblemDetails();
-			builder.Services.AddFusionCache().
-			WithDefaultEntryOptions(options =>
-			{
-				options.DistributedCacheDuration = TimeSpan.FromDays(7);
-				options.Duration = TimeSpan.FromHours(2);
-				options.FailSafeMaxDuration= TimeSpan.FromMinutes(10);
-				options.FailSafeThrottleDuration= TimeSpan.FromSeconds(30);
-				options.EagerRefreshThreshold= 0.9f;
-				options.AllowBackgroundBackplaneOperations= true;
-				options.LockTimeout = TimeSpan.FromSeconds(3);
-
-			}).WithDistributedCache(new RedisCache(new RedisCacheOptions { Configuration= builder.Configuration["Redis:ConnectionString"] }))
-			.WithSerializer(new FusionCacheSystemTextJsonSerializer());
-			builder.Services.AddRateLimiter(options =>
-			{
-				options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-				options.AddFixedWindowLimiter("FixedWindowPolicy", opt =>
-				{
-					opt.Window = TimeSpan.FromMinutes(1);
-					opt.PermitLimit = 100;
-					opt.QueueLimit = 2;
-					opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-
-				});
-				options.AddSlidingWindowLimiter("SlidingWindowPolicy", opt =>
-				{
-					opt.Window= TimeSpan.FromMinutes(15);
-					opt.PermitLimit = 5;
-					opt.QueueLimit = 0;
-					opt.SegmentsPerWindow = 3;
-
-
-				});
-				options.AddTokenBucketLimiter("TokenBucketPolicy", opt =>
-				{
-					opt.TokenLimit = 30;               
-					opt.TokensPerPeriod = 10;         
-					opt.ReplenishmentPeriod = TimeSpan.FromMinutes(1);
-					opt.QueueLimit = 0;
-				});
-
-				options.AddConcurrencyLimiter("LeakyBucketPolicy", opt =>
-				{
-					opt.PermitLimit = 1;
-					opt.QueueLimit = 5;
-					opt.QueueProcessingOrder= QueueProcessingOrder.OldestFirst;
-
-				});
-			});
-			builder.Services.AddSingleton<ICacheService, CacheService>();
-			builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
-			builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("Smtp"));
-			builder.Services.Configure<CloudinarySettings>(builder.Configuration.GetSection("Cloudinary"));
-
 			// CORS Configuration
 			builder.Services.AddCors(options =>
 			{
@@ -220,12 +86,13 @@ namespace Foodo.API
 					.AllowCredentials();
 				});
 			});
+			builder.Services.AddControllers();
 
 
 			var app = builder.Build();
 
 			app.UseRouting();
-			app.UseGlobalExceptionHandlerMiddleware(); 
+			app.UseGlobalExceptionHandlerMiddleware();
 			app.UseSerilogRequestLogging();
 			app.UseCors("AllowFrontend");
 			app.UseAuthentication();

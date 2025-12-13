@@ -12,7 +12,5 @@ namespace Foodo.API.Models.Request.Customer
 		[Range(1, 100, ErrorMessage = "PageSize must be between 1 and 100.")]
 		public int PageSize { get; set; } = 10;
 
-		[Required(ErrorMessage = "MerchantId is required")]
-		public string MerchantId { get; set; }
 	}
 }

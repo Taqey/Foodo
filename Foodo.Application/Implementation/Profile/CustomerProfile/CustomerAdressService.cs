@@ -9,12 +9,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Foodo.Application.Implementation.Profile.CustomerProfile
 {
-	public class CustomerProfileService : ICustomerProfileService
+	public class CustomerAdressService : ICustomerAdressService
 	{
 		private readonly IUserService _service;
 		private readonly IUnitOfWork _unitOfWork;
 
-		public CustomerProfileService(IUserService service, IUnitOfWork unitOfWork)
+		public CustomerAdressService(IUserService service, IUnitOfWork unitOfWork)
 		{
 			_service = service;
 			_unitOfWork = unitOfWork;
