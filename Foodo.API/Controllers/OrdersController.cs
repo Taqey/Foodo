@@ -1,8 +1,11 @@
 ﻿using Foodo.API.Models.Request;
 using Foodo.API.Models.Request.Customer;
 using Foodo.API.Models.Request.Merchant;
+using Foodo.Application;
 using Foodo.Application.Abstraction.Customer;
 using Foodo.Application.Abstraction.Merchant;
+using Foodo.Application.Abstraction.Orders;
+using Foodo.Application.Factory.Order;
 using Foodo.Application.Models.Input;
 using Foodo.Application.Models.Input.Customer;
 using Foodo.Application.Models.Input.Merchant;
@@ -20,13 +23,17 @@ namespace Foodo.API.Controllers
 	[ApiController]
 	public class OrdersController : ControllerBase
 	{
-		private readonly IMerchantService _merchantService;
-		private readonly ICustomerService _customerService;
 
-		public OrdersController(IMerchantService merchantService,ICustomerService customerService)
+		private readonly ICustomerOrderService _customerOrderService;
+		private readonly IMerchantOrderService _merchantOrderService;
+		private readonly IOrderStrategyFactory _factory;
+
+		public OrdersController(ICustomerOrderService customerOrderService,IMerchantOrderService merchantOrderService,IOrderStrategyFactory factory)
 		{
-			_merchantService = merchantService;
-			_customerService = customerService;
+
+			_customerOrderService = customerOrderService;
+			_merchantOrderService = merchantOrderService;
+			_factory = factory;
 		}
 		#region Orders
 
@@ -39,7 +46,7 @@ namespace Foodo.API.Controllers
 		/// <response code="400">Failed to retrieve orders.</response>
 		[HttpGet]
 		[EnableRateLimiting("TokenBucketPolicy")]
-		public async Task<IActionResult> GetAllOrders([FromQuery] PaginationRequest request)
+		public async Task<IActionResult> GetOrders([FromQuery] PaginationRequest request)
 		{
 			Log.Information(
 				"Get all orders attempt started | Page={Page} | PageSize={PageSize} | TraceId={TraceId}",
@@ -47,10 +54,6 @@ namespace Foodo.API.Controllers
 				request.PageSize,
 				HttpContext.TraceIdentifier
 			);
-
-			// ============================
-			// Validate Request
-			// ============================
 			if (!ModelState.IsValid)
 			{
 				var errors = string.Join(" | ",
@@ -72,11 +75,10 @@ namespace Foodo.API.Controllers
 				});
 			}
 
-			// ============================
-			// Call Service
-			// ============================
+
 			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-			var result = await _merchantService.ReadAllOrdersAsync(new ProductPaginationInput
+			var strategy = _factory.GetStrategy(User);
+			var result = await strategy.GetOrders(new ProductPaginationInput
 			{
 				Page = request.PageNumber,
 				PageSize = request.PageSize,
@@ -128,6 +130,7 @@ namespace Foodo.API.Controllers
 		}
 
 
+
 		/// <summary>
 		/// Retrieves a specific order by ID.
 		/// </summary>
@@ -137,25 +140,13 @@ namespace Foodo.API.Controllers
 		/// <response code="400">Failed to retrieve order.</response>
 		[HttpGet("{id}")]
 		[EnableRateLimiting("TokenBucketPolicy")]
-
-		public async Task<IActionResult> GetOrderById(int id)
+		public async Task<IActionResult> GetOrder(int id)
 		{
-			Log.Information(
-				"Get order by ID attempt started | OrderId={OrderId} | TraceId={TraceId}",
-				id,
-				HttpContext.TraceIdentifier
-			);
+			Log.Information("Get order by ID attempt started | OrderId={OrderId} | TraceId={TraceId}",id,HttpContext.TraceIdentifier);
 
-			// ============================
-			// Validate Order ID
-			// ============================
 			if (id <= 0)
 			{
-				Log.Warning(
-					"Invalid OrderId provided | OrderId={OrderId} | TraceId={TraceId}",
-					id,
-					HttpContext.TraceIdentifier
-				);
+				Log.Warning("Invalid OrderId provided | OrderId={OrderId} | TraceId={TraceId}",id,HttpContext.TraceIdentifier);
 
 				return BadRequest(new
 				{
@@ -164,10 +155,10 @@ namespace Foodo.API.Controllers
 				});
 			}
 
-			// ============================
-			// Call Service
-			// ============================
-			var result = await _merchantService.ReadOrderByIdAsync(id);
+			var strategy = _factory.GetStrategy(User);
+			var result=await strategy.GetOrder(id);
+			
+			//dynamic result = await _executor.ExecuteGetOrderByIdAsync(User, id);
 
 			if (!result.IsSuccess)
 			{
@@ -207,6 +198,70 @@ namespace Foodo.API.Controllers
 			});
 		}
 
+		///// <summary>
+		///// Retrieves all orders of the currently logged-in Customer.
+		///// </summary>
+		///// <param name="request">Pagination request.</param>
+		///// <returns>List of orders.</returns>
+		///// <response code="200">Orders retrieved successfully.</response>
+		///// <response code="400">Failed to retrieve orders.</response>
+		//[HttpGet]
+		//[EnableRateLimiting("TokenBucketPolicy")]
+		//public async Task<IActionResult> GetOrders(int id)
+		//{
+		//	Log.Information("Get order by ID attempt started | OrderId={OrderId} | TraceId={TraceId}", id, HttpContext.TraceIdentifier);
+
+		//	if (id <= 0)
+		//	{
+		//		Log.Warning("Invalid OrderId provided | OrderId={OrderId} | TraceId={TraceId}", id, HttpContext.TraceIdentifier);
+
+		//		return BadRequest(new
+		//		{
+		//			message = "Invalid order ID",
+		//			traceId = HttpContext.TraceIdentifier
+		//		});
+		//	}
+
+		//	var result = await _customerOrderService.GetOrderByIdAsync(id);
+
+		//	if (!result.IsSuccess)
+		//	{
+		//		Log.Warning(
+		//			"Get order by ID failed | OrderId={OrderId} | Reason={Reason} | TraceId={TraceId}",
+		//			id,
+		//			result.Message,
+		//			HttpContext.TraceIdentifier
+		//		);
+		//		if (result.Message.Contains("found"))
+		//		{
+		//			return NotFound(new
+		//			{
+		//				message = result.Message,
+		//				traceId = HttpContext.TraceIdentifier
+		//			});
+		//		}
+
+		//		return BadRequest(new
+		//		{
+		//			message = result.Message,
+		//			traceId = HttpContext.TraceIdentifier
+		//		});
+		//	}
+
+		//	Log.Information(
+		//		"Get order by ID succeeded | OrderId={OrderId} | TraceId={TraceId}",
+		//		id,
+		//		HttpContext.TraceIdentifier
+		//	);
+
+		//	return Ok(new
+		//	{
+		//		message = "Order retrieved successfully",
+		//		traceId = HttpContext.TraceIdentifier,
+		//		data = result.Data
+		//	});
+		//}
+
 		/// <summary>
 		/// Updates the status of an order.
 		/// </summary>
@@ -220,22 +275,12 @@ namespace Foodo.API.Controllers
 
 		public async Task<IActionResult> UpdateOrderStatus(int id, [FromBody] OrderStatusUpdateRequest request)
 		{
-			Log.Information(
-				"Update order status attempt started | OrderId={OrderId} | TraceId={TraceId}",
-				id,
-				HttpContext.TraceIdentifier
-			);
+			Log.Information("Update order status attempt started | OrderId={OrderId} | TraceId={TraceId}",id,HttpContext.TraceIdentifier);
 
-			// ============================
-			// Validate Order ID
-			// ============================
+
 			if (id <= 0)
 			{
-				Log.Warning(
-					"Invalid OrderId provided | OrderId={OrderId} | TraceId={TraceId}",
-					id,
-					HttpContext.TraceIdentifier
-				);
+				Log.Warning("Invalid OrderId provided | OrderId={OrderId} | TraceId={TraceId}",id,HttpContext.TraceIdentifier);
 
 				return BadRequest(new
 				{
@@ -244,9 +289,6 @@ namespace Foodo.API.Controllers
 				});
 			}
 
-			// ============================
-			// Validate Request Body
-			// ============================
 			if (!ModelState.IsValid)
 			{
 				var errors = string.Join(" | ",
@@ -269,22 +311,14 @@ namespace Foodo.API.Controllers
 				});
 			}
 
-			// ============================
-			// Call Service
-			// ============================
-			var result = await _merchantService.UpdateOrderStatusAsync(id, new OrderStatusUpdateInput
+			var result = await _merchantOrderService.UpdateOrderStatusAsync(id, new OrderStatusUpdateInput
 			{
 				Status = request.Status
 			});
 
 			if (!result.IsSuccess)
 			{
-				Log.Warning(
-					"Update order status failed | OrderId={OrderId} | Reason={Reason} | TraceId={TraceId}",
-					id,
-					result.Message,
-					HttpContext.TraceIdentifier
-				);
+				Log.Warning("Update order status failed | OrderId={OrderId} | Reason={Reason} | TraceId={TraceId}",id,result.Message,HttpContext.TraceIdentifier);
 
 				return BadRequest(new
 				{
@@ -328,9 +362,6 @@ namespace Foodo.API.Controllers
 				HttpContext.TraceIdentifier
 			);
 
-			// ============================
-			// Validate Request
-			// ============================
 			if (!ModelState.IsValid)
 			{
 				var errors = string.Join(" | ",
@@ -367,11 +398,7 @@ namespace Foodo.API.Controllers
 					traceId = HttpContext.TraceIdentifier
 				});
 			}
-
-			// ============================
-			// Call Service
-			// ============================
-			var result = await _customerService.PlaceOrder(new CreateOrderInput
+			var result = await _customerOrderService.PlaceOrder(new CreateOrderInput
 			{
 				CustomerId = customerId,
 				Items = request.Items
@@ -405,28 +432,6 @@ namespace Foodo.API.Controllers
 				traceId = HttpContext.TraceIdentifier
 			});
 		}
-
-
-		///// <summary>
-		///// Edits an existing order. (Not implemented yet)
-		///// </summary>
-		///// <param name="id">Order ID to edit.</param>
-		///// <param name="value">Updated order data.</param>
-		///// <returns>Status indicating whether the update was applied.</returns>
-		///// <response code="200">Order edited successfully.</response>
-		///// <response code="400">Failed to edit order.</response>
-		///// <response code="401">User not authenticated.</response>
-		///// <response code="404">Order not found.</response>
-		///// <response code="501">Method not implemented.</response>
-
-		//[Authorize(Roles = nameof(UserType.Customer))]
-		//[HttpPut("{id}")]
-		//[EnableRateLimiting("SlidingWindowPolicy")]
-
-		//public async Task<IActionResult> Put(int id, [FromBody] string value)
-		//{
-		//	return StatusCode(StatusCodes.Status501NotImplemented);
-		//}
 
 		/// <summary>
 		/// Cancels a customer's order.
@@ -463,7 +468,7 @@ namespace Foodo.API.Controllers
 				});
 			}
 
-			var result = await _customerService.CancelOrder(new ItemByIdInput { ItemId = id.ToString() });
+			var result = await _customerOrderService.CancelOrder(new ItemByIdInput { ItemId = id.ToString() });
 
 			if (!result.IsSuccess)
 			{
