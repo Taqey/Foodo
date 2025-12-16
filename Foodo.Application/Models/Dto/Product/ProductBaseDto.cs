@@ -1,16 +1,17 @@
 ﻿using Foodo.Application.Models.Dto.Photo;
+using System;
+using System.Collections.Generic;
+using System.Text;
 
-namespace Foodo.Application.Models.Dto.Merchant
+namespace Foodo.Application.Models.Dto.Product
 {
-	public class MerchantProductDto
+	public class ProductBaseDto
 	{
 		public int ProductId { get; set; }
 		public string ProductName { get; set; }
 		public string ProductDescription { get; set; }
-		public List<ProductDetailAttributeDto> ProductDetailAttributes { get; set; } = new();
 		public string Price { get; set; }
 		public ICollection<string> ProductCategories { get; set; } = new List<string>();
 		public ICollection<ProductPhotosDto> Urls { get; set; } = new List<ProductPhotosDto>();
 	}
-
 }

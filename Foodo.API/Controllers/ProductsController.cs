@@ -3,7 +3,9 @@ using Foodo.API.Models.Request.Customer;
 using Foodo.API.Models.Request.Merchant;
 using Foodo.Application.Abstraction.Customer;
 using Foodo.Application.Abstraction.Merchant;
+using Foodo.Application.Factory.Product;
 using Foodo.Application.Models.Dto;
+using Foodo.Application.Models.Dto.Product;
 using Foodo.Application.Models.Input;
 using Foodo.Application.Models.Input.Customer;
 using Foodo.Application.Models.Input.Merchant;
@@ -22,13 +24,15 @@ namespace Foodo.API.Controllers
 	[ApiController]
 	public class ProductsController : ControllerBase
 	{
-		private readonly ICustomerService _service;
+		private readonly ICustomerService _customerService;
 		private readonly IMerchantService _merchantService;
+		private readonly IProductStrategyFactory _factory;
 
-		public ProductsController(ICustomerService service ,IMerchantService merchantService)
+		public ProductsController(ICustomerService customerService ,IMerchantService merchantService,IProductStrategyFactory factory)
 		{
-			_service = service;
+			_customerService = customerService;
 			_merchantService = merchantService;
+			_factory = factory;
 		}
 		#region Product
 
@@ -59,21 +63,24 @@ namespace Foodo.API.Controllers
 				Log.Warning("Validation failed | Errors={Errors} | TraceId={TraceId}", errors, HttpContext.TraceIdentifier);
 				return BadRequest(new { message = errors, traceId = HttpContext.TraceIdentifier });
 			}
-			ApiResponse<PaginationDto<ProductDto>> result = null;
+			var strategy = _factory.GetStrategy(User);
+			ApiResponse<PaginationDto<ProductBaseDto>> result = null;
+			ApiResponse<PaginationDto<CustomerProductDto>> resultDto = null;
 			if (categoryId.HasValue)
 			{
-				result = await _service.ReadProductsByCategory(new ProductPaginationByCategoryInput { Page = request.PageNumber, PageSize = request.PageSize, Category = (FoodCategory)categoryId });
+				resultDto = await _customerService.ReadProductsByCategory(new ProductPaginationByCategoryInput { Page = request.PageNumber, PageSize = request.PageSize, Category = (FoodCategory)categoryId });
 			}
 			else if (!string.IsNullOrEmpty(restaurantId))
 			{
-				result = await _service.ReadProductsByShop(new ProductPaginationByShopInput { MerchantId = restaurantId, Page = request.PageNumber, PageSize = request.PageSize });
+				resultDto = await _customerService.ReadProductsByShop(new ProductPaginationByShopInput { MerchantId = restaurantId, Page = request.PageNumber, PageSize = request.PageSize });
+
 			}
 			else
 			{
-				result = await _service.ReadAllProducts(new ProductPaginationInput { Page = request.PageNumber, PageSize = request.PageSize });
+				result = await strategy.ReadProducts(new ProductPaginationInput { Page = request.PageNumber, PageSize = request.PageSize });
 			}
 
-
+			
 			if (!result.IsSuccess)
 			{
 				Log.Warning("Get products failed | Reason={Reason} | TraceId={TraceId}", result.Message, HttpContext.TraceIdentifier);
@@ -127,8 +134,9 @@ namespace Foodo.API.Controllers
 					traceId = HttpContext.TraceIdentifier
 				});
 			}
+			var strategy = _factory.GetStrategy(User);
 
-			var result = await _service.ReadProductById(new ItemByIdInput
+			var result = await strategy.ReadProduct(new ItemByIdInput
 			{
 				ItemId = id.ToString()
 			});
