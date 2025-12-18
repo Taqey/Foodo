@@ -1,7 +1,4 @@
 ﻿using Foodo.Application.Models.Dto.Photo;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Foodo.Application.Models.Dto.Product
 {

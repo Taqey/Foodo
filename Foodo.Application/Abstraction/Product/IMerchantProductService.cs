@@ -2,13 +2,10 @@
 using Foodo.Application.Models.Dto.Product;
 using Foodo.Application.Models.Input.Merchant;
 using Foodo.Application.Models.Response;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Foodo.Application.Abstraction.Product
 {
-	public interface IMerchantProductService :IProductService<MerchantProductDto>
+	public interface IMerchantProductService : IProductService<MerchantProductDto>
 	{
 		Task<ApiResponse<CreateProductDto>> CreateProductAsync(ProductInput request);
 		Task<ApiResponse> UpdateProductAsync(ProductUpdateInput input);

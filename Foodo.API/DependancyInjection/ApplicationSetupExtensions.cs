@@ -3,10 +3,8 @@ using Foodo.Infrastructure.Helper;
 using Foodo.Infrastructure.Perisistence;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
-using Serilog;
 using System.Reflection;
 using System.Text;
 

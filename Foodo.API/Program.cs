@@ -1,9 +1,14 @@
 ﻿using Foodo.API.Extensions;
+using Foodo.API.Filters;
 using Foodo.API.Middlewares;
+using Foodo.Application;
 using Foodo.Infrastructure.Perisistence;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
+using System.Data;
 namespace Foodo.API
 {
 	public class Program
@@ -13,24 +18,38 @@ namespace Foodo.API
 			var builder = WebApplication.CreateBuilder(args);
 
 			// Add services to the container.
-			 Log.Logger = new LoggerConfiguration()
-			.MinimumLevel.Information()
-			.Enrich.FromLogContext()
-			.Enrich.WithMachineName()
-			.Enrich.WithThreadName()
-			.WriteTo.Console()
-			.WriteTo.Seq("http://localhost:5341")
-			.WriteTo.File("logs/foodo_log.txt", rollingInterval: RollingInterval.Day)
-			.CreateLogger();
+			Log.Logger = new LoggerConfiguration()
+		   .MinimumLevel.Information()
+		   .Enrich.FromLogContext()
+		   .Enrich.WithMachineName()
+		   .Enrich.WithThreadName()
+		   .WriteTo.Console()
+		   .WriteTo.Seq("http://localhost:5341")
+		   .WriteTo.File("logs/foodo_log.txt", rollingInterval: RollingInterval.Day)
+		   .CreateLogger();
 
 			builder.Host.UseSerilog();
 			builder.Services.AddApplicationServices();
 			builder.Services.AddInfrastructureServices();
 			builder.Services.AddApplicationConfigurations(builder.Configuration);
 			builder.Services.AddCachingAndRateLimiter(builder.Configuration);
+			builder.Services.AddScoped<ValidateIdFilter>();
+
+			builder.Services.Configure<ApiBehaviorOptions>(options =>
+			{
+				options.SuppressModelStateInvalidFilter = true;
+			});
+
 			builder.Services.AddOpenApi();
 			builder.Services.AddDbContext<AppDbContext>(options =>
 				options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+			builder.Services.AddScoped<IDbConnection>(sp =>
+			{
+				var configuration = sp.GetRequiredService<IConfiguration>();
+				var connectionString = configuration.GetConnectionString("DefaultConnection");
+				return new SqlConnection(connectionString);
+			});
+
 			// CORS Configuration
 			builder.Services.AddCors(options =>
 			{
@@ -55,7 +74,16 @@ namespace Foodo.API
 					.AllowCredentials();
 				});
 			});
-			builder.Services.AddControllers();
+			builder.Services.AddControllers(options =>
+			{
+				options.Filters.Add<RequestLoggingFilter>();
+				options.Filters.Add<ModelStateValidationFilter>();
+
+			});
+			builder.Services.AddMediatR(cfg =>
+			{
+				cfg.RegisterServicesFromAssembly(typeof(AssemblyReference).Assembly);
+			});
 
 
 			var app = builder.Build();

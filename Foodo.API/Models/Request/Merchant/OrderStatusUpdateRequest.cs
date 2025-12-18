@@ -1,7 +1,9 @@
-﻿namespace Foodo.API.Models.Request.Merchant
+﻿using Foodo.Domain.Enums;
+
+namespace Foodo.API.Models.Request.Merchant
 {
 	public class OrderStatusUpdateRequest
 	{
-		public string Status { get; set; }
+		public OrderState Status { get; set; }
 	}
 }

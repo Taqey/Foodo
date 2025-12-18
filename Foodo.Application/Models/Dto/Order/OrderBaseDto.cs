@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace Foodo.Application.Models.Dto.Order
 {
-	[JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
-	[JsonDerivedType(typeof(CustomerOrderDto), "customer")]
-	[JsonDerivedType(typeof(MerchantOrderDto), "merchant")]
+	//[JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
+	[JsonDerivedType(typeof(CustomerOrderDto))]
+	[JsonDerivedType(typeof(MerchantOrderDto))]
 	public class OrderBaseDto
 	{
 		public int OrderId { get; set; }

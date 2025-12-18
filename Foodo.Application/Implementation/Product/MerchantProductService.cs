@@ -11,9 +11,6 @@ using Foodo.Application.Models.Response;
 using Foodo.Domain.Entities;
 using Foodo.Domain.Repository;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Foodo.Application.Implementation.Product
 {
@@ -22,7 +19,7 @@ namespace Foodo.Application.Implementation.Product
 		private readonly ICacheService _cacheService;
 		private readonly IUnitOfWork _unitOfWork;
 
-		public MerchantProductService(ICacheService cacheService , IUnitOfWork unitOfWork)
+		public MerchantProductService(ICacheService cacheService, IUnitOfWork unitOfWork)
 		{
 			_cacheService = cacheService;
 			_unitOfWork = unitOfWork;
@@ -329,7 +326,7 @@ namespace Foodo.Application.Implementation.Product
 
 			return ApiResponse.Success("Categories removed successfully");
 		}
-		
+
 		#endregion
 
 		#region Delete
@@ -356,7 +353,7 @@ namespace Foodo.Application.Implementation.Product
 
 			return ApiResponse.Success("Product deleted successfully");
 		}
-		
+
 		#endregion
 
 	}

@@ -1,6 +1,4 @@
 ﻿using Foodo.API.Models.Request;
-using Foodo.API.Models.Request.Customer;
-using Foodo.API.Models.Request.Merchant;
 using Foodo.Application.Abstraction.Customer;
 using Foodo.Application.Abstraction.Merchant;
 using Foodo.Application.Abstraction.Profile.MerchantProfile;
@@ -8,7 +6,6 @@ using Foodo.Application.Models.Dto;
 using Foodo.Application.Models.Dto.Customer;
 using Foodo.Application.Models.Input;
 using Foodo.Application.Models.Input.Customer;
-using Foodo.Application.Models.Input.Merchant;
 using Foodo.Application.Models.Input.Profile.Merchant;
 using Foodo.Application.Models.Response;
 using Foodo.Domain.Enums;
@@ -30,7 +27,7 @@ namespace Foodo.API.Controllers
 		private readonly IMerchantService _merchantService;
 		private readonly IMerchantAdressService _merchantAdressService;
 
-		public RestaurantsController(ICustomerService service,IMerchantService merchantService,IMerchantAdressService merchantAdressService)
+		public RestaurantsController(ICustomerService service, IMerchantService merchantService, IMerchantAdressService merchantAdressService)
 		{
 			_service = service;
 			_merchantService = merchantService;
@@ -50,12 +47,6 @@ namespace Foodo.API.Controllers
 		[EnableRateLimiting("TokenBucketPolicy")]
 		public async Task<IActionResult> GetShopById(string id)
 		{
-			Log.Information(
-				"GetShopById attempt started | ShopId={ShopId} | TraceId={TraceId}",
-				id,
-				HttpContext.TraceIdentifier
-			);
-
 			if (string.IsNullOrWhiteSpace(id))
 			{
 				Log.Warning(
@@ -90,13 +81,6 @@ namespace Foodo.API.Controllers
 					traceId = HttpContext.TraceIdentifier
 				});
 			}
-
-			Log.Information(
-				"GetShopById succeeded | ShopId={ShopId} | TraceId={TraceId}",
-				id,
-				HttpContext.TraceIdentifier
-			);
-
 			return Ok(new
 			{
 				data = result.Data,
@@ -118,20 +102,6 @@ namespace Foodo.API.Controllers
 			[FromQuery] PaginationRequest request,
 			[FromQuery] int? categoryId = null)
 		{
-			Log.Information(
-				"Get shops attempt started | Category={Category} | Page={Page} | PageSize={PageSize} | TraceId={TraceId}",
-				categoryId, request.PageNumber, request.PageSize, HttpContext.TraceIdentifier
-			);
-
-			if (!ModelState.IsValid)
-			{
-				var errors = string.Join(" | ",
-					ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-
-				Log.Warning("Validation failed | Errors={Errors} | TraceId={TraceId}", errors, HttpContext.TraceIdentifier);
-				return BadRequest(new { message = errors, traceId = HttpContext.TraceIdentifier });
-			}
-
 			ApiResponse<PaginationDto<ShopDto>> result;
 
 			if (categoryId.HasValue)
@@ -163,12 +133,6 @@ namespace Foodo.API.Controllers
 				Log.Warning("Get shops returned empty | TraceId={TraceId}", HttpContext.TraceIdentifier);
 				return Ok(new { message = "No shops found", traceId = HttpContext.TraceIdentifier, data = result.Data });
 			}
-
-			Log.Information(
-				"Get shops succeeded | Count={Count} | TraceId={TraceId}",
-				result.Data.Items.Count, HttpContext.TraceIdentifier
-			);
-
 			return Ok(new { message = "Shops retrieved successfully", traceId = HttpContext.TraceIdentifier, data = result.Data });
 		}
 
@@ -188,8 +152,6 @@ namespace Foodo.API.Controllers
 		public async Task<IActionResult> GetProfile()
 		{
 			var UserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-			Log.Information("Fetching profile for Merchant: {CustomerId}", UserId);
-
 			var result = await _merchantAdressService.GetMerchantProfile(new MerchantProfileInput
 			{
 				MerchantId = UserId
@@ -197,7 +159,7 @@ namespace Foodo.API.Controllers
 
 			if (!result.IsSuccess)
 			{
-				Log.Information("Failed to retrieve Merchant profile: {Message}", result.Message);
+				Log.Warning("Failed to retrieve Merchant profile: {Message}", result.Message);
 				return BadRequest(result.Message);
 			}
 
@@ -205,8 +167,6 @@ namespace Foodo.API.Controllers
 		}
 
 		#endregion
-
-
 
 		#region Purchased Customers
 
@@ -223,43 +183,6 @@ namespace Foodo.API.Controllers
 		public async Task<IActionResult> GetPurchasedCustomers([FromBody] PaginationRequest request)
 		{
 			var shopId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-			Log.Information(
-				"Get purchased customers attempt started | ShopId={ShopId} | Page={Page} | PageSize={PageSize} | TraceId={TraceId}",
-				shopId,
-				request.PageNumber,
-				request.PageSize,
-				HttpContext.TraceIdentifier
-			);
-
-			// ============================
-			// Validate ModelState
-			// ============================
-			if (!ModelState.IsValid)
-			{
-				var errors = string.Join(" | ",
-					ModelState.Values
-						.SelectMany(v => v.Errors)
-						.Select(e => e.ErrorMessage));
-
-				Log.Warning(
-					"Validation failed while retrieving purchased customers | ShopId={ShopId} | Errors={Errors} | TraceId={TraceId}",
-					shopId,
-					errors,
-					HttpContext.TraceIdentifier
-				);
-
-				return BadRequest(new
-				{
-					message = "Invalid request data",
-					errors,
-					traceId = HttpContext.TraceIdentifier
-				});
-			}
-
-			// ============================
-			// Call Service
-			// ============================
 			var result = await _merchantService.ReadAllPurchasedCustomersAsync(new ProductPaginationInput
 			{
 				Page = request.PageNumber,
@@ -269,12 +192,12 @@ namespace Foodo.API.Controllers
 
 			if (!result.IsSuccess)
 			{
-			Log.Warning(
-					"Failed to retrieve purchased customers | ShopId={ShopId} | Reason={Reason} | TraceId={TraceId}",
-					shopId,
-					result.Message,
-					HttpContext.TraceIdentifier
-				);
+				Log.Warning(
+						"Failed to retrieve purchased customers | ShopId={ShopId} | Reason={Reason} | TraceId={TraceId}",
+						shopId,
+						result.Message,
+						HttpContext.TraceIdentifier
+					);
 
 				return BadRequest(new
 				{
@@ -282,13 +205,6 @@ namespace Foodo.API.Controllers
 					traceId = HttpContext.TraceIdentifier
 				});
 			}
-
-			Log.Information(
-				"Purchased customers retrieved successfully | ShopId={ShopId} | Count={Count} | TraceId={TraceId}",
-				shopId,
-				result.Data?.Items?.Count ?? 0,
-				HttpContext.TraceIdentifier
-			);
 			if (result.Data == null || result.Data.Items.Count == 0)
 			{
 

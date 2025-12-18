@@ -4,9 +4,6 @@ using Foodo.Application.Models.Dto.Product;
 using Foodo.Application.Models.Input;
 using Foodo.Application.Models.Input.Customer;
 using Foodo.Application.Models.Response;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Foodo.Application.Factory.Product
 {
@@ -20,10 +17,10 @@ namespace Foodo.Application.Factory.Product
 		}
 		public async Task<ApiResponse<ProductBaseDto>> ReadProduct(ItemByIdInput input)
 		{
-			var response=await _service.ReadProduct(input);
+			var response = await _service.ReadProduct(input);
 			if (!response.IsSuccess)
 				return ApiResponse<ProductBaseDto>.Failure(response.Message);
-			var result=response.Data;
+			var result = response.Data;
 			return ApiResponse<ProductBaseDto>.Success(result);
 		}
 
