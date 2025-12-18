@@ -18,8 +18,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Queries\Orders\GetOrder\GetCustomerOrder\" />
-    <Folder Include="Queries\Orders\GetOrder\GetMerchantOrder\" />
+    <Folder Include="Queries\Products\GetProducts\GetCustomerProducts\" />
+    <Folder Include="Queries\Products\GetProducts\GetMerchantProducts\" />
+    <Folder Include="Queries\Products\GetProducts\GetProducts\" />
   </ItemGroup>
 
 </Project>

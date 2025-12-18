@@ -21,6 +21,7 @@
 
   <ItemGroup>
     <Folder Include="Perisistence\Migrations\" />
+    <Folder Include="Services\ReadServices\Products\" />
   </ItemGroup>
 
   <ItemGroup>

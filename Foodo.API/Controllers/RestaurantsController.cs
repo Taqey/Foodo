@@ -1,4 +1,5 @@
-﻿using Foodo.API.Models.Request;
+﻿using Foodo.API.Filters;
+using Foodo.API.Models.Request;
 using Foodo.Application.Abstraction.Customer;
 using Foodo.Application.Abstraction.Merchant;
 using Foodo.Application.Abstraction.Profile.MerchantProfile;
@@ -45,15 +46,12 @@ namespace Foodo.API.Controllers
 		/// <response code="404">Shop not found.</response>
 		[HttpGet("{id}")]
 		[EnableRateLimiting("TokenBucketPolicy")]
+		[ServiceFilter(typeof(ValidateIdFilter))]
 		public async Task<IActionResult> GetShopById(string id)
 		{
 			if (string.IsNullOrWhiteSpace(id))
 			{
-				Log.Warning(
-					"GetShopById failed: Invalid ShopId | ShopId={ShopId} | TraceId={TraceId}",
-					id,
-					HttpContext.TraceIdentifier
-				);
+				Log.Warning("GetShopById failed: Invalid ShopId | ShopId={ShopId} | TraceId={TraceId}", id, HttpContext.TraceIdentifier);
 
 				return BadRequest(new
 				{
@@ -69,12 +67,7 @@ namespace Foodo.API.Controllers
 
 			if (!result.IsSuccess)
 			{
-				Log.Warning(
-					"GetShopById failed: Shop not found | ShopId={ShopId} | TraceId={TraceId}",
-					id,
-					HttpContext.TraceIdentifier
-				);
-
+				Log.Warning("GetShopById failed: Shop not found | ShopId={ShopId} | TraceId={TraceId}", id, HttpContext.TraceIdentifier);
 				return NotFound(new
 				{
 					message = result.Message,

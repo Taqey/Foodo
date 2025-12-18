@@ -10,6 +10,7 @@ using Foodo.Application.Models.Input.Customer;
 using Foodo.Application.Models.Input.Merchant;
 using Foodo.Application.Models.Response;
 using Foodo.Domain.Enums;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -25,12 +26,14 @@ namespace Foodo.API.Controllers
 		private readonly ICustomerProductService _customerService;
 		private readonly IMerchantProductService _merchantService;
 		private readonly IProductStrategyFactory _factory;
+		private readonly IMediator _mediator;
 
-		public ProductsController(ICustomerProductService customerService, IMerchantProductService merchantService, IProductStrategyFactory factory)
+		public ProductsController(ICustomerProductService customerService, IMerchantProductService merchantService, IProductStrategyFactory factory,IMediator mediator)
 		{
 			_customerService = customerService;
 			_merchantService = merchantService;
 			_factory = factory;
+			_mediator = mediator;
 		}
 		#region Product
 
@@ -42,44 +45,44 @@ namespace Foodo.API.Controllers
 		/// <param name="restaurantId">Optional restaurant filter.</param>
 		/// <returns>Filtered and paginated list of products.</returns>
 
-		[HttpGet]
-		[EnableRateLimiting("TokenBucketPolicy")]
-		public async Task<IActionResult> GetProducts(
-			[FromQuery] PaginationRequest request,
-			[FromQuery] int? categoryId = null,
-			[FromQuery] string? restaurantId = null)
-		{
-			var strategy = _factory.GetStrategy(User);
-			ApiResponse<PaginationDto<ProductBaseDto>> result = null;
-			ApiResponse<PaginationDto<CustomerProductDto>> resultDto = null;
-			if (categoryId.HasValue)
-			{
-				resultDto = await _customerService.ReadProductsByCategory(new ProductPaginationByCategoryInput { Page = request.PageNumber, PageSize = request.PageSize, Category = (FoodCategory)categoryId });
-			}
-			else if (!string.IsNullOrEmpty(restaurantId))
-			{
-				resultDto = await _customerService.ReadProductsByShop(new ProductPaginationByShopInput { MerchantId = restaurantId, Page = request.PageNumber, PageSize = request.PageSize });
+		//[HttpGet]
+		//[EnableRateLimiting("TokenBucketPolicy")]
+		//public async Task<IActionResult> GetProducts(
+		//	[FromQuery] PaginationRequest request,
+		//	[FromQuery] int? categoryId = null,
+		//	[FromQuery] string? restaurantId = null)
+		//{
+		//	var strategy = _factory.GetStrategy(User);
+		//	ApiResponse<PaginationDto<ProductBaseDto>> result = null;
+		//	ApiResponse<PaginationDto<CustomerProductDto>> resultDto = null;
+		//	if (categoryId.HasValue)
+		//	{
+		//		resultDto = await _customerService.ReadProductsByCategory(new ProductPaginationByCategoryInput { Page = request.PageNumber, PageSize = request.PageSize, Category = (FoodCategory)categoryId });
+		//	}
+		//	else if (!string.IsNullOrEmpty(restaurantId))
+		//	{
+		//		resultDto = await _customerService.ReadProductsByShop(new ProductPaginationByShopInput { MerchantId = restaurantId, Page = request.PageNumber, PageSize = request.PageSize });
 
-			}
-			else
-			{
-				result = await strategy.ReadProducts(new ProductPaginationInput { Page = request.PageNumber, PageSize = request.PageSize });
-			}
+		//	}
+		//	else
+		//	{
+		//		result = await strategy.ReadProducts(new ProductPaginationInput { Page = request.PageNumber, PageSize = request.PageSize });
+		//	}
 
 
-			if (!result.IsSuccess)
-			{
-				Log.Warning("Get products failed | Reason={Reason} | TraceId={TraceId}", result.Message, HttpContext.TraceIdentifier);
-				return BadRequest(new { message = result.Message, traceId = HttpContext.TraceIdentifier });
-			}
+		//	if (!result.IsSuccess)
+		//	{
+		//		Log.Warning("Get products failed | Reason={Reason} | TraceId={TraceId}", result.Message, HttpContext.TraceIdentifier);
+		//		return BadRequest(new { message = result.Message, traceId = HttpContext.TraceIdentifier });
+		//	}
 
-			if (result.Data == null || result.Data.Items.Count == 0)
-			{
-				Log.Warning("Get products returned empty | TraceId={TraceId}", HttpContext.TraceIdentifier);
-				return Ok(new { message = "No products found", traceId = HttpContext.TraceIdentifier, data = result.Data });
-			}
-			return Ok(new { message = "Products retrieved successfully", traceId = HttpContext.TraceIdentifier, data = result.Data });
-		}
+		//	if (result.Data == null || result.Data.Items.Count == 0)
+		//	{
+		//		Log.Warning("Get products returned empty | TraceId={TraceId}", HttpContext.TraceIdentifier);
+		//		return Ok(new { message = "No products found", traceId = HttpContext.TraceIdentifier, data = result.Data });
+		//	}
+		//	return Ok(new { message = "Products retrieved successfully", traceId = HttpContext.TraceIdentifier, data = result.Data });
+		//}
 
 
 		/// <summary>
@@ -95,19 +98,12 @@ namespace Foodo.API.Controllers
 		[ServiceFilter(typeof(ValidateIdFilter))]
 		public async Task<IActionResult> GetProductbyId(int id)
 		{
-			var strategy = _factory.GetStrategy(User);
-			var result = await strategy.ReadProduct(new ItemByIdInput
-			{
-				ItemId = id.ToString()
-			});
+			var strategy = _factory.GetProductStrategy(User,id);
+			var result =await _mediator.Send(strategy);
 
 			if (!result.IsSuccess)
 			{
-				Log.Warning(
-					"Get all Products By Id  failed: Product not found | ProductId={ProductId} | TraceId={TraceId}",
-					id,
-					HttpContext.TraceIdentifier
-				);
+				Log.Warning("Get all Products By Id  failed: Product not found | ProductId={ProductId} | TraceId={TraceId}",id,HttpContext.TraceIdentifier);
 
 				return NotFound(new
 				{

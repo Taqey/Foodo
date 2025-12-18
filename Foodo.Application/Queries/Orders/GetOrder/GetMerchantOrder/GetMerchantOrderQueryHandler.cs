@@ -3,7 +3,7 @@ using Foodo.Application.Models.Dto.Order;
 using Foodo.Application.Models.Response;
 using MediatR;
 
-namespace Foodo.Application.Queries.Orders.GetOrders.GetMerchantOrder
+namespace Foodo.Application.Queries.Orders.GetOrder.GetMerchantOrder
 {
 	public class GetMerchantOrderQueryHandler : IRequestHandler<GetMerchantOrderQuery, ApiResponse<OrderBaseDto>>
 	{

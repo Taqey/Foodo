@@ -1,7 +1,11 @@
 ﻿using Foodo.Application.Models.Dto.Photo;
+using System.Text.Json.Serialization;
 
 namespace Foodo.Application.Models.Dto.Product
 {
+	[JsonDerivedType(typeof(MerchantProductDto))]
+	[JsonDerivedType(typeof(CustomerProductDto))]
+
 	public class ProductBaseDto
 	{
 		public int ProductId { get; set; }
