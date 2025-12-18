@@ -1,13 +1,9 @@
 ﻿using Foodo.Application.Abstraction.Product;
 using Foodo.Application.Models.Dto;
-using Foodo.Application.Models.Dto.Order;
 using Foodo.Application.Models.Dto.Product;
 using Foodo.Application.Models.Input;
 using Foodo.Application.Models.Input.Customer;
 using Foodo.Application.Models.Response;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Foodo.Application.Factory.Product
 {

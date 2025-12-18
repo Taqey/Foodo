@@ -1,5 +1,4 @@
 ﻿using Foodo.Application.Models.Dto.Profile.Customer;
-using Foodo.Application.Models.Dto.Profile.Merchant;
 
 namespace Foodo.Application.Models.Input.Profile.Merchant
 {

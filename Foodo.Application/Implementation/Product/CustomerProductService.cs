@@ -1,7 +1,6 @@
 ﻿using Foodo.Application.Abstraction.InfraRelated;
 using Foodo.Application.Abstraction.Product;
 using Foodo.Application.Models.Dto;
-using Foodo.Application.Models.Dto.Merchant;
 using Foodo.Application.Models.Dto.Photo;
 using Foodo.Application.Models.Dto.Product;
 using Foodo.Application.Models.Input;
@@ -9,9 +8,6 @@ using Foodo.Application.Models.Input.Customer;
 using Foodo.Application.Models.Response;
 using Foodo.Domain.Repository;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Foodo.Application.Implementation.Product
 {
@@ -21,7 +17,7 @@ namespace Foodo.Application.Implementation.Product
 		private readonly ICacheService _cacheService;
 		private readonly IUserService _userService;
 
-		public CustomerProductService(IUnitOfWork unitOfWork , ICacheService cacheService,IUserService userService)
+		public CustomerProductService(IUnitOfWork unitOfWork, ICacheService cacheService, IUserService userService)
 		{
 			_unitOfWork = unitOfWork;
 			_cacheService = cacheService;

@@ -1,14 +1,11 @@
-﻿using Foodo.API.Models.Request;
-using Foodo.API.Models.Request.Customer;
-using Foodo.Application.Abstraction.Customer;
+﻿using Foodo.Application.Abstraction.Customer;
 using Foodo.Application.Abstraction.Profile.CustomerProfile;
-using Foodo.Application.Models.Input;
-using Foodo.Application.Models.Input.Customer;
 using Foodo.Application.Models.Input.Profile.Customer;
 using Foodo.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Serilog;
 using System.Security.Claims;
 
 namespace Foodo.API.Controllers
@@ -37,13 +34,11 @@ namespace Foodo.API.Controllers
 	{
 		private readonly ICustomerService _service;
 		private readonly ICustomerAdressService _profileService;
-		private readonly ILogger<CustomersController> _logger;
 
-		public CustomersController(ICustomerService service,ICustomerAdressService profileService, ILogger<CustomersController> logger)
+		public CustomersController(ICustomerService service, ICustomerAdressService profileService)
 		{
 			_service = service;
 			_profileService = profileService;
-			_logger = logger;
 		}
 
 		#region Get Profile
@@ -55,13 +50,11 @@ namespace Foodo.API.Controllers
 		/// <response code="200">Profile retrieved successfully.</response>
 		/// <response code="400">Failed to retrieve profile.</response>
 		[HttpGet("profile")]
-		[Authorize(Roles =nameof(UserType.Customer))]
+		[Authorize(Roles = nameof(UserType.Customer))]
 		[EnableRateLimiting("FixedWindowPolicy")]
 		public async Task<IActionResult> GetProfile()
 		{
-			var UserId= User.FindFirstValue(ClaimTypes.NameIdentifier);
-			_logger.LogInformation("Fetching profile for CustomerId: {CustomerId}", UserId);
-
+			var UserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 			var result = await _profileService.GetCustomerProfile(new CustomerGetCustomerProfileInput
 			{
 				UserId = UserId
@@ -69,7 +62,7 @@ namespace Foodo.API.Controllers
 
 			if (!result.IsSuccess)
 			{
-				_logger.LogWarning("Failed to retrieve customer profile: {Message}", result.Message);
+				Log.Warning("Failed to retrieve customer profile: {Message}", result.Message);
 				return BadRequest(result.Message);
 			}
 

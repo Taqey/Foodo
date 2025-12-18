@@ -12,7 +12,7 @@ namespace Foodo.Infrastructure.Services
 			_cache = cache;
 		}
 
-		public void Set (string key, object value)
+		public void Set(string key, object value)
 		{
 			_cache.Set(key, value);
 		}

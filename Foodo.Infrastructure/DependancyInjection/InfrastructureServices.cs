@@ -1,9 +1,12 @@
 ﻿using Foodo.Application.Abstraction.Authentication;
 using Foodo.Application.Abstraction.InfraRelated;
 using Foodo.Application.Abstraction.InfrastructureRelatedServices;
+using Foodo.Application.Abstraction.InfrastructureRelatedServices.ReadServices.Order;
+using Foodo.Application.Abstraction.InfrastructureRelatedServices.ReadServices.Orders;
 using Foodo.Domain.Repository;
 using Foodo.Infrastructure.Repository;
 using Foodo.Infrastructure.Services;
+using Foodo.Infrastructure.Services.ReadServices.Order;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Foodo.API.Extensions
@@ -23,7 +26,10 @@ namespace Foodo.API.Extensions
 			services.AddScoped<IOrderRepository, OrderRepository>();
 			services.AddScoped<IProductPhotoCustomRepository, ProductPhotoCustomRepository>();
 			services.AddSingleton<IPhotoAccessorService, PhotoAccessorService>();
-
+			services.AddScoped<ICustomerOrdersReadService, CustomerOrdersReadService>();
+			services.AddScoped<IMerchantOrdersReadService, MerchantOrdersReadService>();
+			services.AddScoped<ICustomerOrderReadService, CustomerOrderReadService>();
+			services.AddScoped<IMerchantOrderReadService, MerchantOrderReadService>();
 			return services;
 		}
 	}

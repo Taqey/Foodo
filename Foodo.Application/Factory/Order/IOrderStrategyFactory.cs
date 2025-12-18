@@ -1,10 +1,14 @@
-﻿using System.Security.Claims;
+﻿using Foodo.Application.Queries.Orders.GetOrders.GetOrder;
+using Foodo.Application.Queries.Orders.GetOrders.GetOrders;
+using System.Security.Claims;
 
 namespace Foodo.Application.Factory.Order
 {
 	public interface IOrderStrategyFactory
 	{
-		IOrderStrategy GetStrategy(ClaimsPrincipal user);
+		GetOrdersQuery GetOrdersStrategy(ClaimsPrincipal user, int page, int pageSize);
+		GetOrderQuery GetOrderStrategy(ClaimsPrincipal user, int orderId);
+
 	}
 
 }

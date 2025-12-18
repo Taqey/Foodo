@@ -1,13 +1,9 @@
 ﻿using Foodo.Application.Abstraction.InfraRelated;
 using Foodo.Infrastructure.Services;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
-using Microsoft.Extensions.DependencyInjection;
-using System;
 using System.Threading.RateLimiting;
 using ZiggyCreatures.Caching.Fusion;
-using ZiggyCreatures.Caching.Fusion.Backplane.StackExchangeRedis;
 using ZiggyCreatures.Caching.Fusion.Serialization.SystemTextJson;
 
 namespace Foodo.API.Extensions

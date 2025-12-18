@@ -7,11 +7,19 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Dapper" Version="2.1.66" />
+    <PackageReference Include="MediatR" Version="14.0.0" />
+    <PackageReference Include="MediatR.Extensions.Autofac.DependencyInjection" Version="13.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.3.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Foodo.Domain\Foodo.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Queries\Orders\GetOrder\GetCustomerOrder\" />
+    <Folder Include="Queries\Orders\GetOrder\GetMerchantOrder\" />
   </ItemGroup>
 
 </Project>

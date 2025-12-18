@@ -1,26 +1,12 @@
 ﻿using Foodo.Application.Models.Dto;
 using Foodo.Application.Models.Dto.Customer;
-using Foodo.Application.Models.Dto.Merchant;
-using Foodo.Application.Models.Dto.Product;
 using Foodo.Application.Models.Input;
-using Foodo.Application.Models.Input.Merchant;
 using Foodo.Application.Models.Response;
 
 namespace Foodo.Application.Abstraction.Merchant;
 
 public interface IMerchantService
 {
-	Task<ApiResponse<MerchantProductDto>> ReadProductByIdAsync(int productId);
-	Task<ApiResponse<PaginationDto<MerchantProductDto>>> ReadAllProductsAsync(ProductPaginationInput input);
-	Task<ApiResponse<CreateProductDto>> CreateProductAsync(ProductInput request);
-	Task<ApiResponse> UpdateProductAsync(ProductUpdateInput input);
-	Task<ApiResponse> DeleteProductAsync(int productId);
-	Task<ApiResponse> AddProductAttributeAsync(int productDetailId, AttributeCreateInput attributes);
-	Task<ApiResponse> RemoveProductAttributeAsync(int productDetailId, AttributeDeleteInput attributes);
-	Task<ApiResponse> AddProductCategoriesAsync(ProductCategoryInput categoryInput);
-	Task<ApiResponse> RemoveProductCategoriesAsync(ProductCategoryInput categoryInput);
-	//Task<ApiResponse<PaginationDto<MerchantOrderDto>>> ReadAllOrdersAsync(ProductPaginationInput input);
-	//Task<ApiResponse<MerchantOrderDto>> ReadOrderByIdAsync(int orderId);
-	//Task<ApiResponse> UpdateOrderStatusAsync(int orderId, OrderStatusUpdateInput input);
+
 	Task<ApiResponse<PaginationDto<CustomerDto>>> ReadAllPurchasedCustomersAsync(ProductPaginationInput input);
 }

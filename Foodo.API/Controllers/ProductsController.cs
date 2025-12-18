@@ -1,8 +1,7 @@
-﻿using Foodo.API.Models.Request;
-using Foodo.API.Models.Request.Customer;
+﻿using Foodo.API.Filters;
+using Foodo.API.Models.Request;
 using Foodo.API.Models.Request.Merchant;
-using Foodo.Application.Abstraction.Customer;
-using Foodo.Application.Abstraction.Merchant;
+using Foodo.Application.Abstraction.Product;
 using Foodo.Application.Factory.Product;
 using Foodo.Application.Models.Dto;
 using Foodo.Application.Models.Dto.Product;
@@ -12,7 +11,6 @@ using Foodo.Application.Models.Input.Merchant;
 using Foodo.Application.Models.Response;
 using Foodo.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Serilog;
@@ -24,11 +22,11 @@ namespace Foodo.API.Controllers
 	[ApiController]
 	public class ProductsController : ControllerBase
 	{
-		private readonly ICustomerService _customerService;
-		private readonly IMerchantService _merchantService;
+		private readonly ICustomerProductService _customerService;
+		private readonly IMerchantProductService _merchantService;
 		private readonly IProductStrategyFactory _factory;
 
-		public ProductsController(ICustomerService customerService ,IMerchantService merchantService,IProductStrategyFactory factory)
+		public ProductsController(ICustomerProductService customerService, IMerchantProductService merchantService, IProductStrategyFactory factory)
 		{
 			_customerService = customerService;
 			_merchantService = merchantService;
@@ -43,6 +41,7 @@ namespace Foodo.API.Controllers
 		/// <param name="categoryId">Optional category filter.</param>
 		/// <param name="restaurantId">Optional restaurant filter.</param>
 		/// <returns>Filtered and paginated list of products.</returns>
+
 		[HttpGet]
 		[EnableRateLimiting("TokenBucketPolicy")]
 		public async Task<IActionResult> GetProducts(
@@ -50,19 +49,6 @@ namespace Foodo.API.Controllers
 			[FromQuery] int? categoryId = null,
 			[FromQuery] string? restaurantId = null)
 		{
-			Log.Information(
-				"Get products attempt started | Category={Category} | Restaurant={Restaurant} | Page={Page} | PageSize={PageSize} | TraceId={TraceId}",
-				categoryId, restaurantId, request.PageNumber, request.PageSize, HttpContext.TraceIdentifier
-			);
-
-			if (!ModelState.IsValid)
-			{
-				var errors = string.Join(" | ",
-					ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
-
-				Log.Warning("Validation failed | Errors={Errors} | TraceId={TraceId}", errors, HttpContext.TraceIdentifier);
-				return BadRequest(new { message = errors, traceId = HttpContext.TraceIdentifier });
-			}
 			var strategy = _factory.GetStrategy(User);
 			ApiResponse<PaginationDto<ProductBaseDto>> result = null;
 			ApiResponse<PaginationDto<CustomerProductDto>> resultDto = null;
@@ -80,7 +66,7 @@ namespace Foodo.API.Controllers
 				result = await strategy.ReadProducts(new ProductPaginationInput { Page = request.PageNumber, PageSize = request.PageSize });
 			}
 
-			
+
 			if (!result.IsSuccess)
 			{
 				Log.Warning("Get products failed | Reason={Reason} | TraceId={TraceId}", result.Message, HttpContext.TraceIdentifier);
@@ -92,12 +78,6 @@ namespace Foodo.API.Controllers
 				Log.Warning("Get products returned empty | TraceId={TraceId}", HttpContext.TraceIdentifier);
 				return Ok(new { message = "No products found", traceId = HttpContext.TraceIdentifier, data = result.Data });
 			}
-
-			Log.Information(
-				"Get products succeeded | Count={Count} | TraceId={TraceId}",
-				result.Data.Items.Count, HttpContext.TraceIdentifier
-			);
-
 			return Ok(new { message = "Products retrieved successfully", traceId = HttpContext.TraceIdentifier, data = result.Data });
 		}
 
@@ -112,30 +92,10 @@ namespace Foodo.API.Controllers
 		/// <response code="404">Product not found.</response>
 		[HttpGet("{id}")]
 		[EnableRateLimiting("TokenBucketPolicy")]
+		[ServiceFilter(typeof(ValidateIdFilter))]
 		public async Task<IActionResult> GetProductbyId(int id)
 		{
-			Log.Information(
-				"GetProductById attempt started | ProductId={ProductId} | TraceId={TraceId}",
-				id,
-				HttpContext.TraceIdentifier
-			);
-
-			if (id <= 0)
-			{
-				Log.Warning(
-					"Get all Products By Id failed: Invalid product id | ProductId={ProductId} | TraceId={TraceId}",
-					id,
-					HttpContext.TraceIdentifier
-				);
-
-				return BadRequest(new
-				{
-					message = "Invalid product id.",
-					traceId = HttpContext.TraceIdentifier
-				});
-			}
 			var strategy = _factory.GetStrategy(User);
-
 			var result = await strategy.ReadProduct(new ItemByIdInput
 			{
 				ItemId = id.ToString()
@@ -155,13 +115,6 @@ namespace Foodo.API.Controllers
 					traceId = HttpContext.TraceIdentifier
 				});
 			}
-
-			Log.Information(
-				"Get all Products By Id  succeeded | ProductId={ProductId} | TraceId={TraceId}",
-				id,
-				HttpContext.TraceIdentifier
-			);
-
 			return Ok(result.Data);
 		}
 
@@ -179,42 +132,6 @@ namespace Foodo.API.Controllers
 		public async Task<IActionResult> CreateProduct([FromBody] ProductRequest request)
 		{
 			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-			Log.Information(
-				"Create product attempt started | MerchantId={MerchantId} | ProductName={ProductName} | TraceId={TraceId}",
-				userId,
-				request?.ProductName,
-				HttpContext.TraceIdentifier
-			);
-
-			// ============================
-			// Validate Request
-			// ============================
-			if (!ModelState.IsValid)
-			{
-				var errors = string.Join(" | ",
-					ModelState.Values
-						.SelectMany(v => v.Errors)
-						.Select(e => e.ErrorMessage));
-
-				Log.Warning(
-					"Validation failed while creating product | MerchantId={MerchantId} | Errors={Errors} | TraceId={TraceId}",
-					userId,
-					errors,
-					HttpContext.TraceIdentifier
-				);
-
-				return BadRequest(new
-				{
-					message = "Invalid request data",
-					errors,
-					traceId = HttpContext.TraceIdentifier
-				});
-			}
-
-			// ============================
-			// Call Service
-			// ============================
 			var result = await _merchantService.CreateProductAsync(new ProductInput
 			{
 				Id = userId,
@@ -240,14 +157,6 @@ namespace Foodo.API.Controllers
 					traceId = HttpContext.TraceIdentifier
 				});
 			}
-
-			Log.Information(
-				"Product created successfully | MerchantId={MerchantId} | ProductName={ProductName} | TraceId={TraceId}",
-				userId,
-				request.ProductName,
-				HttpContext.TraceIdentifier
-			);
-
 			return Ok(new
 			{
 				message = "Product created successfully",
@@ -266,61 +175,10 @@ namespace Foodo.API.Controllers
 		[HttpPut("{id}")]
 		[EnableRateLimiting("SlidingWindowPolicy")]
 		[Authorize(Roles = nameof(UserType.Merchant))]
-
+		[ServiceFilter(typeof(ValidateIdFilter))]
 		public async Task<IActionResult> UpdateProduct(int id, [FromBody] ProductUpdateRequest request)
 		{
-			Log.Information(
-				"Update product attempt started | ProductId={ProductId} | TraceId={TraceId}",
-				id,
-				HttpContext.TraceIdentifier
-			);
 
-			// ============================
-			// Validate Product ID
-			// ============================
-			if (id <= 0)
-			{
-				Log.Warning(
-					"Invalid ProductId provided | ProductId={ProductId} | TraceId={TraceId}",
-					id,
-					HttpContext.TraceIdentifier
-				);
-
-				return BadRequest(new
-				{
-					message = "Invalid product ID",
-					traceId = HttpContext.TraceIdentifier
-				});
-			}
-
-			// ============================
-			// Validate Request Body
-			// ============================
-			if (!ModelState.IsValid)
-			{
-				var errors = string.Join(" | ",
-					ModelState.Values
-						.SelectMany(v => v.Errors)
-						.Select(e => e.ErrorMessage));
-
-				Log.Warning(
-					"Validation failed while updating product | ProductId={ProductId} | Errors={Errors} | TraceId={TraceId}",
-					id,
-					errors,
-					HttpContext.TraceIdentifier
-				);
-
-				return BadRequest(new
-				{
-					message = "Invalid request data",
-					errors,
-					traceId = HttpContext.TraceIdentifier
-				});
-			}
-
-			// ============================
-			// Call Service
-			// ============================
 			var result = await _merchantService.UpdateProductAsync(new ProductUpdateInput
 			{
 				productId = id,
@@ -331,26 +189,13 @@ namespace Foodo.API.Controllers
 
 			if (!result.IsSuccess)
 			{
-				Log.Warning(
-					"Product update failed | ProductId={ProductId} | Reason={Reason} | TraceId={TraceId}",
-					id,
-					result.Message,
-					HttpContext.TraceIdentifier
-				);
-
+				Log.Warning("Product update failed | ProductId={ProductId} | Reason={Reason} | TraceId={TraceId}", id, result.Message, HttpContext.TraceIdentifier);
 				return BadRequest(new
 				{
 					message = result.Message,
 					traceId = HttpContext.TraceIdentifier
 				});
 			}
-
-			Log.Information(
-				"Product updated successfully | ProductId={ProductId} | TraceId={TraceId}",
-				id,
-				HttpContext.TraceIdentifier
-			);
-
 			return Ok(new
 			{
 				message = "Product updated successfully",
@@ -368,59 +213,20 @@ namespace Foodo.API.Controllers
 		[HttpDelete("{id}")]
 		[EnableRateLimiting("FixedWindowPolicy")]
 		[Authorize(Roles = nameof(UserType.Merchant))]
+		[ServiceFilter(typeof(ValidateIdFilter))]
 		public async Task<IActionResult> DeleteProduct(int id)
 		{
-			Log.Information(
-				"Delete product attempt started | ProductId={ProductId} | TraceId={TraceId}",
-				id,
-				HttpContext.TraceIdentifier
-			);
-
-			// ============================
-			// Validate Product ID
-			// ============================
-			if (id <= 0)
-			{
-				Log.Warning(
-					"Invalid ProductId provided | ProductId={ProductId} | TraceId={TraceId}",
-					id,
-					HttpContext.TraceIdentifier
-				);
-
-				return BadRequest(new
-				{
-					message = "Invalid product ID",
-					traceId = HttpContext.TraceIdentifier
-				});
-			}
-
-			// ============================
-			// Call Service
-			// ============================
 			var result = await _merchantService.DeleteProductAsync(id);
 
 			if (!result.IsSuccess)
 			{
-				Log.Warning(
-					"Product deletion failed | ProductId={ProductId} | Reason={Reason} | TraceId={TraceId}",
-					id,
-					result.Message,
-					HttpContext.TraceIdentifier
-				);
-
+				Log.Warning("Product deletion failed | ProductId={ProductId} | Reason={Reason} | TraceId={TraceId}", id, result.Message, HttpContext.TraceIdentifier);
 				return BadRequest(new
 				{
 					message = result.Message,
 					traceId = HttpContext.TraceIdentifier
 				});
 			}
-
-			Log.Information(
-				"Product deleted successfully | ProductId={ProductId} | TraceId={TraceId}",
-				id,
-				HttpContext.TraceIdentifier
-			);
-
 			return Ok(new
 			{
 				message = "Product deleted successfully",
@@ -443,60 +249,9 @@ namespace Foodo.API.Controllers
 		[HttpPut("{id}/attributes")]
 		[EnableRateLimiting("SlidingWindowPolicy")]
 		[Authorize(Roles = nameof(UserType.Merchant))]
+		[ServiceFilter(typeof(ValidateIdFilter))]
 		public async Task<IActionResult> AddAttribute(int id, [FromBody] AttributeCreateRequest request)
 		{
-			Log.Information(
-				"Add product attributes attempt started | ProductId={ProductId} | TraceId={TraceId}",
-				id,
-				HttpContext.TraceIdentifier
-			);
-
-			// ============================
-			// Validate Product ID
-			// ============================
-			if (id <= 0)
-			{
-				Log.Warning(
-					"Invalid ProductId provided | ProductId={ProductId} | TraceId={TraceId}",
-					id,
-					HttpContext.TraceIdentifier
-				);
-
-				return BadRequest(new
-				{
-					message = "Invalid product ID",
-					traceId = HttpContext.TraceIdentifier
-				});
-			}
-
-			// ============================
-			// Validate Request Body
-			// ============================
-			if (!ModelState.IsValid)
-			{
-				var errors = string.Join(" | ",
-					ModelState.Values
-						.SelectMany(v => v.Errors)
-						.Select(e => e.ErrorMessage));
-
-				Log.Warning(
-					"Validation failed while adding attributes | ProductId={ProductId} | Errors={Errors} | TraceId={TraceId}",
-					id,
-					errors,
-					HttpContext.TraceIdentifier
-				);
-
-				return BadRequest(new
-				{
-					message = "Invalid request data",
-					errors,
-					traceId = HttpContext.TraceIdentifier
-				});
-			}
-
-			// ============================
-			// Call Service
-			// ============================
 			var result = await _merchantService.AddProductAttributeAsync(id, new AttributeCreateInput
 			{
 				Attributes = request.Attributes
@@ -504,26 +259,13 @@ namespace Foodo.API.Controllers
 
 			if (!result.IsSuccess)
 			{
-				Log.Warning(
-					"Adding attributes failed | ProductId={ProductId} | Reason={Reason} | TraceId={TraceId}",
-					id,
-					result.Message,
-					HttpContext.TraceIdentifier
-				);
-
+				Log.Warning("Adding attributes failed | ProductId={ProductId} | Reason={Reason} | TraceId={TraceId}", id, result.Message, HttpContext.TraceIdentifier);
 				return BadRequest(new
 				{
 					message = result.Message,
 					traceId = HttpContext.TraceIdentifier
 				});
 			}
-
-			Log.Information(
-				"Attributes added successfully | ProductId={ProductId} | TraceId={TraceId}",
-				id,
-				HttpContext.TraceIdentifier
-			);
-
 			return Ok(new
 			{
 				message = "Attributes added successfully",
@@ -543,60 +285,9 @@ namespace Foodo.API.Controllers
 		[HttpDelete("{id}/attributes")]
 		[EnableRateLimiting("SlidingWindowPolicy")]
 		[Authorize(Roles = nameof(UserType.Merchant))]
+		[ServiceFilter(typeof(ValidateIdFilter))]
 		public async Task<IActionResult> RemoveAttribute(int id, [FromBody] AttributeDeleteRequest request)
 		{
-			Log.Information(
-				"Remove product attributes attempt started | ProductId={ProductId} | TraceId={TraceId}",
-				id,
-				HttpContext.TraceIdentifier
-			);
-
-			// ============================
-			// Validate Product ID
-			// ============================
-			if (id <= 0)
-			{
-				Log.Warning(
-					"Invalid ProductId provided | ProductId={ProductId} | TraceId={TraceId}",
-					id,
-					HttpContext.TraceIdentifier
-				);
-
-				return BadRequest(new
-				{
-					message = "Invalid product ID",
-					traceId = HttpContext.TraceIdentifier
-				});
-			}
-
-			// ============================
-			// Validate Request Body
-			// ============================
-			if (!ModelState.IsValid)
-			{
-				var errors = string.Join(" | ",
-					ModelState.Values
-						.SelectMany(v => v.Errors)
-						.Select(e => e.ErrorMessage));
-
-				Log.Warning(
-					"Validation failed while removing attributes | ProductId={ProductId} | Errors={Errors} | TraceId={TraceId}",
-					id,
-					errors,
-					HttpContext.TraceIdentifier
-				);
-
-				return BadRequest(new
-				{
-					message = "Invalid request data",
-					errors,
-					traceId = HttpContext.TraceIdentifier
-				});
-			}
-
-			// ============================
-			// Call Service
-			// ============================
 			var result = await _merchantService.RemoveProductAttributeAsync(id, new AttributeDeleteInput
 			{
 				Attributes = request.Attributes
@@ -604,12 +295,7 @@ namespace Foodo.API.Controllers
 
 			if (!result.IsSuccess)
 			{
-				Log.Warning(
-					"Removing attributes failed | ProductId={ProductId} | Reason={Reason} | TraceId={TraceId}",
-					id,
-					result.Message,
-					HttpContext.TraceIdentifier
-				);
+				Log.Warning("Removing attributes failed | ProductId={ProductId} | Reason={Reason} | TraceId={TraceId}", id, result.Message, HttpContext.TraceIdentifier);
 
 				return BadRequest(new
 				{
@@ -617,13 +303,6 @@ namespace Foodo.API.Controllers
 					traceId = HttpContext.TraceIdentifier
 				});
 			}
-
-			Log.Information(
-				"Attributes removed successfully | ProductId={ProductId} | TraceId={TraceId}",
-				id,
-				HttpContext.TraceIdentifier
-			);
-
 			return Ok(new
 			{
 				message = "Attributes removed successfully",
@@ -647,60 +326,9 @@ namespace Foodo.API.Controllers
 		[HttpPut("{Id}/categories")]
 		[EnableRateLimiting("SlidingWindowPolicy")]
 		[Authorize(Roles = nameof(UserType.Merchant))]
+		[ServiceFilter(typeof(ValidateIdFilter))]
 		public async Task<IActionResult> AddCategories(int Id, [FromBody] CategoryRequest request)
 		{
-			Log.Information(
-				"Add categories attempt started | ProductId={ProductId} | TraceId={TraceId}",
-				Id,
-				HttpContext.TraceIdentifier
-			);
-
-			// ============================
-			// Validate Product ID
-			// ============================
-			if (Id <= 0)
-			{
-				Log.Warning(
-					"Invalid ProductId provided | ProductId={ProductId} | TraceId={TraceId}",
-					Id,
-					HttpContext.TraceIdentifier
-				);
-
-				return BadRequest(new
-				{
-					message = "Invalid product ID",
-					traceId = HttpContext.TraceIdentifier
-				});
-			}
-
-			// ============================
-			// Validate Request Body
-			// ============================
-			if (!ModelState.IsValid)
-			{
-				var errors = string.Join(" | ",
-					ModelState.Values
-						.SelectMany(v => v.Errors)
-						.Select(e => e.ErrorMessage));
-
-				Log.Warning(
-					"Validation failed while adding categories | ProductId={ProductId} | Errors={Errors} | TraceId={TraceId}",
-					Id,
-					errors,
-					HttpContext.TraceIdentifier
-				);
-
-				return BadRequest(new
-				{
-					message = "Invalid request data",
-					errors,
-					traceId = HttpContext.TraceIdentifier
-				});
-			}
-
-			// ============================
-			// Call Service
-			// ============================
 			var result = await _merchantService.AddProductCategoriesAsync(new ProductCategoryInput
 			{
 				restaurantCategories = request.Categories,
@@ -709,12 +337,7 @@ namespace Foodo.API.Controllers
 
 			if (!result.IsSuccess)
 			{
-				Log.Warning(
-					"Add categories failed | ProductId={ProductId} | Reason={Reason} | TraceId={TraceId}",
-					Id,
-					result.Message,
-					HttpContext.TraceIdentifier
-				);
+				Log.Warning("Add categories failed | ProductId={ProductId} | Reason={Reason} | TraceId={TraceId}", Id, result.Message, HttpContext.TraceIdentifier);
 
 				return BadRequest(new
 				{
@@ -722,13 +345,6 @@ namespace Foodo.API.Controllers
 					traceId = HttpContext.TraceIdentifier
 				});
 			}
-
-			Log.Information(
-				"Categories added successfully | ProductId={ProductId} | TraceId={TraceId}",
-				Id,
-				HttpContext.TraceIdentifier
-			);
-
 			return Ok(new
 			{
 				message = "Categories added successfully",
@@ -748,60 +364,9 @@ namespace Foodo.API.Controllers
 		[HttpDelete("{Id}/categories")]
 		[EnableRateLimiting("SlidingWindowPolicy")]
 		[Authorize(Roles = nameof(UserType.Merchant))]
+		[ServiceFilter(typeof(ValidateIdFilter))]
 		public async Task<IActionResult> RemoveCategories(int Id, [FromBody] CategoryRequest request)
 		{
-			Log.Information(
-				"Remove categories attempt started | ProductId={ProductId} | TraceId={TraceId}",
-				Id,
-				HttpContext.TraceIdentifier
-			);
-
-			// ============================
-			// Validate Product ID
-			// ============================
-			if (Id <= 0)
-			{
-				Log.Warning(
-					"Invalid ProductId provided | ProductId={ProductId} | TraceId={TraceId}",
-					Id,
-					HttpContext.TraceIdentifier
-				);
-
-				return BadRequest(new
-				{
-					message = "Invalid product ID",
-					traceId = HttpContext.TraceIdentifier
-				});
-			}
-
-			// ============================
-			// Validate Request Body
-			// ============================
-			if (!ModelState.IsValid)
-			{
-				var errors = string.Join(" | ",
-					ModelState.Values
-						.SelectMany(v => v.Errors)
-						.Select(e => e.ErrorMessage));
-
-				Log.Warning(
-					"Validation failed while removing categories | ProductId={ProductId} | Errors={Errors} | TraceId={TraceId}",
-					Id,
-					errors,
-					HttpContext.TraceIdentifier
-				);
-
-				return BadRequest(new
-				{
-					message = "Invalid request data",
-					errors,
-					traceId = HttpContext.TraceIdentifier
-				});
-			}
-
-			// ============================
-			// Call Service
-			// ============================
 			var result = await _merchantService.RemoveProductCategoriesAsync(new ProductCategoryInput
 			{
 				ProductId = Id,
@@ -810,34 +375,19 @@ namespace Foodo.API.Controllers
 
 			if (!result.IsSuccess)
 			{
-				Log.Warning(
-					"Remove categories failed | ProductId={ProductId} | Reason={Reason} | TraceId={TraceId}",
-					Id,
-					result.Message,
-					HttpContext.TraceIdentifier
-				);
-
+				Log.Warning("Remove categories failed | ProductId={ProductId} | Reason={Reason} | TraceId={TraceId}", Id, result.Message, HttpContext.TraceIdentifier);
 				return BadRequest(new
 				{
 					message = result.Message,
 					traceId = HttpContext.TraceIdentifier
 				});
 			}
-
-			Log.Information(
-				"Categories removed successfully | ProductId={ProductId} | TraceId={TraceId}",
-				Id,
-				HttpContext.TraceIdentifier
-			);
-
 			return Ok(new
 			{
 				message = "Categories removed successfully",
 				traceId = HttpContext.TraceIdentifier
 			});
 		}
-
-
 		#endregion
 
 	}
