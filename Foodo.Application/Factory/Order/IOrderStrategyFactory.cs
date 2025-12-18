@@ -1,4 +1,4 @@
-﻿using Foodo.Application.Queries.Orders.GetOrders.GetOrder;
+﻿using Foodo.Application.Queries.Orders.GetOrder.GetOrder;
 using Foodo.Application.Queries.Orders.GetOrders.GetOrders;
 using System.Security.Claims;
 

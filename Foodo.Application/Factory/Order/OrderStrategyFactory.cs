@@ -1,8 +1,8 @@
-﻿using Foodo.Application.Queries.Orders.GetOrders.GetCustomerOrder;
+﻿using Foodo.Application.Queries.Orders.GetOrder.GetCustomerOrder;
+using Foodo.Application.Queries.Orders.GetOrder.GetMerchantOrder;
+using Foodo.Application.Queries.Orders.GetOrder.GetOrder;
 using Foodo.Application.Queries.Orders.GetOrders.GetCustomerOrders;
-using Foodo.Application.Queries.Orders.GetOrders.GetMerchantOrder;
 using Foodo.Application.Queries.Orders.GetOrders.GetMerchantOrders;
-using Foodo.Application.Queries.Orders.GetOrders.GetOrder;
 using Foodo.Application.Queries.Orders.GetOrders.GetOrders;
 using Foodo.Domain.Enums;
 using System.Security.Claims;

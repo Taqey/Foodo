@@ -1,4 +1,5 @@
-﻿using Foodo.API.Models.Request.Profile.Customer;
+﻿using Foodo.API.Filters;
+using Foodo.API.Models.Request.Profile.Customer;
 using Foodo.Application.Abstraction.Profile.CustomerProfile;
 using Foodo.Application.Abstraction.Profile.MerchantProfile;
 using Foodo.Application.Models.Input.Profile.Customer;
@@ -83,6 +84,7 @@ namespace Foodo.API.Controllers
 		/// <response code="400">Failed to delete address.</response>
 		[HttpDelete("{id}")]
 		[Authorize]
+		[ServiceFilter(typeof(ValidateIdFilter))]
 		public async Task<IActionResult> DeleteAddress(int id)
 		{
 			ApiResponse result = null;
@@ -122,9 +124,9 @@ namespace Foodo.API.Controllers
 		/// <response code="400">Failed to set default address.</response>
 		[HttpPut("{id}/default")]
 		[Authorize(Roles = nameof(UserType.Customer))]
+		[ServiceFilter(typeof(ValidateIdFilter))]
 		public async Task<IActionResult> SetDefaultAddress(int id)
 		{
-
 			var result = await _customerAdressService.MakeAdressDefault(new CustomerMakeAdressDefaultInput
 			{
 				CustomerId = UserId,

@@ -2,7 +2,7 @@
 using Foodo.Application.Models.Response;
 using MediatR;
 
-namespace Foodo.Application.Queries.Orders.GetOrders.GetOrder
+namespace Foodo.Application.Queries.Orders.GetOrder.GetOrder
 {
 	public class GetOrderQuery : IRequest<ApiResponse<OrderBaseDto>>
 	{
