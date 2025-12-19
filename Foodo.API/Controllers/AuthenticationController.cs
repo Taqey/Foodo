@@ -1,8 +1,15 @@
 ﻿using Foodo.API.Models.Request.Authentication;
-using Foodo.Application.Abstraction.Authentication;
-using Foodo.Application.Models.Input.Auth;
-using Foodo.Application.Models.Input.Merchant;
+using Foodo.Application.Commands.Authentication.AddCategory;
+using Foodo.Application.Commands.Authentication.ChangePassword;
+using Foodo.Application.Commands.Authentication.ForgetPassword;
+using Foodo.Application.Commands.Authentication.Login;
+using Foodo.Application.Commands.Authentication.RefreshToken;
+using Foodo.Application.Commands.Authentication.Register;
+using Foodo.Application.Commands.Authentication.SubmitForgetPasswordRequest;
+using Foodo.Application.Commands.Authentication.VerifyEmail;
+using Foodo.Application.Commands.Authentication.VerifyEmailRequest;
 using Foodo.Domain.Enums;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -52,11 +59,11 @@ namespace Foodo.API.Controllers
 
 	public class AuthenticationController : ControllerBase
 	{
-		private readonly IAuthenticationService _service;
+		private readonly IMediator _mediator;
 
-		public AuthenticationController(IAuthenticationService service)
+		public AuthenticationController(IMediator mediator)
 		{
-			_service = service;
+			_mediator = mediator;
 		}
 
 		#region LOGIN
@@ -70,7 +77,7 @@ namespace Foodo.API.Controllers
 		[HttpPost("login")]
 		public async Task<IActionResult> Login([FromForm] LoginRequest request)
 		{
-			var result = await _service.Login(new LoginInput
+			var result = await _mediator.Send(new LoginCommand
 			{
 				Email = request.Email,
 				Password = request.Password
@@ -106,7 +113,7 @@ namespace Foodo.API.Controllers
 		[HttpPost("register-customer")]
 		public async Task<IActionResult> RegisterCustomer([FromForm] CustomerRegisterRequest request)
 		{
-			var input = new RegisterInput
+			var input = new RegisterCommand
 			{
 				Email = request.Email,
 				Password = request.Password,
@@ -123,7 +130,7 @@ namespace Foodo.API.Controllers
 				PostalCode = request.PostalCode,
 				Country = request.Country
 			};
-			var result = await _service.Register(input);
+			var result = await _mediator.Send(input);
 			if (!result.IsSuccess)
 			{
 				Log.Warning("Customer registration failed | Email={Email} | Reason={Reason} | TraceId={TraceId}", request.Email, result.Message, HttpContext.TraceIdentifier);
@@ -151,7 +158,7 @@ namespace Foodo.API.Controllers
 		[HttpPost("register-merchant")]
 		public async Task<IActionResult> RegisterMerchant([FromForm] MerchantRegisterRequest request)
 		{
-			var input = new RegisterInput
+			var input = new RegisterCommand
 			{
 				Email = request.Email,
 				Password = request.Password,
@@ -160,7 +167,7 @@ namespace Foodo.API.Controllers
 				UserType = UserType.Merchant,
 				UserName = request.UserName
 			};
-			var result = await _service.Register(input);
+			var result = await _mediator.Send(input);
 			if (!result.IsSuccess)
 			{
 				Log.Warning("Merchant registration failed | Email={Email} | Reason={Reason} | TraceId={TraceId}", request.Email, result.Message, HttpContext.TraceIdentifier);
@@ -187,7 +194,7 @@ namespace Foodo.API.Controllers
 		[HttpPost("add-category")]
 		public async Task<IActionResult> AddCategory([FromBody] AddCategoryRequest request)
 		{
-			var result = await _service.AddCategory(new CategoryInput
+			var result = await _mediator.Send(new AddCategoryCommand
 			{
 				UserId = request.UserId,
 				restaurantCategories = request.RestaurantCategories
@@ -224,7 +231,7 @@ namespace Foodo.API.Controllers
 		public async Task<IActionResult> ChangePassword([FromForm] ChangePasswordRequest request)
 		{
 			var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-			var result = await _service.ChangePassword(new ChangePasswordInput
+			var result = await _mediator.Send(new ChangePasswordCommand
 			{
 				CurrentPassword = request.CurrentPassword,
 				NewPassword = request.NewPassword,
@@ -253,7 +260,7 @@ namespace Foodo.API.Controllers
 		[HttpPost("submit-forget-password-request")]
 		public async Task<IActionResult> SubmitForgetPasswordRequest([FromForm] ForgetPasswordRequest request)
 		{
-			var result = await _service.SubmitForgetPasswordRequest(new SubmitForgetPasswordRequestInput { Email = request.Email });
+			var result = await _mediator.Send(new SubmitForgetPasswordRequestCommand { Email = request.Email });
 
 			if (!result.IsSuccess)
 			{
@@ -289,7 +296,7 @@ namespace Foodo.API.Controllers
 		[HttpPost("reset-password")]
 		public async Task<IActionResult> ResetPassword([FromForm] ResetPasswordRequest request)
 		{
-			var result = await _service.ForgetPassword(new ForgetPasswordInput
+			var result = await _mediator.Send(new ForgetPasswordCommand
 			{
 				Code = request.Code,
 				Password = request.NewPassword
@@ -333,7 +340,7 @@ namespace Foodo.API.Controllers
 					traceId = HttpContext.TraceIdentifier
 				});
 			}
-			var result = await _service.RefreshToken(refreshToken);
+			var result = await _mediator.Send(new RefreshTokenCommand { Token = refreshToken });
 
 			if (!result.IsSuccess)
 			{
@@ -370,7 +377,7 @@ namespace Foodo.API.Controllers
 			var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 			var email = User.FindFirst(ClaimTypes.Email)?.Value;
 			var role = User.FindFirst(ClaimTypes.Role)?.Value;
-			var result = await _service.VerifyEmailRequest(new VerifyEmailRequestInput
+			var result = await _mediator.Send(new VerifyEmailRequestCommand
 			{
 				Email = email,
 				Role = role,
@@ -405,7 +412,7 @@ namespace Foodo.API.Controllers
 		public async Task<IActionResult> VerifyEmail([FromForm] VerifyEmailRequest request)
 		{
 			var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-			var result = await _service.VerifyEmail(new VerifyEmailInput
+			var result = await _mediator.Send(new VerifyEmailCommand
 			{
 				Code = request.Code
 			});

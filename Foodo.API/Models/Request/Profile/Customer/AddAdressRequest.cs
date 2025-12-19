@@ -4,7 +4,7 @@ namespace Foodo.API.Models.Request.Profile.Customer
 {
 	public class AddAdressRequest
 	{
-		public List<CustomerAddAdressDto> Adresses { get; set; } = new List<CustomerAddAdressDto>();
+		public List<AddAdressDto> Adresses { get; set; } = new List<AddAdressDto>();
 
 	}
 }

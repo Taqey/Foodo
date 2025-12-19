@@ -1,6 +1,6 @@
 ﻿namespace Foodo.Application.Models.Dto.Profile.Customer
 {
-	public class CustomerAddAdressDto
+	public class AddAdressDto
 	{
 		public string City { get; set; }
 
