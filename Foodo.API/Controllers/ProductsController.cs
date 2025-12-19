@@ -1,14 +1,15 @@
 ﻿using Foodo.API.Filters;
 using Foodo.API.Models.Request;
 using Foodo.API.Models.Request.Merchant;
-using Foodo.Application.Abstraction.Product;
+using Foodo.Application.Commands.Products.AddProductAttribute;
+using Foodo.Application.Commands.Products.AddProductCategory;
+using Foodo.Application.Commands.Products.CreateProduct;
+using Foodo.Application.Commands.Products.DeleteProduct;
+using Foodo.Application.Commands.Products.RemoveProductAttribute;
+using Foodo.Application.Commands.Products.RemoveProductCategory;
+using Foodo.Application.Commands.Products.UpdateProduct;
 using Foodo.Application.Factory.Product;
-using Foodo.Application.Models.Dto;
-using Foodo.Application.Models.Dto.Product;
-using Foodo.Application.Models.Input;
-using Foodo.Application.Models.Input.Customer;
-using Foodo.Application.Models.Input.Merchant;
-using Foodo.Application.Models.Response;
+using Foodo.Application.Models.Enums;
 using Foodo.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -23,15 +24,15 @@ namespace Foodo.API.Controllers
 	[ApiController]
 	public class ProductsController : ControllerBase
 	{
-		private readonly ICustomerProductService _customerService;
-		private readonly IMerchantProductService _merchantService;
+		//private readonly ICustomerProductService _customerService;
+		//private readonly IMerchantProductService _merchantService;
 		private readonly IProductStrategyFactory _factory;
 		private readonly IMediator _mediator;
 
-		public ProductsController(ICustomerProductService customerService, IMerchantProductService merchantService, IProductStrategyFactory factory,IMediator mediator)
+		public ProductsController(IProductStrategyFactory factory, IMediator mediator)
 		{
-			_customerService = customerService;
-			_merchantService = merchantService;
+			//_customerService = customerService;
+			//_merchantService = merchantService;
 			_factory = factory;
 			_mediator = mediator;
 		}
@@ -45,44 +46,31 @@ namespace Foodo.API.Controllers
 		/// <param name="restaurantId">Optional restaurant filter.</param>
 		/// <returns>Filtered and paginated list of products.</returns>
 
-		//[HttpGet]
-		//[EnableRateLimiting("TokenBucketPolicy")]
-		//public async Task<IActionResult> GetProducts(
-		//	[FromQuery] PaginationRequest request,
-		//	[FromQuery] int? categoryId = null,
-		//	[FromQuery] string? restaurantId = null)
-		//{
-		//	var strategy = _factory.GetStrategy(User);
-		//	ApiResponse<PaginationDto<ProductBaseDto>> result = null;
-		//	ApiResponse<PaginationDto<CustomerProductDto>> resultDto = null;
-		//	if (categoryId.HasValue)
-		//	{
-		//		resultDto = await _customerService.ReadProductsByCategory(new ProductPaginationByCategoryInput { Page = request.PageNumber, PageSize = request.PageSize, Category = (FoodCategory)categoryId });
-		//	}
-		//	else if (!string.IsNullOrEmpty(restaurantId))
-		//	{
-		//		resultDto = await _customerService.ReadProductsByShop(new ProductPaginationByShopInput { MerchantId = restaurantId, Page = request.PageNumber, PageSize = request.PageSize });
+		[HttpGet]
+		[EnableRateLimiting("TokenBucketPolicy")]
+		public async Task<IActionResult> GetProducts(
+			[FromQuery] PaginationRequest request,
+			[FromQuery] FoodCategory? categoryId = null,
+			[FromQuery] string? restaurantId = null,
+			[FromQuery] ProductOrderBy? orderBy = null,
+			[FromQuery] OrderingDirection? orderingDirection = null
+			)
+		{
+			var strategy = _factory.GetProductsStrategy(User, request.PageNumber, request.PageSize, categoryId, restaurantId, orderBy, orderingDirection);
+			var result = await _mediator.Send(strategy);
+			if (!result.IsSuccess)
+			{
+				Log.Warning("Get products failed | Reason={Reason} | TraceId={TraceId}", result.Message, HttpContext.TraceIdentifier);
+				return BadRequest(new { message = result.Message, traceId = HttpContext.TraceIdentifier });
+			}
 
-		//	}
-		//	else
-		//	{
-		//		result = await strategy.ReadProducts(new ProductPaginationInput { Page = request.PageNumber, PageSize = request.PageSize });
-		//	}
-
-
-		//	if (!result.IsSuccess)
-		//	{
-		//		Log.Warning("Get products failed | Reason={Reason} | TraceId={TraceId}", result.Message, HttpContext.TraceIdentifier);
-		//		return BadRequest(new { message = result.Message, traceId = HttpContext.TraceIdentifier });
-		//	}
-
-		//	if (result.Data == null || result.Data.Items.Count == 0)
-		//	{
-		//		Log.Warning("Get products returned empty | TraceId={TraceId}", HttpContext.TraceIdentifier);
-		//		return Ok(new { message = "No products found", traceId = HttpContext.TraceIdentifier, data = result.Data });
-		//	}
-		//	return Ok(new { message = "Products retrieved successfully", traceId = HttpContext.TraceIdentifier, data = result.Data });
-		//}
+			if (result.Data == null)
+			{
+				Log.Warning("Get products returned empty | TraceId={TraceId}", HttpContext.TraceIdentifier);
+				return Ok(new { message = "No products found", traceId = HttpContext.TraceIdentifier, data = result.Data });
+			}
+			return Ok(new { message = "Products retrieved successfully", traceId = HttpContext.TraceIdentifier, data = result.Data });
+		}
 
 
 		/// <summary>
@@ -98,12 +86,12 @@ namespace Foodo.API.Controllers
 		[ServiceFilter(typeof(ValidateIdFilter))]
 		public async Task<IActionResult> GetProductbyId(int id)
 		{
-			var strategy = _factory.GetProductStrategy(User,id);
-			var result =await _mediator.Send(strategy);
+			var strategy = _factory.GetProductStrategy(User, id);
+			var result = await _mediator.Send(strategy);
 
 			if (!result.IsSuccess)
 			{
-				Log.Warning("Get all Products By Id  failed: Product not found | ProductId={ProductId} | TraceId={TraceId}",id,HttpContext.TraceIdentifier);
+				Log.Warning("Get all Products By Id  failed: Product not found | ProductId={ProductId} | TraceId={TraceId}", id, HttpContext.TraceIdentifier);
 
 				return NotFound(new
 				{
@@ -128,7 +116,7 @@ namespace Foodo.API.Controllers
 		public async Task<IActionResult> CreateProduct([FromBody] ProductRequest request)
 		{
 			var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-			var result = await _merchantService.CreateProductAsync(new ProductInput
+			var result = await _mediator.Send(new CreateProductCommand
 			{
 				Id = userId,
 				ProductName = request.ProductName,
@@ -140,12 +128,7 @@ namespace Foodo.API.Controllers
 
 			if (!result.IsSuccess)
 			{
-				Log.Warning(
-					"Product creation failed | MerchantId={MerchantId} | Reason={Reason} | TraceId={TraceId}",
-					userId,
-					result.Message,
-					HttpContext.TraceIdentifier
-				);
+				Log.Warning("Product creation failed | MerchantId={MerchantId} | Reason={Reason} | TraceId={TraceId}", userId, result.Message, HttpContext.TraceIdentifier);
 
 				return BadRequest(new
 				{
@@ -175,7 +158,7 @@ namespace Foodo.API.Controllers
 		public async Task<IActionResult> UpdateProduct(int id, [FromBody] ProductUpdateRequest request)
 		{
 
-			var result = await _merchantService.UpdateProductAsync(new ProductUpdateInput
+			var result = await _mediator.Send(new UpdateProductCommand
 			{
 				productId = id,
 				ProductName = request.ProductName,
@@ -212,7 +195,7 @@ namespace Foodo.API.Controllers
 		[ServiceFilter(typeof(ValidateIdFilter))]
 		public async Task<IActionResult> DeleteProduct(int id)
 		{
-			var result = await _merchantService.DeleteProductAsync(id);
+			var result = await _mediator.Send(new DeleteProductCommand { productId = id, UserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value });
 
 			if (!result.IsSuccess)
 			{
@@ -248,9 +231,11 @@ namespace Foodo.API.Controllers
 		[ServiceFilter(typeof(ValidateIdFilter))]
 		public async Task<IActionResult> AddAttribute(int id, [FromBody] AttributeCreateRequest request)
 		{
-			var result = await _merchantService.AddProductAttributeAsync(id, new AttributeCreateInput
+			var result = await _mediator.Send(new AddProductAttributeCommand
 			{
-				Attributes = request.Attributes
+				Attributes = request.Attributes,
+				ProductId = id
+
 			});
 
 			if (!result.IsSuccess)
@@ -284,9 +269,10 @@ namespace Foodo.API.Controllers
 		[ServiceFilter(typeof(ValidateIdFilter))]
 		public async Task<IActionResult> RemoveAttribute(int id, [FromBody] AttributeDeleteRequest request)
 		{
-			var result = await _merchantService.RemoveProductAttributeAsync(id, new AttributeDeleteInput
+			var result = await _mediator.Send(new RemoveProductAttributeCommand
 			{
-				Attributes = request.Attributes
+				Attributes = request.Attributes,
+				ProductId = id
 			});
 
 			if (!result.IsSuccess)
@@ -325,7 +311,7 @@ namespace Foodo.API.Controllers
 		[ServiceFilter(typeof(ValidateIdFilter))]
 		public async Task<IActionResult> AddCategories(int Id, [FromBody] CategoryRequest request)
 		{
-			var result = await _merchantService.AddProductCategoriesAsync(new ProductCategoryInput
+			var result = await _mediator.Send(new AddProductCategoryCommand
 			{
 				restaurantCategories = request.Categories,
 				ProductId = Id
@@ -363,7 +349,7 @@ namespace Foodo.API.Controllers
 		[ServiceFilter(typeof(ValidateIdFilter))]
 		public async Task<IActionResult> RemoveCategories(int Id, [FromBody] CategoryRequest request)
 		{
-			var result = await _merchantService.RemoveProductCategoriesAsync(new ProductCategoryInput
+			var result = await _mediator.Send(new RemoveProductCategoryCommand
 			{
 				ProductId = Id,
 				restaurantCategories = request.Categories

@@ -16,13 +16,13 @@ public class GetCustomerOrdersQueryHandler : IRequestHandler<GetCustomerOrdersQu
 
 	public async Task<ApiResponse<PaginationDto<OrderBaseDto>>> Handle(GetCustomerOrdersQuery request, CancellationToken cancellationToken)
 	{
-		var merchantOrders = await _service.GetCustomerOrders(request.UserId, request.Page, request.PageSize);
+		var CustomerOrders = await _service.GetCustomerOrders(request.UserId, request.Page, request.PageSize);
 
 		var baseOrders = new PaginationDto<OrderBaseDto>
 		{
-			TotalItems = merchantOrders.TotalItems,
-			TotalPages = merchantOrders.TotalPages,
-			Items = merchantOrders.Items.Cast<OrderBaseDto>().ToList()
+			TotalItems = CustomerOrders.TotalItems,
+			TotalPages = CustomerOrders.TotalPages,
+			Items = CustomerOrders.Items.Cast<OrderBaseDto>().ToList()
 		};
 
 		return ApiResponse<PaginationDto<OrderBaseDto>>.Success(baseOrders);

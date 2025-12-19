@@ -29,7 +29,7 @@ namespace Foodo.Application.Commands.Products.AddProductAttribute
 
 			using var transaction = await _unitOfWork.BeginTransactionAsync();
 
-			foreach (var item in request.attributes.Attributes)
+			foreach (var item in request.Attributes)
 			{
 				var attribute = new LkpAttribute { Name = item.Name, value = item.Value };
 				await _unitOfWork.AttributeRepository.CreateAsync(attribute);
@@ -48,14 +48,8 @@ namespace Foodo.Application.Commands.Products.AddProductAttribute
 			_unitOfWork.ProductRepository.Update(product);
 			await _unitOfWork.saveAsync();
 			await transaction.CommitAsync();
-
-			//_cacheService.Remove($"merchant_product:{productId}");
 			_cacheService.RemoveByPrefix($"merchant_product:list:{product.UserId}");
 			_cacheService.RemoveByPrefix($"customer_product:list:all");
-			_cacheService.RemoveByPrefix($"customer_product:list:shop:{product.UserId}");
-			_cacheService.RemoveByPrefix($"customer_product:list:category");
-			//_cacheService.Remove($"customer_product:{productId}");
-
 			return ApiResponse.Success("Attributes added successfully");
 		}
 	}

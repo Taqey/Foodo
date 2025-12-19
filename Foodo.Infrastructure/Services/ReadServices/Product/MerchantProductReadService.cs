@@ -29,21 +29,28 @@ FROM     TblCategoryOfProducts INNER JOIN
                   LkpMeasureUnits ON LkpProductDetailsAttributes.UnitOfMeasureId = LkpMeasureUnits.UnitOfMeasureId
                   where TblProducts.ProductId=@ProductId
 ";
-			var RawProductDto=await _connection.QueryAsync<MerchantRawProductDto>(query,new {ProductId= productId });
+			var RawProductDto = await _connection.QueryAsync<MerchantRawProductDto>(query, new { ProductId = productId });
 			if (RawProductDto.Count() == 0)
 			{
 				return null;
 			}
-			var result = RawProductDto.GroupBy(o => o.ProductId).Select(e=>new MerchantProductDto
+			var result = RawProductDto.GroupBy(o => o.ProductId).Select(e => new MerchantProductDto
 			{
-				ProductId=e.First().ProductId,
-				ProductName=e.First().ProductsName,
-				ProductDescription=e.First().ProductDescription,
-				Price=e.First().Price,
-				Urls=e.Select(o=>new ProductPhotosDto { isMain=o.IsMain,url=o.Url}).ToList(),
-				ProductCategories=e.SelectMany(o=>new List<string> { o.CategoryName}).ToList(),
-				ProductDetailAttributes=e.Select(o=>new ProductDetailAttributeDto { Id=o.ProductDetailAttributeId,AttributeName=o.AttributeName,AttributeValue=o.AttributeValue,MeasurementUnit=o.MeasuringUnit }).ToList()
-				
+				ProductId = e.First().ProductId,
+				ProductName = e.First().ProductsName,
+				ProductDescription = e.First().ProductDescription,
+				Price = e.First().Price,
+				Urls = e
+						.GroupBy(p => p.Url)
+						.Select(g => new ProductPhotosDto
+						{
+							url = g.Key,
+							isMain = g.First().IsMain
+						})
+						.ToList(),
+				ProductCategories = e.SelectMany(o => new List<string> { o.CategoryName }).Distinct().ToList(),
+				ProductDetailAttributes = e.GroupBy(a => new { a.AttributeName, a.AttributeValue, a.MeasuringUnit }).Select(o => new ProductDetailAttributeDto { Id = o.First().ProductDetailAttributeId, AttributeName = o.First().AttributeName, AttributeValue = o.First().AttributeValue, MeasurementUnit = o.First().MeasuringUnit }).ToList()
+
 			}).FirstOrDefault();
 			return result;
 		}

@@ -1,13 +1,9 @@
 ﻿using Dapper;
 using Foodo.Application.Abstraction.InfrastructureRelatedServices.ReadServices.Product;
 using Foodo.Application.Models.Dto;
-using Foodo.Application.Models.Dto.Merchant;
 using Foodo.Application.Models.Dto.Photo;
 using Foodo.Application.Models.Dto.Product;
-using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Text;
 
 namespace Foodo.Infrastructure.Services.ReadServices.Product
 {
@@ -34,7 +30,7 @@ FROM     TblCategoryOfProducts INNER JOIN
                   where TblProducts.ProductId=@ProductId
 ";
 			var RawProductDto = await _connection.QueryAsync<MerchantRawProductDto>(query, new { ProductId = productId });
-			if (RawProductDto.Count()==0)
+			if (RawProductDto.Count() == 0)
 			{
 				return null;
 			}
