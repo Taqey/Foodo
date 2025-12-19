@@ -2,10 +2,13 @@
 using Foodo.API.Models.Request.Profile.Customer;
 using Foodo.Application.Abstraction.Profile.CustomerProfile;
 using Foodo.Application.Abstraction.Profile.MerchantProfile;
+using Foodo.Application.Commands.Addresses.SetAddressDefault;
+using Foodo.Application.Factory.Address;
 using Foodo.Application.Models.Input.Profile.Customer;
 using Foodo.Application.Models.Input.Profile.Merchant;
 using Foodo.Application.Models.Response;
 using Foodo.Domain.Enums;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -20,16 +23,16 @@ namespace Foodo.API.Controllers
 
 	public class AdressesController : ControllerBase
 	{
-		private readonly ICustomerAdressService _customerAdressService;
-		private readonly IMerchantAdressService _merchantAdressService;
+		private readonly IMediator _mediator;
+		private readonly IAddressStrategyFactory _factory;
 
-		public AdressesController(ICustomerAdressService customerAdressService, IMerchantAdressService merchantAdressService)
+		public AdressesController(IMediator mediator,IAddressStrategyFactory factory)
 		{
-			_customerAdressService = customerAdressService;
-			_merchantAdressService = merchantAdressService;
+
+			_mediator = mediator;
+			_factory = factory;
 		}
-		private string UserId => User.FindFirstValue(ClaimTypes.NameIdentifier);
-		private string Role => User.FindFirst(ClaimTypes.Role)?.Value;
+
 
 		#region Add Address
 
@@ -44,24 +47,8 @@ namespace Foodo.API.Controllers
 		[Authorize]
 		public async Task<IActionResult> AddAddress([FromBody] AddAdressRequest request)
 		{
-			ApiResponse result = null;
-			if (Role == nameof(UserType.Customer))
-			{
-
-				result = await _customerAdressService.AddAdress(new CustomerAddAdressInput
-				{
-					CustomerId = UserId,
-					Adresses = request.Adresses
-				});
-			}
-			else
-			{
-				result = await _merchantAdressService.AddAdress(new MerchantAddAdressInput
-				{
-					MerchantId = UserId,
-					Adresses = request.Adresses
-				});
-			}
+			var strategy = _factory.GetCreateAddressStrategy(User);
+			var result = await _mediator.Send(strategy);
 			if (!result.IsSuccess)
 			{
 				Log.Warning("Failed to add address: {Message}", result.Message);
@@ -87,21 +74,8 @@ namespace Foodo.API.Controllers
 		[ServiceFilter(typeof(ValidateIdFilter))]
 		public async Task<IActionResult> DeleteAddress(int id)
 		{
-			ApiResponse result = null;
-			if (Role == nameof(UserType.Customer))
-			{
-
-				result = await _customerAdressService.RemoveAdress(new CustomerRemoveAdressInput
-				{
-					CustomerId = UserId,
-					adressId = id
-				});
-			}
-			else
-			{
-				result = await _merchantAdressService.RemoveAdress(new MerchantRemoveAdressInput { AdressId = id, MerchantId = UserId });
-			}
-
+			var strategy= _factory.GetDeleteAddressStrategy(User,id);
+			var result=await _mediator.Send(strategy);
 			if (!result.IsSuccess)
 			{
 				Log.Warning("Failed to delete address {AddressId}: {Message}", id, result.Message);
@@ -127,9 +101,9 @@ namespace Foodo.API.Controllers
 		[ServiceFilter(typeof(ValidateIdFilter))]
 		public async Task<IActionResult> SetDefaultAddress(int id)
 		{
-			var result = await _customerAdressService.MakeAdressDefault(new CustomerMakeAdressDefaultInput
+			var result = await _mediator.Send(new SetAddressDefaultCommand
 			{
-				CustomerId = UserId,
+				CustomerId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value,
 				AdressId = id
 			});
 

@@ -5,6 +5,6 @@ namespace Foodo.Application.Models.Input.Profile.Merchant
 	public class MerchantAddAdressInput
 	{
 		public string MerchantId { get; set; }
-		public List<CustomerAddAdressDto> Adresses { get; set; } = new List<CustomerAddAdressDto>();
+		public List<AddAdressDto> Adresses { get; set; } = new List<AddAdressDto>();
 	}
 }
