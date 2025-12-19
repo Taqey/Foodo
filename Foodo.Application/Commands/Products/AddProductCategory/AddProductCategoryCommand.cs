@@ -1,11 +1,12 @@
-﻿using Foodo.Application.Models.Input.Merchant;
-using Foodo.Application.Models.Response;
+﻿using Foodo.Application.Models.Response;
+using Foodo.Domain.Enums;
 using MediatR;
 
 namespace Foodo.Application.Commands.Products.AddProductCategory
 {
 	public class AddProductCategoryCommand : IRequest<ApiResponse>
 	{
-		public ProductCategoryInput input { get; set; }
+		public int ProductId { get; set; }
+		public List<FoodCategory> restaurantCategories { get; set; }
 	}
 }

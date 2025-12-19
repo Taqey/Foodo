@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Foodo.Application.Models.Dto.Product
+﻿namespace Foodo.Application.Models.Dto.Product
 {
 	public class CustomerRawProductDto
 	{
 		public int ProductId { get; set; }
-		public string ProductName { get; set; }
+		public string ProductsName { get; set; }
 		public string ProductDescription { get; set; }
-		public string Price { get; set; }
+		public decimal Price { get; set; }
 		public string Url { get; set; }
 		public bool IsMain { get; set; }
 		public string CategoryName { get; set; }

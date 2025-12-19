@@ -18,11 +18,11 @@ namespace Foodo.Application.Commands.Products.RemoveProductCategory
 		}
 		public async Task<ApiResponse> Handle(RemoveProductCategoryCommand request, CancellationToken cancellationToken)
 		{
-			var product = await _unitOfWork.ProductCustomRepository.ReadProductsIncludeTracking().Where(e => e.ProductId == request.categoryInput.ProductId).FirstOrDefaultAsync();
+			var product = await _unitOfWork.ProductCustomRepository.ReadProductsIncludeTracking().Where(e => e.ProductId == request.ProductId).FirstOrDefaultAsync();
 			if (product == null)
 				return ApiResponse.Failure("Product not found");
 
-			foreach (var item in request.categoryInput.restaurantCategories)
+			foreach (var item in request.restaurantCategories)
 			{
 				var category = product.ProductCategories
 						.FirstOrDefault(c => c.categoryid == (int)item);
@@ -31,13 +31,8 @@ namespace Foodo.Application.Commands.Products.RemoveProductCategory
 					product.ProductCategories.Remove(category);
 			}
 			await _unitOfWork.saveAsync();
-			// Clear cache
-			//_cacheService.Remove($"merchant_product:{product.ProductId}");
 			_cacheService.RemoveByPrefix($"merchant_product:list:{product.UserId}");
 			_cacheService.RemoveByPrefix($"customer_product:list:all");
-			_cacheService.RemoveByPrefix($"customer_product:list:shop:{product.UserId}");
-			_cacheService.RemoveByPrefix($"customer_product:list:category");
-			//_cacheService.Remove($"customer_product:{product.ProductId}");
 			return ApiResponse.Success("Categories removed successfully");
 		}
 	}

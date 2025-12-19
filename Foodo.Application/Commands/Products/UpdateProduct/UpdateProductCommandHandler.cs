@@ -37,14 +37,8 @@ namespace Foodo.Application.Commands.Products.UpdateProduct
 				return new ApiResponse { IsSuccess = false, Message = "Saving product after update failed" };
 			}
 
-			//_cacheService.Remove($"merchant_product:{input.productId}");
 			_cacheService.RemoveByPrefix($"merchant_product:list:{product.UserId}");
 			_cacheService.RemoveByPrefix($"customer_product:list:all");
-			_cacheService.RemoveByPrefix($"customer_product:list:shop:{product.UserId}");
-			_cacheService.RemoveByPrefix($"customer_product:list:category");
-			//_cacheService.Remove($"customer_product:{input.productId}");
-
-
 			return ApiResponse.Success("Product updated successfully");
 		}
 	}

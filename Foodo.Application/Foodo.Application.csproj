@@ -17,10 +17,4 @@
     <ProjectReference Include="..\Foodo.Domain\Foodo.Domain.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Queries\Products\GetProducts\GetCustomerProducts\" />
-    <Folder Include="Queries\Products\GetProducts\GetMerchantProducts\" />
-    <Folder Include="Queries\Products\GetProducts\GetProducts\" />
-  </ItemGroup>
-
 </Project>

@@ -64,8 +64,6 @@ namespace Foodo.Application.Commands.Products.CreateProduct
 				await _unitOfWork.saveAsync();
 				_cacheService.RemoveByPrefix($"merchant_product:list:{input.Id}");
 				_cacheService.RemoveByPrefix($"customer_product:list:all");
-				_cacheService.RemoveByPrefix($"customer_product:list:shop:{input.Id}");
-				_cacheService.RemoveByPrefix($"customer_product:list:category");
 				await transaction.CommitAsync();
 			}
 			catch (Exception e)
