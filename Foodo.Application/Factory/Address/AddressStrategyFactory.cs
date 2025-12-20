@@ -5,10 +5,7 @@ using Foodo.Application.Commands.Addresses.DeleteAddress;
 using Foodo.Application.Commands.Addresses.DeleteAddress.DeleteCustomerAddress;
 using Foodo.Application.Commands.Addresses.DeleteAddress.DeleteMerchantAddress;
 using Foodo.Domain.Enums;
-using System;
-using System.Collections.Generic;
 using System.Security.Claims;
-using System.Text;
 
 namespace Foodo.Application.Factory.Address
 {
@@ -16,7 +13,7 @@ namespace Foodo.Application.Factory.Address
 	{
 		public CreateAddressCommand GetCreateAddressStrategy(ClaimsPrincipal user)
 		{
-			var role=user.FindFirst(ClaimTypes.Role)?.Value;
+			var role = user.FindFirst(ClaimTypes.Role)?.Value;
 			switch (role)
 			{
 				case nameof(UserType.Customer):
@@ -34,7 +31,7 @@ namespace Foodo.Application.Factory.Address
 			switch (role)
 			{
 				case nameof(UserType.Customer):
-					return new DeleteCustomerAddressCommand{userId=user.FindFirst(ClaimTypes.NameIdentifier)?.Value,adressId=id};
+					return new DeleteCustomerAddressCommand { userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value, adressId = id };
 				case nameof(UserType.Merchant):
 					return new DeleteMerchantAddressCommand { userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value, adressId = id };
 				default:

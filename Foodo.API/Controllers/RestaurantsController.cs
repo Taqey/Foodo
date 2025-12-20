@@ -1,15 +1,9 @@
-﻿using Foodo.API.Filters;
-using Foodo.API.Models.Request;
-using Foodo.Application.Abstraction.Customer;
-using Foodo.Application.Abstraction.Merchant;
-using Foodo.Application.Abstraction.Profile.MerchantProfile;
-using Foodo.Application.Models.Dto;
-using Foodo.Application.Models.Dto.Customer;
-using Foodo.Application.Models.Input;
-using Foodo.Application.Models.Input.Customer;
-using Foodo.Application.Models.Input.Profile.Merchant;
-using Foodo.Application.Models.Response;
+﻿using Foodo.API.Models.Request;
+using Foodo.Application.Queries.Profile.GetMerchantProfile;
+using Foodo.Application.Queries.Restaurants.GetRestaurant;
+using Foodo.Application.Queries.Restaurants.GetRestaurants;
 using Foodo.Domain.Enums;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -20,19 +14,43 @@ using System.Security.Claims;
 
 namespace Foodo.API.Controllers
 {
+	/// <summary>
+	/// Provides endpoints to manage restaurants (shops) and merchant-related operations.
+	/// </summary>
+	/// <remarks>
+	/// <para>
+	/// This controller handles both public and merchant-specific operations including:
+	/// </para>
+	/// <list type="bullet">
+	///     <item>
+	///         <description>Browsing restaurants (shops) with pagination and category filtering</description>
+	///     </item>
+	///     <item>
+	///         <description>Retrieving restaurant details by ID</description>
+	///     </item>
+	///     <item>
+	///         <description>Accessing the authenticated merchant profile</description>
+	///     </item>
+	///     <item>
+	///         <description>Retrieving customers who purchased from a merchant</description>
+	///     </item>
+	/// </list>
+	/// <para>
+	/// Some endpoints are public, while others require authentication and
+	/// role-based authorization for merchants.
+	/// </para>
+	/// </remarks>
 	[Route("api/[controller]")]
 	[ApiController]
 	public class RestaurantsController : ControllerBase
 	{
-		private readonly ICustomerService _service;
-		private readonly IMerchantService _merchantService;
-		private readonly IMerchantAdressService _merchantAdressService;
 
-		public RestaurantsController(ICustomerService service, IMerchantService merchantService, IMerchantAdressService merchantAdressService)
+		private readonly IMediator _mediator;
+
+		public RestaurantsController(IMediator mediator)
 		{
-			_service = service;
-			_merchantService = merchantService;
-			_merchantAdressService = merchantAdressService;
+
+			_mediator = mediator;
 		}
 
 		#region Shops
@@ -46,7 +64,6 @@ namespace Foodo.API.Controllers
 		/// <response code="404">Shop not found.</response>
 		[HttpGet("{id}")]
 		[EnableRateLimiting("TokenBucketPolicy")]
-		[ServiceFilter(typeof(ValidateIdFilter))]
 		public async Task<IActionResult> GetShopById(string id)
 		{
 			if (string.IsNullOrWhiteSpace(id))
@@ -60,9 +77,9 @@ namespace Foodo.API.Controllers
 				});
 			}
 
-			var result = await _service.ReadShopById(new ItemByIdInput
+			var result = await _mediator.Send(new GetRestaurantQuery
 			{
-				ItemId = id
+				RestaurantId = id
 			});
 
 			if (!result.IsSuccess)
@@ -88,32 +105,17 @@ namespace Foodo.API.Controllers
 		/// </summary>
 		/// <param name="request">Pagination parameters.</param>
 		/// <param name="categoryId">Optional category filter.</param>
-		/// <returns>Filtered and paginated list of shops.</returns>
+		/// <returns>Filtered and paginated list of shops.</returns>		
+		/// <response code="200">Shops retrieved successfully.</response>
+		/// <response code="400">Failed to retrieve shops.</response>
 		[HttpGet]
 		[EnableRateLimiting("TokenBucketPolicy")]
 		public async Task<IActionResult> GetShops(
 			[FromQuery] PaginationRequest request,
-			[FromQuery] int? categoryId = null)
+			[FromQuery] RestaurantCategory? categoryId = null
+			)
 		{
-			ApiResponse<PaginationDto<ShopDto>> result;
-
-			if (categoryId.HasValue)
-			{
-				result = await _service.ReadShopsByCategory(new ShopsPaginationByCategoryInput
-				{
-					Page = request.PageNumber,
-					PageSize = request.PageSize,
-					Category = (RestaurantCategory)categoryId
-				});
-			}
-			else
-			{
-				result = await _service.ReadAllShops(new ProductPaginationInput
-				{
-					Page = request.PageNumber,
-					PageSize = request.PageSize
-				});
-			}
+			var result = await _mediator.Send(new GetRestaurantsQuery { Page = request.PageNumber, PageSize = request.PageSize, Category = categoryId });
 
 			if (!result.IsSuccess)
 			{
@@ -134,9 +136,9 @@ namespace Foodo.API.Controllers
 		#region Profile
 
 		/// <summary>
-		/// Retrieves the profile details of the authenticated customer.
+		/// Retrieves the profile details of the authenticated merchant.
 		/// </summary>
-		/// <returns>Customer profile data.</returns>
+		/// <returns>merchant profile data.</returns>
 		/// <response code="200">Profile retrieved successfully.</response>
 		/// <response code="400">Failed to retrieve profile.</response>
 		[HttpGet("profile")]
@@ -145,9 +147,9 @@ namespace Foodo.API.Controllers
 		public async Task<IActionResult> GetProfile()
 		{
 			var UserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-			var result = await _merchantAdressService.GetMerchantProfile(new MerchantProfileInput
+			var result = await _mediator.Send(new GetMerchantProfileQuery
 			{
-				MerchantId = UserId
+				UserId = UserId
 			});
 
 			if (!result.IsSuccess)
@@ -161,64 +163,7 @@ namespace Foodo.API.Controllers
 
 		#endregion
 
-		#region Purchased Customers
 
-		/// <summary>
-		/// Retrieves all customers who purchased from the logged-in merchant.
-		/// </summary>
-		/// <param name="request">Pagination request.</param>
-		/// <returns>List of purchased customers.</returns>
-		/// <response code="200">Customers retrieved successfully.</response>
-		/// <response code="400">Failed to retrieve customers.</response>
-		[HttpPost("get-purchased-customers")]
-		[EnableRateLimiting("TokenBucketPolicy")]
-
-		public async Task<IActionResult> GetPurchasedCustomers([FromBody] PaginationRequest request)
-		{
-			var shopId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-			var result = await _merchantService.ReadAllPurchasedCustomersAsync(new ProductPaginationInput
-			{
-				Page = request.PageNumber,
-				PageSize = request.PageSize,
-				UserId = shopId
-			});
-
-			if (!result.IsSuccess)
-			{
-				Log.Warning(
-						"Failed to retrieve purchased customers | ShopId={ShopId} | Reason={Reason} | TraceId={TraceId}",
-						shopId,
-						result.Message,
-						HttpContext.TraceIdentifier
-					);
-
-				return BadRequest(new
-				{
-					message = result.Message,
-					traceId = HttpContext.TraceIdentifier
-				});
-			}
-			if (result.Data == null || result.Data.Items.Count == 0)
-			{
-
-				return Ok(new
-				{
-					message = "No Customers found",
-					traceId = HttpContext.TraceIdentifier,
-					data = result.Data
-				});
-			}
-
-			return Ok(new
-			{
-				message = "Customers retrieved successfully",
-				traceId = HttpContext.TraceIdentifier,
-				data = result.Data
-			});
-		}
-
-
-		#endregion
 
 	}
 }

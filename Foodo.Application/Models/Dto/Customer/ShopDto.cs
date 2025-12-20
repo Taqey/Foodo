@@ -5,8 +5,8 @@
 		public string ShopId { get; set; }
 		public string ShopName { get; set; }
 		public string ShopDescription { get; set; }
-		public List<string> Categories { get; set; } = new List<string>();
-		public string url { get; set; }
+		public List<string>? Categories { get; set; } = new List<string>();
+		public string? url { get; set; }
 
 	}
 }

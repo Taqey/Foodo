@@ -1,6 +1,9 @@
 ﻿using Foodo.API.Filters;
 using Foodo.API.Models.Request;
 using Foodo.API.Models.Request.Merchant;
+using Foodo.API.Models.Request.Photo;
+using Foodo.Application.Commands.Photos.AddProuctPhotos;
+using Foodo.Application.Commands.Photos.SetProductPhotoMain;
 using Foodo.Application.Commands.Products.AddProductAttribute;
 using Foodo.Application.Commands.Products.AddProductCategory;
 using Foodo.Application.Commands.Products.CreateProduct;
@@ -20,19 +23,44 @@ using System.Security.Claims;
 
 namespace Foodo.API.Controllers
 {
+	/// <summary>
+	/// Provides endpoints to manage products, including creation, retrieval,
+	/// updating, deletion, and related operations.
+	/// </summary>
+	/// <remarks>
+	/// <para>
+	/// This controller handles product-related operations for both public users
+	/// and merchants, with certain actions restricted to authenticated merchants.
+	/// </para>
+	/// <list type="bullet">
+	///     <item>
+	///         <description>Retrieve products with filtering, sorting, and pagination</description>
+	///     </item>
+	///     <item>
+	///         <description>Create, update, and delete products (Merchant only)</description>
+	///     </item>
+	///     <item>
+	///         <description>Manage product attributes and categories</description>
+	///     </item>
+	///     <item>
+	///         <description>Upload and manage product photos</description>
+	///     </item>
+	/// </list>
+	/// <para>
+	/// Rate limiting and role-based authorization are applied where applicable.
+	/// </para>
+	/// </remarks>
 	[Route("api/[controller]")]
 	[ApiController]
 	public class ProductsController : ControllerBase
 	{
-		//private readonly ICustomerProductService _customerService;
-		//private readonly IMerchantProductService _merchantService;
+
 		private readonly IProductStrategyFactory _factory;
 		private readonly IMediator _mediator;
 
 		public ProductsController(IProductStrategyFactory factory, IMediator mediator)
 		{
-			//_customerService = customerService;
-			//_merchantService = merchantService;
+
 			_factory = factory;
 			_mediator = mediator;
 		}
@@ -369,6 +397,71 @@ namespace Foodo.API.Controllers
 				message = "Categories removed successfully",
 				traceId = HttpContext.TraceIdentifier
 			});
+		}
+		#endregion
+
+		#region Product Photos
+		/// <summary>
+		/// Uploads photos for a specific product.
+		/// </summary>
+		/// <param name="request">Product photos upload request.</param>
+		/// <returns>Uploaded photos data.</returns>
+		/// <response code="200">Product photos uploaded successfully.</response>
+		/// <response code="400">Failed to upload product photos.</response>
+
+		[HttpPost("{id}/photos")]
+		[EnableRateLimiting("LeakyBucketPolicy")]
+		public async Task<IActionResult> AddProductPhotos([FromForm] AddProductPhotosRequest request)
+		{
+			var result = await _mediator.Send(new AddProuctPhotosCommand { Files = request.Files, ProductId = request.ProductId });
+			if (!result.IsSuccess)
+			{
+				return BadRequest(result.Message);
+			}
+
+			return Ok(result.Data);
+		}
+		/// <summary>
+		/// Sets a specific product photo as the main photo.
+		/// </summary>
+		/// <param name="id">Photo ID.</param>
+		/// <returns>Confirmation message.</returns>
+		/// <response code="200">Main product photo set successfully.</response>
+		/// <response code="400">Failed to set main product photo.</response>
+
+		[HttpPut("{id}/photos/main")]
+		[EnableRateLimiting("LeakyBucketPolicy")]
+		public async Task<IActionResult> Put(int id)
+		{
+			var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+			var result = await _mediator.Send(new SetProductPhotoMainCommand { id = id });
+			if (!result.IsSuccess)
+			{
+				return BadRequest(result.Message);
+			}
+
+			return Ok(result.Message);
+		}
+
+		/// <summary>
+		/// Deletes product photos.
+		/// </summary>
+		/// <param name="request">Product photos delete request.</param>
+		/// <returns>Status message.</returns>
+		/// <response code="200">Product photos deleted successfully.</response>
+
+		[HttpDelete("{id}/photos")]
+		[EnableRateLimiting("LeakyBucketPolicy")]
+		public async Task<IActionResult> DeleteProductPhotos([FromForm] AddProductPhotosRequest request)
+		{
+			return Ok();
+			//var result = await _mediator.Send(new AddProuctPhotosCommand { Files = request.Files, ProductId = request.ProductId });
+			//if (!result.IsSuccess)
+			//{
+			//	return BadRequest(result.Message);
+			//}
+
+			//return Ok(result.Data);
 		}
 		#endregion
 

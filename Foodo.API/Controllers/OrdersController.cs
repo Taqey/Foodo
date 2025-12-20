@@ -16,6 +16,34 @@ using System.Security.Claims;
 
 namespace Foodo.API.Controllers
 {
+	/// <summary>
+	/// Provides endpoints to manage orders including placing, retrieving,
+	/// updating, and cancelling orders.
+	/// </summary>
+	/// <remarks>
+	/// <para>
+	/// This controller handles all order-related operations for both customers
+	/// and merchants, with behavior determined by the authenticated user's role.
+	/// </para>
+	/// <list type="bullet">
+	///     <item>
+	///         <description>Place new orders (Customer only)</description>
+	///     </item>
+	///     <item>
+	///         <description>Retrieve orders and order details</description>
+	///     </item>
+	///     <item>
+	///         <description>Update order status</description>
+	///     </item>
+	///     <item>
+	///         <description>Cancel existing orders</description>
+	///     </item>
+	/// </list>
+	/// <para>
+	/// Endpoints are protected using role-based authorization and rate limiting
+	/// policies where applicable.
+	/// </para>
+	/// </remarks>
 	[Route("api/[controller]")]
 	[ApiController]
 	public class OrdersController : ControllerBase

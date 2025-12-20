@@ -1,5 +1,5 @@
 ﻿using Dapper;
-using Foodo.Application.Abstraction.InfraRelated;
+using Foodo.Application.Abstraction.InfrastructureRelatedServices.Cache;
 using Foodo.Application.Abstraction.InfrastructureRelatedServices.ReadServices.Products;
 using Foodo.Application.Models.Dto;
 using Foodo.Application.Models.Dto.Photo;

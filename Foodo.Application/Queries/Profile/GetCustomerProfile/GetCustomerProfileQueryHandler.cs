@@ -1,17 +1,22 @@
-﻿using Foodo.Application.Models.Dto.Profile.Customer;
+﻿using Foodo.Application.Abstraction.InfrastructureRelatedServices.ReadServices.Profile.CustomerProfile;
+using Foodo.Application.Models.Dto.Profile.Customer;
 using Foodo.Application.Models.Response;
 using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Foodo.Application.Queries.Profile.GetCustomerProfile
 {
 	public class GetCustomerProfileQueryHandler : IRequestHandler<GetCustomerProfileQuery, ApiResponse<CustomerProfileDto>>
 	{
-		public Task<ApiResponse<CustomerProfileDto>> Handle(GetCustomerProfileQuery request, CancellationToken cancellationToken)
+		private readonly ICustomerProfileReadService _service;
+
+		public GetCustomerProfileQueryHandler(ICustomerProfileReadService service)
 		{
-			throw new NotImplementedException();
+			_service = service;
+		}
+		public async Task<ApiResponse<CustomerProfileDto>> Handle(GetCustomerProfileQuery request, CancellationToken cancellationToken)
+		{
+			var result = await _service.ReadCustomerProfile(request.UserId);
+			return ApiResponse<CustomerProfileDto>.Success(result, "Data retrieved successfully");
 		}
 	}
 }
