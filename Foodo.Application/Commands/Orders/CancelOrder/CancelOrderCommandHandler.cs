@@ -1,4 +1,4 @@
-﻿using Foodo.Application.Abstraction.InfraRelated;
+﻿using Foodo.Application.Abstraction.InfrastructureRelatedServices.Cache;
 using Foodo.Application.Models.Response;
 using Foodo.Domain.Enums;
 using Foodo.Domain.Repository;

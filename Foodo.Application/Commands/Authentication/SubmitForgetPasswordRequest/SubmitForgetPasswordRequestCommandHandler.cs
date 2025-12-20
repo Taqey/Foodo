@@ -1,4 +1,5 @@
-﻿using Foodo.Application.Abstraction.InfraRelated;
+﻿using Foodo.Application.Abstraction.InfrastructureRelatedServices.Mailing;
+using Foodo.Application.Abstraction.InfrastructureRelatedServices.User;
 using Foodo.Application.Models.Response;
 using Foodo.Domain.Entities;
 using Foodo.Domain.Enums;

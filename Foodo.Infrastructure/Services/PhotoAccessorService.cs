@@ -1,10 +1,10 @@
 ﻿using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
-using Foodo.Application.Abstraction.InfrastructureRelatedServices;
+using Foodo.Application.Abstraction.InfrastructureRelatedServices.Upload;
 using Foodo.Application.Models.Dto.Photo;
-using Foodo.Application.Models.Input.Photo;
 using Foodo.Domain.Enums;
 using Foodo.Infrastructure.Helper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 
 namespace Foodo.Infrastructure.Services
@@ -25,20 +25,20 @@ namespace Foodo.Infrastructure.Services
 			};
 			_cloudinary = new Cloudinary(account);
 		}
-		public async Task<PhotoResultDto> AddPhoto(AddPhotoInput input)
+		public async Task<PhotoResultDto> AddPhoto(string Id, UserType UserType, IFormFile file)
 		{
 
-			if (input.file.Length == 0 || input.file == null)
+			if (file.Length == 0 || file == null)
 			{
 				return new PhotoResultDto { Message = "file is empty" };
 			}
-			await using var stream = input.file.OpenReadStream();
+			await using var stream = file.OpenReadStream();
 			ImageUploadParams uploadParameters;
-			if (input.UserType == UserType.Customer)
+			if (UserType == UserType.Customer)
 			{
 				uploadParameters = new ImageUploadParams
 				{
-					File = new FileDescription(input.file.FileName, stream),
+					File = new FileDescription(file.FileName, stream),
 					Folder = "Foodo_Customers"
 				};
 
@@ -47,7 +47,7 @@ namespace Foodo.Infrastructure.Services
 			{
 				uploadParameters = new ImageUploadParams
 				{
-					File = new FileDescription(input.file.FileName, stream),
+					File = new FileDescription(file.FileName, stream),
 					Folder = "Foodo_Merchants"
 				};
 			}
@@ -64,17 +64,17 @@ namespace Foodo.Infrastructure.Services
 			var result = await _cloudinary.DestroyAsync(deleteParams);
 			return result.Result.ToString();
 		}
-		public async Task<List<PhotoResultDto>> AddProductPhotos(AddProductPhotosInput input)
+		public async Task<List<PhotoResultDto>> AddProductPhotos(IFormFileCollection Files, int ProductId)
 		{
 			var photos = new List<PhotoResultDto>();
 
-			if (input.Files == null || input.Files.Count == 0)
+			if (Files == null || Files.Count == 0)
 			{
 				photos.Add(new PhotoResultDto { Message = "No files received" });
 				return photos;
 			}
 
-			foreach (var file in input.Files)
+			foreach (var file in Files)
 			{
 				if (file == null || file.Length == 0)
 				{

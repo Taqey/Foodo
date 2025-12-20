@@ -1,7 +1,8 @@
-﻿using Foodo.Application.Abstraction.Customer;
-using Foodo.Application.Abstraction.Profile.CustomerProfile;
-using Foodo.Application.Models.Input.Profile.Customer;
+﻿using Foodo.API.Models.Request;
+using Foodo.Application.Queries.Customers;
+using Foodo.Application.Queries.Profile.GetCustomerProfile;
 using Foodo.Domain.Enums;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -11,34 +12,27 @@ using System.Security.Claims;
 namespace Foodo.API.Controllers
 {
 	/// <summary>
-	/// Provides endpoints for customers to interact with products, shops, and orders.
+	/// Provides endpoints to retrieve customer profile information.
 	/// </summary>
 	/// <remarks>
-	/// This controller handles all customer-related operations including:
-	/// <list type="bullet">
-	///     <item>
-	///         <description>Reading products (all, by ID, by category, or by restaurant)</description>
-	///     </item>
-	///     <item>
-	///         <description>Reading shops (all, by ID, or by category)</description>
-	///     </item>
-	///     <item>
-	///         <description>Placing, editing, cancelling, and retrieving orders</description>
-	///     </item>
-	/// </list>
-	/// Protected endpoints require Bearer authentication and the "Customer" role where applicable.
+	/// <para>
+	/// This controller is responsible for customer profile-related operations,
+	/// allowing authenticated customers to access their personal profile data.
+	/// </para>
+	/// <para>
+	/// All endpoints are protected and require Bearer authentication with
+	/// the Customer role.
+	/// </para>
 	/// </remarks>
 	[Route("api/[controller]")]
 	[ApiController]
 	public class CustomersController : ControllerBase
 	{
-		private readonly ICustomerService _service;
-		private readonly ICustomerAdressService _profileService;
+		private readonly IMediator _mediator;
 
-		public CustomersController(ICustomerService service, ICustomerAdressService profileService)
+		public CustomersController(IMediator mediator)
 		{
-			_service = service;
-			_profileService = profileService;
+			_mediator = mediator;
 		}
 
 		#region Get Profile
@@ -55,7 +49,7 @@ namespace Foodo.API.Controllers
 		public async Task<IActionResult> GetProfile()
 		{
 			var UserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-			var result = await _profileService.GetCustomerProfile(new CustomerGetCustomerProfileInput
+			var result = await _mediator.Send(new GetCustomerProfileQuery
 			{
 				UserId = UserId
 			});
@@ -71,6 +65,63 @@ namespace Foodo.API.Controllers
 
 		#endregion
 
+		#region Purchased Customers
 
+		/// <summary>
+		/// Retrieves all customers who purchased from the logged-in merchant.
+		/// </summary>
+		/// <param name="request">Pagination request.</param>
+		/// <returns>List of purchased customers.</returns>
+		/// <response code="200">Customers retrieved successfully.</response>
+		/// <response code="400">Failed to retrieve customers.</response>
+		[HttpGet()]
+		[EnableRateLimiting("TokenBucketPolicy")]
+		[Authorize(Roles = nameof(UserType.Merchant))]
+		public async Task<IActionResult> GetPurchasedCustomers([FromQuery] PaginationRequest request)
+		{
+			var shopId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+			var result = await _mediator.Send(new GetCustomersQuery
+			{
+				Page = request.PageNumber,
+				PageSize = request.PageSize,
+				RestaurantId = shopId
+			});
+
+			if (!result.IsSuccess)
+			{
+				Log.Warning(
+						"Failed to retrieve purchased customers | ShopId={ShopId} | Reason={Reason} | TraceId={TraceId}",
+						shopId,
+						result.Message,
+						HttpContext.TraceIdentifier
+					);
+
+				return BadRequest(new
+				{
+					message = result.Message,
+					traceId = HttpContext.TraceIdentifier
+				});
+			}
+			if (result.Data == null || result.Data.Items.Count == 0)
+			{
+
+				return Ok(new
+				{
+					message = "No Customers found",
+					traceId = HttpContext.TraceIdentifier,
+					data = result.Data
+				});
+			}
+
+			return Ok(new
+			{
+				message = "Customers retrieved successfully",
+				traceId = HttpContext.TraceIdentifier,
+				data = result.Data
+			});
+		}
+
+
+		#endregion
 	}
 }

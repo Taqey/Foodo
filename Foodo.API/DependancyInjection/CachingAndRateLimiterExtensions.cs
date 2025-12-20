@@ -1,4 +1,4 @@
-﻿using Foodo.Application.Abstraction.InfraRelated;
+﻿using Foodo.Application.Abstraction.InfrastructureRelatedServices.Cache;
 using Foodo.Infrastructure.Services;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Caching.StackExchangeRedis;

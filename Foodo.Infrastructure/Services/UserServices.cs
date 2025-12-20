@@ -1,4 +1,4 @@
-﻿using Foodo.Application.Abstraction.InfraRelated;
+﻿using Foodo.Application.Abstraction.InfrastructureRelatedServices.User;
 using Foodo.Domain.Entities;
 using Foodo.Domain.Enums;
 using Microsoft.AspNetCore.Identity;

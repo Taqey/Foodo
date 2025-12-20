@@ -1,12 +1,8 @@
-﻿using Autofac.Core;
-using Foodo.Application.Abstraction.InfraRelated;
+﻿using Foodo.Application.Abstraction.InfrastructureRelatedServices.User;
 using Foodo.Application.Models.Response;
 using Foodo.Domain.Repository;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Foodo.Application.Commands.Addresses.SetAddressDefault
 {
@@ -15,7 +11,7 @@ namespace Foodo.Application.Commands.Addresses.SetAddressDefault
 		private readonly IUnitOfWork _unitOfWork;
 		private readonly IUserService _userService;
 
-		public SetAddressDefaultCommandHandler(IUnitOfWork unitOfWork,IUserService userService)
+		public SetAddressDefaultCommandHandler(IUnitOfWork unitOfWork, IUserService userService)
 		{
 			_unitOfWork = unitOfWork;
 			_userService = userService;

@@ -1,4 +1,4 @@
-﻿using Foodo.Application.Abstraction.InfraRelated;
+﻿using Foodo.Application.Abstraction.InfrastructureRelatedServices.Cache;
 using ZiggyCreatures.Caching.Fusion;
 
 namespace Foodo.Infrastructure.Services

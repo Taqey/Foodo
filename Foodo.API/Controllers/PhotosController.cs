@@ -1,7 +1,8 @@
 ﻿using Foodo.API.Models.Request.Photo;
-using Foodo.Application.Abstraction.Photo;
-using Foodo.Application.Models.Input.Photo;
+using Foodo.Application.Commands.Photos.AddUserPhoto;
+using Foodo.Application.Queries.Photos.ReadUserPhoto;
 using Foodo.Domain.Enums;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
@@ -10,31 +11,42 @@ using System.Security.Claims;
 
 namespace Foodo.API.Controllers
 {
+	/// <summary>
+	/// Provides endpoints to manage user photos.
+	/// </summary>
+	/// <remarks>
+	/// <para>
+	/// This controller handles operations related to uploading and retrieving
+	/// photos associated with user profiles.
+	/// </para>
+	/// <para>
+	/// Endpoints are rate-limited to prevent abuse and require authenticated users
+	/// to identify the target profile.
+	/// </para>
+	/// </remarks>
 	[Route("api/[controller]")]
 	[ApiController]
 	[EnableRateLimiting("LeakyBucketPolicy")]
 
 	public class PhotosController : ControllerBase
 	{
-		private readonly IPhotoService _service;
+		private readonly IMediator _mediator;
 
-		public PhotosController(IPhotoService service)
+		public PhotosController(IMediator mediator)
 		{
-			_service = service;
+			_mediator = mediator;
 		}
-		// GET: api/<PhotosController>
-		//[HttpGet]
-		//public IEnumerable<string> Get()
-		//{
-		//	return new string[] { "value1", "value2" };
-		//}
-
-		// GET api/<PhotosController>/5
-		[HttpGet("get-user-photo")]
+		/// <summary>
+		/// Retrieves the profile photo of the authenticated user.
+		/// </summary>
+		/// <returns>User photo data.</returns>
+		/// <response code="200">User photo retrieved successfully.</response>
+		/// <response code="400">Failed to retrieve user photo.</response>
+		[HttpGet]
 		public async Task<IActionResult> GetUserPhoto()
 		{
 			var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-			var result = await _service.ReadUserPhoto(new GetUserPhotoInput { Id = userId, });
+			var result = await _mediator.Send(new ReadUserPhotoQuery { Id = userId, });
 			if (!result.IsSuccess)
 			{
 				return BadRequest(result.Message);
@@ -42,67 +54,21 @@ namespace Foodo.API.Controllers
 
 			return Ok(result.Data);
 		}
+		/// <summary>
+		/// Uploads or updates the profile photo of the authenticated user.
+		/// </summary>
+		/// <param name="request">Photo upload request.</param>
+		/// <returns>Status message.</returns>
+		/// <response code="200">User photo uploaded successfully.</response>
+		/// <response code="400">Failed to upload user photo.</response>
 
-		// POST api/<PhotosController>
-		[HttpPost("add-user-photo")]
+		[HttpPost]
 		public async Task<IActionResult> AddUserPhoto([FromForm] AddPhotoRequest request)
 		{
 			var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 			var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
 			var Enumvalue = (UserType)Enum.Parse(typeof(UserType), userRole);
-			var result = await _service.AddUserPhoto(new AddPhotoInput { file = request.file, Id = userId, UserType = Enumvalue });
-			if (!result.IsSuccess)
-			{
-				return BadRequest(result.Message);
-			}
-
-			return Ok(result.Message);
-		}
-		[HttpPost("add-merchant-photo")]
-		public async Task<IActionResult> AddMerchantPhoto([FromForm] AddMerchantPhotoRequest request)
-		{
-			var result = await _service.AddUserPhoto(new AddPhotoInput { file = request.file, Id = request.MerchantId, UserType = UserType.Merchant });
-			if (!result.IsSuccess)
-			{
-				return BadRequest(result.Message);
-			}
-
-			return Ok(result.Message);
-		}
-		//}		[HttpPost("add-user-photo")]
-		//public async Task<IActionResult> AddUserPhoto([FromForm] AddPhotoRequest request)
-		//{
-		//	var userId=User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-		//	var userRole=User.FindFirst(ClaimTypes.Role)?.Value;
-		//	var Enumvalue=(UserType)Enum.Parse(typeof(UserType), userRole);
-		//	var result = await _service.AddUserPhoto(new AddPhotoInput { file = request.file, Id = userId, UserType = Enumvalue });
-		//	if (!result.IsSuccess)
-		//	{
-		//		return BadRequest(result.Message);
-		//	}
-
-		//	return Ok(result.Message);
-		//}
-		[HttpPost("add-product-photos")]
-
-		public async Task<IActionResult> AddProductPhotos([FromForm] AddProductPhotosRequest request)
-		{
-
-			var result = await _service.AddProuctPhotos(new AddProductPhotosInput { Files = request.Files, ProductId = request.ProductId });
-			if (!result.IsSuccess)
-			{
-				return BadRequest(result.Message);
-			}
-
-			return Ok(result.Data);
-		}
-
-		// PUT api/<PhotosController>/5
-		[HttpPut("set-photo-main/{id}")]
-		public async Task<IActionResult> Put(int id)
-		{
-			var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-			var result = await _service.SetProductPhotoMain(new SetPhotoMainInput { id = id });
+			var result = await _mediator.Send(new AddUserPhotoCommand { file = request.file, Id = userId, UserType = Enumvalue });
 			if (!result.IsSuccess)
 			{
 				return BadRequest(result.Message);
@@ -111,10 +77,5 @@ namespace Foodo.API.Controllers
 			return Ok(result.Message);
 		}
 
-		// DELETE api/<PhotosController>/5
-		//[HttpDelete("{id}")]
-		//public void Delete(int id)
-		//{
-		//}
 	}
 }

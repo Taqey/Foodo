@@ -1,12 +1,7 @@
 ﻿using Foodo.API.Filters;
 using Foodo.API.Models.Request.Profile.Customer;
-using Foodo.Application.Abstraction.Profile.CustomerProfile;
-using Foodo.Application.Abstraction.Profile.MerchantProfile;
 using Foodo.Application.Commands.Addresses.SetAddressDefault;
 using Foodo.Application.Factory.Address;
-using Foodo.Application.Models.Input.Profile.Customer;
-using Foodo.Application.Models.Input.Profile.Merchant;
-using Foodo.Application.Models.Response;
 using Foodo.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -17,16 +12,40 @@ using System.Security.Claims;
 
 namespace Foodo.API.Controllers
 {
+	/// <summary>
+	/// Provides endpoints to manage user addresses such as adding,
+	/// deleting, and setting a default address.
+	/// </summary>
+	/// <remarks>
+	/// <para>
+	/// This controller handles address-related operations for authenticated users,
+	/// with behavior varying based on the user's role.
+	/// </para>
+	/// <list type="bullet">
+	///     <item>
+	///         <description>Add a new address to the user's profile</description>
+	///     </item>
+	///     <item>
+	///         <description>Delete an existing address</description>
+	///     </item>
+	///     <item>
+	///         <description>Set a specific address as the default (Customer only)</description>
+	///     </item>
+	/// </list>
+	/// <para>
+	/// All endpoints require authentication, and some operations are restricted
+	/// to specific user roles.
+	/// </para>
+	/// </remarks>
 	[Route("api/[controller]")]
 	[ApiController]
 	[EnableRateLimiting("FixedWindowPolicy")]
-
 	public class AdressesController : ControllerBase
 	{
 		private readonly IMediator _mediator;
 		private readonly IAddressStrategyFactory _factory;
 
-		public AdressesController(IMediator mediator,IAddressStrategyFactory factory)
+		public AdressesController(IMediator mediator, IAddressStrategyFactory factory)
 		{
 
 			_mediator = mediator;
@@ -74,8 +93,8 @@ namespace Foodo.API.Controllers
 		[ServiceFilter(typeof(ValidateIdFilter))]
 		public async Task<IActionResult> DeleteAddress(int id)
 		{
-			var strategy= _factory.GetDeleteAddressStrategy(User,id);
-			var result=await _mediator.Send(strategy);
+			var strategy = _factory.GetDeleteAddressStrategy(User, id);
+			var result = await _mediator.Send(strategy);
 			if (!result.IsSuccess)
 			{
 				Log.Warning("Failed to delete address {AddressId}: {Message}", id, result.Message);
