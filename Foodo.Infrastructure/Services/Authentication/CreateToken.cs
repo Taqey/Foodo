@@ -10,7 +10,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Foodo.Infrastructure.Services
+namespace Foodo.Infrastructure.Services.Authentication
 {
 	public class CreateToken : ICreateToken
 	{

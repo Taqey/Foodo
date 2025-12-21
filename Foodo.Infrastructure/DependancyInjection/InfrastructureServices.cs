@@ -14,12 +14,15 @@ using Foodo.Application.Abstraction.InfrastructureRelatedServices.Upload;
 using Foodo.Application.Abstraction.InfrastructureRelatedServices.User;
 using Foodo.Domain.Repository;
 using Foodo.Infrastructure.Repository;
-using Foodo.Infrastructure.Services;
+using Foodo.Infrastructure.Services.Authentication;
+using Foodo.Infrastructure.Services.Mailing;
 using Foodo.Infrastructure.Services.ReadServices.Order;
 using Foodo.Infrastructure.Services.ReadServices.Photos;
 using Foodo.Infrastructure.Services.ReadServices.Product;
 using Foodo.Infrastructure.Services.ReadServices.Products;
 using Foodo.Infrastructure.Services.ReadServices.Profile.MerchantProfile;
+using Foodo.Infrastructure.Services.Upload;
+using Foodo.Infrastructure.Services.UserManagment;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Foodo.API.Extensions

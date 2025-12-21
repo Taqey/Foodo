@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 
-namespace Foodo.Infrastructure.Services
+namespace Foodo.Infrastructure.Services.UserManagment
 {
 	public class UserService : IUserService
 	{

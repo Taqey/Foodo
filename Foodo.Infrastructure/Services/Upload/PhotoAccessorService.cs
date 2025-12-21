@@ -7,7 +7,7 @@ using Foodo.Infrastructure.Helper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 
-namespace Foodo.Infrastructure.Services
+namespace Foodo.Infrastructure.Services.Upload
 {
 	public class PhotoAccessorService : IPhotoAccessorService
 	{
