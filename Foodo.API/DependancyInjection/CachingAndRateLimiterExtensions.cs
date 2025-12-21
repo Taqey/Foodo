@@ -1,5 +1,5 @@
 ﻿using Foodo.Application.Abstraction.InfrastructureRelatedServices.Cache;
-using Foodo.Infrastructure.Services;
+using Foodo.Infrastructure.Services.Cache;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
 using System.Threading.RateLimiting;

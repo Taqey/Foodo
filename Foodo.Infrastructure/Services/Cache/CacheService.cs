@@ -1,7 +1,7 @@
 ﻿using Foodo.Application.Abstraction.InfrastructureRelatedServices.Cache;
 using ZiggyCreatures.Caching.Fusion;
 
-namespace Foodo.Infrastructure.Services
+namespace Foodo.Infrastructure.Services.Cache
 {
 	public class CacheService : ICacheService
 	{

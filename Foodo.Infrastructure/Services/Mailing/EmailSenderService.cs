@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 using MimeKit;
 
 
-namespace Foodo.Infrastructure.Services
+namespace Foodo.Infrastructure.Services.Mailing
 {
 	public class EmailSenderService : IEmailSenderService
 	{
