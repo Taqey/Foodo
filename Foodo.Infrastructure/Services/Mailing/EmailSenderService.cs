@@ -36,7 +36,6 @@ namespace Foodo.Infrastructure.Services.Mailing
 			{
 				await client.ConnectAsync(_options.Value.SMTPServer, _options.Value.Port, false);
 
-				// Note: only needed if the SMTP server requires authentication
 				await client.AuthenticateAsync(_options.Value.Login, _options.Value.Password);
 
 				await client.SendAsync(message);
