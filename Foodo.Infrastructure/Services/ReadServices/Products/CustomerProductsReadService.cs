@@ -170,14 +170,15 @@ ORDER BY {orderByColumn}";
 							})
 							.ToList();
 
-			_cacheService.Set(cacheKey, products);
 
-			return new PaginationDto<CustomerProductDto>
+			var result= new PaginationDto<CustomerProductDto>
 			{
 				Items = products,
 				TotalItems = totalItems,
 				TotalPages = totalPages
 			};
+			_cacheService.Set(cacheKey, result);
+			return result;
 		}
 	}
 }
