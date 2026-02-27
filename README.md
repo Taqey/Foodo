@@ -64,6 +64,7 @@ Foodo
 
 ## 🔹 Foodo.Infrastructure
 - Entity Framework Core
+- Dapper
 - SQL Server integration
 - Repository pattern
 - Authentication & token management
