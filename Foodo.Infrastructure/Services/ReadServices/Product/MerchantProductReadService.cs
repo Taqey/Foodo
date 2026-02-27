@@ -17,17 +17,8 @@ namespace Foodo.Infrastructure.Services.ReadServices.Product
 		}
 		public async Task<MerchantProductDto> ReadProduct(int productId)
 		{
-			string query = @"SELECT  TblProducts.ProductId, TblProducts.ProductsName, TblProducts.ProductDescription, TblProductDetails.Price, TblProductPhotos.Url, TblProductPhotos.isMain, TblCategoryOfProducts.CategoryName, 
-                   LkpProductDetailsAttributes.ProductDetailAttributeId,LkpAttributes.Name as 'AttributeName',LkpAttributes.value as 'AttributeValue',  LkpMeasureUnits.UnitOfMeasureName as 'MeasuringUnit'
-FROM     TblCategoryOfProducts INNER JOIN
-                  TblProductCategories ON TblCategoryOfProducts.CategoryId = TblProductCategories.categoryid INNER JOIN
-                  TblProducts ON TblProductCategories.productid = TblProducts.ProductId INNER JOIN
-                  TblProductDetails ON TblProducts.ProductId = TblProductDetails.ProductId INNER JOIN
-                  TblProductPhotos ON TblProducts.ProductId = TblProductPhotos.ProductId INNER JOIN
-                  LkpProductDetailsAttributes ON TblProductDetails.ProductDetailId = LkpProductDetailsAttributes.ProductDetailId INNER JOIN
-                  LkpAttributes ON LkpProductDetailsAttributes.AttributeId = LkpAttributes.AttributeId INNER JOIN
-                  LkpMeasureUnits ON LkpProductDetailsAttributes.UnitOfMeasureId = LkpMeasureUnits.UnitOfMeasureId
-                  where TblProducts.ProductId=@ProductId
+			string query = @"SELECT * from  vw_MerchantProduct
+                  where ProductId=@ProductId
 ";
 			var RawProductDto = await _connection.QueryAsync<MerchantRawProductDto>(query, new { ProductId = productId });
 			if (RawProductDto.Count() == 0)

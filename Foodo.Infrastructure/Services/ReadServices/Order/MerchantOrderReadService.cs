@@ -16,24 +16,7 @@ namespace Foodo.Infrastructure.Services.ReadServices.Order
 		}
 		public async Task<MerchantOrderDto> GetMerchantOrder(int OrderId)
 		{
-			string query = @"SELECT 
-							o.OrderId,
-							o.OrderDate,
-							o.TotalPrice,
-							o.OrderStatus,
-							c.UserId      AS CustomerId,
-							CONCAT(c.FirstName,' ',c.LastName)   AS CustomerName,
-							p.ProductId,
-							p.ProductsName,
-							po.Quantity,
-							po.Price
-							FROM TblOrders o
-							JOIN TblAdresses a ON a.AddressId = o.BillingAddressId
-							JOIN TblProductsOrders po ON po.OrderId = o.OrderId
-							JOIN TblProducts p ON po.ProductId = p.ProductId
-							JOIN TblMerchants m ON p.UserId = m.UserId
-							join TblCustomers c on o.CustomerId=c.UserId
-							WHERE o.OrderId = @OrderId";
+			string query = @"select* from vw_MerchantOrder where OrderId= @OrderId";
 			var rawOrder = await _connection.QueryAsync<MerchantOrderRawDto>(query, new { OrderId = OrderId });
 
 			var result = rawOrder.GroupBy(o => o.OrderId).Select(e => new MerchantOrderDto

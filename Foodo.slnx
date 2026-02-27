@@ -3,4 +3,5 @@
   <Project Path="Foodo.Application/Foodo.Application.csproj" />
   <Project Path="Foodo.Domain/Foodo.Domain.csproj" />
   <Project Path="Foodo.Infrastructure/Foodo.Infrastructure.csproj" />
+  <Project Path="Foodo.UnitTests/Foodo.UnitTests.csproj" Id="fc976ecd-4d36-4bf6-94b8-b658d386ebaa" />
 </Solution>
