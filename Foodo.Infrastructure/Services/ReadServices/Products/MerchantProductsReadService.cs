@@ -98,15 +98,15 @@ namespace Foodo.Infrastructure.Services.ReadServices.Products
 			switch (orderBy)
 			{
 				case ProductOrderBy.Name:
-					orderByColumn = "p.ProductsName";
+					orderByColumn = "ProductsName";
 					break;
 
 				case ProductOrderBy.Price:
-					orderByColumn = "p.Price";
+					orderByColumn = "Price";
 					break;
 
 				default:
-					orderByColumn = "p.ProductId";
+					orderByColumn = "ProductId";
 					break;
 			}
 
@@ -121,32 +121,12 @@ namespace Foodo.Infrastructure.Services.ReadServices.Products
 			var productIds = (await _connection.QueryAsync<int>(sql.ToString(), parameters)).ToList();
 
 			var prodQuery = $@"SELECT  
-					p.ProductId,
-                    p.ProductsName,
-                    p.ProductDescription,
-                    TblProductDetails.Price,
-                    TblProductPhotos.Url,
-                    TblProductPhotos.isMain,
-                    TblCategoryOfProducts.CategoryName,
-                    LkpAttributes.Name AS AttributeName,
-                    LkpAttributes.value AS AttributeValue,
-                    LkpProductDetailsAttributes.ProductDetailAttributeId As ProductDetailAttributeId,
-                    LkpMeasureUnits.UnitOfMeasureName AS MeasuringUnit,
-                    p.CreatedDate
-					FROM TblCategoryOfProducts
-					INNER JOIN TblProductCategories ON TblCategoryOfProducts.CategoryId = TblProductCategories.categoryid
-					INNER JOIN TblProducts p ON TblProductCategories.productid = p.ProductId
-					INNER JOIN TblProductDetails ON p.ProductId = TblProductDetails.ProductId
-					INNER JOIN TblProductPhotos ON p.ProductId = TblProductPhotos.ProductId
-					INNER JOIN LkpProductDetailsAttributes ON TblProductDetails.ProductDetailId = LkpProductDetailsAttributes.ProductDetailId
-					INNER JOIN LkpAttributes ON LkpProductDetailsAttributes.AttributeId = LkpAttributes.AttributeId
-					INNER JOIN LkpMeasureUnits ON LkpProductDetailsAttributes.UnitOfMeasureId = LkpMeasureUnits.UnitOfMeasureId
-					WHERE p.ProductId IN @productIds
+ * from vw_MerchantProducts
+					WHERE ProductId IN @productIds
 					ORDER BY {orderByColumn}";
-
 			var rows = await _connection.QueryAsync<MerchantRawProductDto>(
 				prodQuery,
-				new { productIds = productIds }
+				new { productIds } // the name matches @productIds
 			);
 
 			var products = rows
@@ -181,14 +161,15 @@ namespace Foodo.Infrastructure.Services.ReadServices.Products
 						.ToList()
 				})
 				.ToList();
-			_cacheService.Set(cacheKey, products);
 
-			return new PaginationDto<MerchantProductDto>
+			var result= new PaginationDto<MerchantProductDto>
 			{
 				Items = products,
 				TotalItems = totalItems,
 				TotalPages = (int)Math.Ceiling(totalItems / (double)PageSize)
 			};
+			_cacheService.Set(cacheKey, result);
+			return result;
 		}
 	}
 }

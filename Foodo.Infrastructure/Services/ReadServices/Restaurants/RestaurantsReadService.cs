@@ -71,19 +71,8 @@ namespace Foodo.Application.Abstraction.InfrastructureRelatedServices.ReadServic
 			// =========================
 			var dataSql = @"
         SELECT 
-            rc.CategoryId,
-            p.Url,
-            m.StoreName,
-            m.StoreDescription,
-            m.UserId
-        FROM TblMerchants m
-        LEFT JOIN AspNetUsers u 
-            ON u.Id = m.UserId
-        LEFT JOIN LkpUserPhotos p 
-            ON u.Id = p.UserId
-        LEFT JOIN TblRestaurantCategories rc 
-            ON m.UserId = rc.RestaurantId
-        WHERE m.UserId IN @ids
+* from vw_restaurants
+        WHERE UserId IN @ids
     ";
 
 			var raw = await _connection.QueryAsync<ShopRawDto>(dataSql, new { ids });

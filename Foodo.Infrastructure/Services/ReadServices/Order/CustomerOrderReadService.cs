@@ -16,25 +16,8 @@ namespace Foodo.Infrastructure.Services.ReadServices.Order
 		}
 		public async Task<CustomerOrderDto> GetCustomerOrder(int OrderId)
 		{
-			string query = @"SELECT 
-							o.OrderId,
-							o.OrderDate,
-							o.TotalPrice,
-							o.OrderStatus,
-							o.MerchantId  AS MerchantId,
-							m.StoreName   AS MerchantName,
-							a.StreetAddress AS BillingAddress,
-							p.ProductId,
-							p.ProductsName,
-							po.Quantity,
-							po.Price
-							FROM TblOrders o
-							JOIN TblAdresses a ON a.AddressId = o.BillingAddressId
-							JOIN TblProductsOrders po ON po.OrderId = o.OrderId
-							JOIN TblProducts p ON po.ProductId = p.ProductId
-							JOIN TblMerchants m ON p.UserId = m.UserId
-							join TblCustomers c on o.CustomerId=c.UserId
-							WHERE o.OrderId = @OrderId";
+			string query = @"select* from vw_CustomerOrder
+							WHERE OrderId = @OrderId";
 			var rawOrder = await _connection.QueryAsync<CustomerOrderRawDto>(query, new { OrderId = OrderId });
 			if (!rawOrder.Any())
 			{

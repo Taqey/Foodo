@@ -38,25 +38,9 @@ namespace Foodo.Infrastructure.Services.ReadServices.Order
 					Items = new List<MerchantOrderDto>()
 				};
 
-			string sqlOrdersDetails = @"	SELECT 
-											o.OrderId,
-											o.OrderDate,
-											o.TotalPrice,
-											o.OrderStatus,
-											c.UserId      AS CustomerId,
-											CONCAT(c.FirstName,' ',c.LastName) AS CustomerName,
-											p.ProductId,
-											p.ProductsName,
-											po.Quantity,
-											po.Price
-											FROM TblOrders o
-											JOIN TblAdresses a ON a.AddressId = o.BillingAddressId
-											JOIN TblProductsOrders po ON po.OrderId = o.OrderId
-											JOIN TblProducts p ON po.ProductId = p.ProductId
-											JOIN TblMerchants m ON p.UserId = m.UserId
-											JOIN TblCustomers c ON o.CustomerId = c.UserId
-											WHERE o.OrderId IN @OrderIds
-											ORDER BY o.OrderDate DESC;";
+			string sqlOrdersDetails = @"	select *from vw_MerchantOrders
+											WHERE OrderId IN @OrderIds
+											ORDER BY OrderDate DESC;";
 
 			var rawOrders = await _connection.QueryAsync<MerchantOrderRawDto>(
 				sqlOrdersDetails, new { OrderIds = orderIds });

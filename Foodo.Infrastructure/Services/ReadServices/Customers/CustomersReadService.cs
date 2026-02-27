@@ -16,10 +16,7 @@ namespace Foodo.Application.Abstraction.InfrastructureRelatedServices.ReadServic
 		public async Task<PaginationDto<CustomerDto>> ReadCustomers(string restaurantId, int page, int pageSize)
 		{
 			var countSql = @"
-							SELECT COUNT(DISTINCT o.CustomerId) 
-							FROM TblOrders o
-							WHERE o.OrderStatus = 'Completed' 
-							  AND o.MerchantId = @MerchantId;
+select CompletedCustomerCount from vw_NumberOfCompletedCustomers where MerchantId= @MerchantId;
 						";
 			var totalItems = await _connection.ExecuteScalarAsync<int>(countSql, new { MerchantId = restaurantId });
 			if (totalItems == 0)
@@ -32,28 +29,11 @@ namespace Foodo.Application.Abstraction.InfrastructureRelatedServices.ReadServic
 
 				};
 			}
-			var sql = @"SELECT 
-							CONCAT(c.FirstName, ' ', c.LastName) AS FullName,
-							u.Email,
-							u.PhoneNumber,
-							SUM(o.TotalPrice) AS TotalSpent,
-							COUNT(o.OrderId) AS TotalOrders,
-							MAX(o.OrderDate) AS LastPurchased
-						FROM AspNetUsers u
-						INNER JOIN TblCustomers c 
-							ON u.Id = c.UserId
-						INNER JOIN TblOrders o
-							ON o.CustomerId = c.UserId
-						WHERE o.OrderStatus = 'Completed' 
-						  AND o.MerchantId = @MerchantId
-						GROUP BY 
-							c.FirstName,
-							c.LastName,
-							u.Email,
-							u.PhoneNumber
-						ORDER BY TotalSpent DESC  
+			var sql = @"select FullName,Email,PhoneNumber,TotalSpent,TotalOrders,LastPurchased from vw_CompletedCustomers where MerchantId = @MerchantId			
+ORDER BY TotalSpent DESC  
 						OFFSET @OFFSET ROWS 
 						FETCH NEXT @FETCH ROWS ONLY;
+
 						";
 			var result = (await _connection.QueryAsync<CustomerDto>(sql, new { MerchantId = restaurantId, OFFSET = (page - 1) * pageSize, FETCH = pageSize })).ToList();
 			return new PaginationDto<CustomerDto>

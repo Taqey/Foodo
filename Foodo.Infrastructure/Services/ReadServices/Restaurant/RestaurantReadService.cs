@@ -15,12 +15,9 @@ namespace Foodo.Application.Abstraction.InfrastructureRelatedServices.ReadServic
 		}
 		public async Task<ShopDto> ReadRestaurant(string RestaurantId)
 		{
-			var sql = @"SELECT TblRestaurantCategories.categoryid, LkpUserPhotos.Url, TblMerchants.StoreName, TblMerchants.StoreDescription, TblMerchants.UserId
-FROM     AspNetUsers left JOIN
-                  LkpUserPhotos ON AspNetUsers.Id = LkpUserPhotos.UserId right JOIN
-                  TblMerchants ON AspNetUsers.Id = TblMerchants.UserId left JOIN
-                  TblRestaurantCategories ON TblMerchants.UserId = TblRestaurantCategories.restaurantid
-                  where TblMerchants.UserId=@Id";
+			var sql = @"SELECT * from
+vw_restaurant
+                  where UserId=@Id";
 			var raw = await _connection.QueryAsync<ShopRawDto>(sql, new { Id = RestaurantId });
 			var result = raw.GroupBy(o => o.UserId).Select(e => new ShopDto
 			{

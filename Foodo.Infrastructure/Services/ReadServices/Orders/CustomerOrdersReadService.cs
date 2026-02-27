@@ -39,24 +39,9 @@ namespace Foodo.Infrastructure.Services.ReadServices.Order
 				};
 
 			string sqlOrdersDetails = @"	SELECT 
-										o.OrderId,
-										o.OrderDate,
-										o.TotalPrice,
-										o.OrderStatus,
-										m.UserId      AS MerchantId,
-										m.StoreName   AS MerchantName,
-										a.StreetAddress AS BillingAddress,
-										p.ProductId,
-										p.ProductsName,
-										po.Quantity,
-										po.Price
-										FROM TblOrders o
-										LEFT JOIN TblAdresses a ON a.AddressId = o.BillingAddressId
-										JOIN TblProductsOrders po ON po.OrderId = o.OrderId
-										JOIN TblProducts p ON po.ProductId = p.ProductId
-										JOIN TblMerchants m ON p.UserId = m.UserId
-										WHERE o.OrderId IN @OrderIds
-										ORDER BY o.OrderDate DESC;";
+* from vw_CustomerOrders
+										WHERE OrderId IN @OrderIds
+										ORDER BY OrderDate DESC;";
 
 			var rawOrders = await _connection.QueryAsync<CustomerOrderRawDto>(
 				sqlOrdersDetails, new { OrderIds = orderIds });
